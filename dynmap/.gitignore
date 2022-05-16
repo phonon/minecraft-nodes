@@ -1,0 +1,22 @@
+node_modules/
+
+# build
+build/
+
+# local utility scripts
+scripts/*
+!scripts/spritesheet/
+
+# ignore rust outputs
+target/
+bin/
+pkg/
+wasm/*.js
+wasm/*.ts
+wasm/*.wasm
+wasm-pack.log
+/target
+**/*.rs.bk
+
+# backup files
+*.bak

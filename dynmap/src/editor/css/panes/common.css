@@ -1,0 +1,48 @@
+.nodes-editor-panel-title {
+	height: 24px;
+	min-height: 24px;
+	flex-grow: 0;
+	font-weight: bold;
+	line-height: 24px;
+	display: flex;
+}
+
+.nodes-editor-section-header {
+	height: 24px;
+	min-height: 24px;
+	flex-grow: 0;
+	font-weight: bold;
+	line-height: 24px;
+	display: flex;
+	margin-top: 8px;
+}
+
+.nodes-editor-setting-field {
+	display: flex;
+	white-space: nowrap;
+	margin: 2px 0;
+	height: 18px;
+}
+
+.nodes-editor-setting-input {
+    flex-grow: 1;
+    margin-left: 8px;
+    background-color: #111;
+}
+
+.nodes-editor-setting-input input{
+	box-sizing: border-box;
+	width: 100%;
+	text-align: left;
+	padding: 0 4px;
+	background-color: rgba(0,0,0,0);
+	font-family: 'Courier New', Courier, monospace;
+	color: #fff;
+}
+
+.nodes-editor-help {
+    margin-top: 8px;
+    color: #888;
+    font-size: 12px;
+    user-select: none;
+}

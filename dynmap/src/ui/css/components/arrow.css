@@ -1,0 +1,46 @@
+/**
+ * editor.css
+ * --------------------------------------------------
+ * CSS for arrow components
+ */
+
+
+.nodes-arrow-left {
+	margin-bottom: 2px;
+	transform: rotate(135deg);
+}
+
+.nodes-arrow-right {
+	margin-bottom: 2px;
+	transform: rotate(-45deg);
+}
+
+.nodes-arrow-up {
+	margin-top: 4px;
+	transform: rotate(-135deg);
+}
+
+.nodes-arrow-down {
+	margin-bottom: 4px;
+	transform: rotate(45deg);
+}
+
+.nodes-arrow-northwest {
+	margin-top: 2px;
+	transform: rotate(180deg);
+}
+
+.nodes-arrow-northeast {
+	margin-top: 2px;
+	transform: rotate(-90deg);
+}
+
+.nodes-arrow-southwest {
+	margin-bottom: 2px;
+	transform: rotate(90deg);
+}
+
+.nodes-arrow-southeast {
+	margin-bottom: 2px;
+	transform: rotate(0deg);
+}

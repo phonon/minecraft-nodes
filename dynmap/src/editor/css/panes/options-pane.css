@@ -1,0 +1,20 @@
+#nodes-editor-pane-options {
+	display: flex;
+	height: 100%;
+    flex-direction: column;
+    position: relative;
+}
+
+#nodes-editor-options-image-upload {
+	display: none;
+}
+
+#nodes-editor-options-upload-img-btn {
+	font-size: 12px;
+	width: 100px;
+	margin-left: 4px;
+}
+
+#nodes-ace-editor-default-resource-container {
+	height: 150px;
+}

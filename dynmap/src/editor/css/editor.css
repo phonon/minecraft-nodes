@@ -1,0 +1,143 @@
+#nodes-container {
+    background-color: #222;
+    font-size: 14px;
+}
+
+#nodes-editor {
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background-color: #222;
+    color: white;
+    font-family: "Courier New", Courier, monospace;
+    box-sizing: border-box;
+}
+
+#nodes-file-uploader {
+    display: none;
+}
+
+#nodes-header {
+    box-sizing: border-box;
+    display: flex;
+    height: 40px;
+    min-height: 40px;
+    flex-grow: 0;
+    padding: 8px 12px 8px 8px;
+    background-color: #111;
+}
+
+#nodes-header-text {
+    height: 100%;
+    font-size: 16pt;
+    font-weight: bold;
+    flex-grow: 0;
+}
+
+#nodes-header-btns {
+    flex-grow: 1;
+    display: flex;
+    justify-content: flex-end;
+    user-select: none;
+}
+
+.nodes-editor-header-btn-container {
+	position: relative;
+}
+
+.nodes-editor-header-btn {
+    box-sizing: border-box;
+	width: 24px;
+    height: 24px;
+    cursor: pointer;
+    z-index: 9002;
+    margin-left: 10px;
+}
+
+.nodes-editor-header-btn-icon {
+	width: 24px;
+	height: 24px;
+	opacity: 0.4;
+	transition: opacity 0.4s;
+}
+
+.nodes-editor-header-btn:hover .nodes-editor-header-btn-icon {
+	opacity: 1.0;
+}
+
+.nodes-editor-header-btn-tooltip {
+	position: absolute;
+	left: 4px;
+	top: 24px;
+	width: 200px;
+	height: 0;
+	line-height: 30px;
+	padding: 0;
+	box-sizing: border-box;
+	display: flex;
+	color: #fff;
+	overflow: hidden;
+	white-space: nowrap;
+	z-index: 8999;
+	transition: height 0.5s;
+}
+
+/* Hack, just increase larger than it should be */
+.nodes-editor-header-btn:hover + .nodes-editor-header-btn-tooltip {
+	height: 40px;
+}
+
+.nodes-editor-header-btn-tooltip-text {
+	background-color: #111;
+}
+
+/* Editor panes */
+
+#nodes-editor-tabs-container {
+    flex-grow: 0;
+    display: flex;
+    padding: 0 8px;
+    background-color: #111;
+}
+
+#nodes-editor-pane-container {
+    flex-grow: 1;
+    overflow-y: scroll;
+}
+
+.nodes-editor-tab {
+    box-sizing: border-box;
+    width: 48px;
+    height: 48px;
+    padding: 8px;
+    background-color: #181818;
+    font-size: 11pt;
+    text-align: center;
+    user-select: none;
+    cursor: pointer;
+    border-left: 1px solid #111;
+    border-right: 1px solid #111;
+}
+
+.nodes-editor-tab-icon {
+    width: 100%;
+    height: 100%;
+    opacity: 0.5;
+}
+
+.nodes-editor-tab-selected {
+    background-color: #222;
+    border-left: 1px solid #222;
+    border-right: 1px solid #222;
+}
+
+.nodes-editor-tab-selected img {
+    opacity: 1.0;
+}
+
+.nodes-editor-pane {
+    box-sizing: border-box;
+    background-color: #222;
+    padding: 8px 12px 12px 12px;
+}

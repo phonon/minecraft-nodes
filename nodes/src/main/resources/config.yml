@@ -1,0 +1,262 @@
+# Note about times:
+# 1 hour = 3600000 ms
+# 2 hour = 7200000 ms
+# 24 hour = 86400000 ms
+# 48 hour = 172800000 ms
+# 72 hour = 259200000 ms
+
+# ===================================
+# engine settings
+# only adjust if know what doing
+# ===================================
+# save period in ticks
+savePeriod: 600
+
+# backup period in ms
+backupPeriod: 3600000
+
+# main background task in ticks
+mainPeriodicTick: 1200
+
+# over max claim reminder in ticks
+overMaxClaimsReminderPeriod: 24000
+
+# nametag update period in ticks
+nametagUpdatePeriod: 80
+nametagPipelineTicks: 16 # how many ticks to divide nametag updates
+
+# force copy to dynmap
+dynmapCopyTowns: false
+
+# ===================================
+# nametag configs
+# ===================================
+# use internal armorstand teleport nametag system
+useNametags: true
+
+# ===================================
+# afk kick time
+# ===================================
+# time in milliseconds for afk time before player kicked
+# adjusts claims progress as penalty
+# 10 min = 600000 ms
+# 20 min = 1200000 ms
+afkKickTime: 900000
+
+# ===================================
+# general permissions
+# ===================================
+# interact in area with NO TERRITORIES (build, destroy, etc...)
+canInteractInEmpty: false
+
+# interact in territory without town (build, destroy, etc...)
+canInteractInUnclaimed: true
+
+# only allow shearing in sheep node
+requireSheepNodeToShear: true
+
+# ===========================================
+# town settings
+# ===========================================
+# 24 hour = 86400000 ms
+# 48 hour = 172800000 ms
+# 72 hour = 259200000 ms
+townCreateCooldown: 172800000
+townMoveHomeCooldown: 172800000
+
+# update town state time
+# 1 min = 1200
+townCooldownUpdateTick: 2400
+
+# town spawn timer in seconds (converted to ticks by num * 20)
+townSpawnTime: 10
+
+# outpost configs
+# item cost for outpost teleport
+outpostTeleportCost:
+  diamond: 1
+
+# ===========================================
+# nation settings
+# ===========================================
+# allow teleporting to other towns in nation
+allowNationTownSpawn: false
+
+# item cost to teleport to nation's towns
+nationTownTeleportCost:
+  diamond: 1
+
+# ===========================================
+# Town Claim Settings
+# 
+# claims = baseClaims + bonusClaims + claimsPerPlayer * players
+# ===========================================
+
+# territory cost parameters
+#   cost = base + scale * chunks
+territoryCostBase: 10
+territoryCostScale: 0.25
+
+# initial claims GIVEN TO PLAYER when towns created
+townInitialClaims: 25
+
+# penalty scale factor when over initial claim allowed:
+# penalty = scale * (territory.cost - initialAllowed) if cost > allowed
+initialOverClaimsAmountScale: 2
+
+# extra base claim power per town
+townClaimsBase: 20
+
+# max claim power per town (-1 for unlimited)
+townClaimsMax: -1
+
+# claim power per player
+playerClaimsInitial: 1     # initial player claims on town join
+playerClaimsMax: 25        # max player claims for town
+playerClaimsIncrease: 2    # claims increase per tick period
+
+# town penalty decay
+townPenaltyDecay: 2
+
+# time periods for town claims penalty decay and player power gain, milliseconds
+# 1 hour = 3600000 ms
+# 2 hour = 7200000 ms
+townClaimsPenaltyDecayPeriod: 3600000
+playerClaimsIncreasePeriod: 3600000
+
+# reduced resource rate when over max claim (runs Math.random() < rate)
+overClaimsMaxPenalty: 0.5
+
+# annexation settings
+
+# can only annex territories during war time
+canOnlyAnnexDuringWar: true
+
+# ===========================================
+# Resource Settings
+# ===========================================
+# territory income time
+incomePeriod: 3600000
+
+# default resources in all territories
+globalResources:
+  income:
+    gold_ingot: 1
+  ore:
+    coal: [0.03, 1, 3]
+    iron_ore: [0.015, 1, 2]
+    gold_ore: [0.015, 1, 1]
+    emerald_ore: 0.007
+    diamond_ore: 0.007
+  crops:
+    wheat: 0.25
+    potato: 0.25
+  animals:
+
+# allow mining/harvesting/breeding in unowned territories
+allowOreInWilderness: false
+allowCropsInWilderness: false
+allowBreedingInWilderness: false
+
+# allow mining in captured territories
+allowOreInCaptured: true
+
+# allow mining/harvesting in other towns in nation
+allowOreInNationTowns: true
+
+# require crops or animal breeding to be above ground in sky light (set = 0 to disable)
+cropsMinSkyLight: 14
+breedingMinSkyLight: 14
+
+# min/max y levels allowed for crop growth and animal breeding
+cropsMinYHeight: 16
+cropsMaxYHeight: 255
+breedingMinYHeight: 16
+breedingMaxYHeight: 255
+
+# ===========================================
+# Tax Settings
+# ===========================================
+# fraction of territory income that goes to occupier
+taxIncomeRate: 0.2
+
+# probability that a hidden ore event resources go to occupier
+taxMineRate: 0.2
+
+# probability that all of a crop's harvest items go to occupier
+taxFarmRate: 0.2
+
+# probability that a new animal goes to occupier (as a spawn egg item)
+taxAnimalRate: 0.2
+
+# ===========================================
+# War Settings
+# ===========================================
+# Nodes internal explosion block damage restrictions
+restrictExplosions: true
+onlyAllowExplosionsDuringWar: true
+
+# disable building within this distance of flag (square range)
+flagNoBuildDistance: 1
+
+# disable building for y > flag base block + flagNoBuildYOffset
+flagNoBuildYOffset: -1
+
+# time to capture a chunk in ticks
+chunkAttackTime: 1200
+
+# modifiers to chunk attack time
+chunkAttackFromWastelandMultiplier: 2.0
+chunkAttackHomeMultiplier: 2.0
+
+# number of chunks a player can attack at same time
+maxPlayerChunkAttacks: 1
+
+# flag sky beacon config
+flagBeaconSize: 6          # in range [2, 16]
+flagBeaconMinSkyLevel: 100 # minimum height level in sky
+flagBeaconSkyLevel: 50     # height level above blocks
+
+# allow war permissions during skirmish mode
+allowDestructionDuringSkirmish: false
+
+# bypass permissions and allow extended ally interactions in towns
+warPermissions: true
+
+# allow leaving towns during war
+canLeaveTownDuringWar: true
+
+# allow creating towns during war
+canCreateTownDuringWar: false
+canDestroyTownDuringWar: false
+canLeaveNationDuringWar: false
+
+# global disable annexing
+annexDisabled: false
+
+# war whitelist: only allow attacking/destroying given town uuids,
+# warWhitelist:
+# - caffd0a0-042e-4022-910f-608be7fd277e
+
+# war blacklist: DO NOT ALLOW attacking given town uuids (PROTECTED from war)
+# warBlacklist:
+# - caffd0a0-042e-4022-910f-608be7fd277e
+
+# annex blacklist
+# annexBlacklist:
+# - caffd0a0-042e-4022-910f-608be7fd277e
+
+# only allow towns on the whitelist to annex territories from each other
+onlyWhitelistCanAnnex: true
+onlyWhitelistCanClaim: true
+
+# multiplier for warping home when occupied
+occupiedHomeTeleportMultiplier: 12.0
+# ===========================================
+# Truce Settings
+# ===========================================
+# truce period in milliseconds
+# 24 hour = 86400000 ms
+# 48 hour = 172800000 ms
+# 72 hour = 259200000 ms
+trucePeriod: 259200000

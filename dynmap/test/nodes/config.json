@@ -1,0 +1,7 @@
+{
+    "meta":{"type":"config"},
+    "territoryCost":{
+        "scale": 0.25,
+        "constant": 20
+    }
+}

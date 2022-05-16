@@ -1,0 +1,14 @@
+.nodes-editor-generation-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 10px;
+}
+
+.nodes-editor-generation-text-button {
+    width: 100%;
+    overflow: hidden;
+}
+
+#nodes-resource-distribute-ace-editor-container {
+    height: 200px;
+}

@@ -1,0 +1,153 @@
+#nodes-editor-pane-nodes {
+	display: flex;
+	height: 100%;
+    flex-direction: column;
+}
+
+#nodes-editor-nodes-header {
+	height: 24px;
+	min-height: 24px;
+	flex-grow: 0;
+	font-weight: bold;
+	line-height: 24px;
+	display: flex;
+}
+
+#nodes-editor-nodes-header-text {
+	flex-grow: 1;
+}
+
+#nodes-editor-nodes-header-buttons {
+	flex-shrink: 0;
+	flex-grow: 0;
+}
+
+.nodes-editor-nodes-header-btn {
+	box-sizing: border-box;
+	width: 20px;
+	height: 20px;
+	margin: 2px;
+}
+
+#nodes-editor-nodes-editor-folder {
+	cursor: pointer;
+	user-select: none;
+	font-weight: bold;
+}
+
+#nodes-editor-nodes-list {
+	width: 100%;
+	height: 160px;
+	min-height: 160px;
+	flex-grow: 1;
+	background-color: #111;
+	margin-bottom: 4px;
+}
+
+.nodes-editor-nodes-list-item {
+	display: flex;
+	width: 100%;
+	height: 24px;
+	user-select: none;
+	cursor: pointer;
+}
+
+.nodes-editor-nodes-list-edit-name {
+	flex-grow: 1;
+}
+
+.nodes-editor-nodes-list-edit-name input{
+	box-sizing: border-box;
+	width: 50%;
+	text-align: left;
+	padding: 0 4px;
+	background-color: rgba(0,0,0,0);
+	font-family: 'Courier New', Courier, monospace;
+	color: #fff;
+}
+
+.nodes-editor-nodes-list-item-icon {
+	box-sizing: border-box;
+	width: 24px;
+	min-width: 24px;
+	height: 24px;
+	flex-grow: 0;
+}
+
+.nodes-editor-nodes-list-item-img {
+	width: 16px;
+	height: 16px;
+	padding: 4px;
+}
+
+.nodes-editor-nodes-list-item-delete {
+	box-sizing: border-box;
+	width: 24px;
+	min-width: 24px;
+	height: 24px;
+	padding: 0;
+	flex-grow: 0;
+}
+
+.nodes-editor-nodes-list-item-x {
+	width: 12px;
+	height: 12px;
+	padding: 6px;
+	opacity: 0.3;
+	cursor: pointer;
+}
+
+.nodes-editor-nodes-list-item-x:hover {
+	opacity: 0.8;
+	transition: linear opacity 0.2s;
+}
+
+#nodes-code-editor-container {
+    width: 100%;
+	height: 200px;
+	min-height: 200px;
+	flex-shrink: 1;
+	flex-grow: 2;
+	display: flex;
+	flex-direction: column;
+	position: relative;
+}
+
+#nodes-editor-nodes-choose-icon {
+	width: 100%;
+	margin-bottom: 8px;
+}
+
+#nodes-editor-nodes-icon-selection {
+	height: 120px;
+	padding: 4px;
+	display: flex;
+	flex-wrap: wrap;
+	overflow-y: scroll;
+	background-color: #111;
+}
+
+.nodes-editor-nodes-icon-btn {
+	box-sizing: border-box;
+	width: 24px;
+	height: 24px;
+	padding: 4px;
+	cursor: pointer;
+	user-select: none;
+}
+
+.nodes-editor-nodes-icon-btn-selected {
+	background-color: #444;
+}
+
+.nodes-editor-nodes-icon-img {
+	width: 16px;
+	height: 16px;
+}
+
+#nodes-editor-nodes-guide {
+    margin-top: 8px;
+    color: #888;
+    font-size: 12px;
+    user-select: none;
+}

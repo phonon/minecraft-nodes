@@ -1,0 +1,191 @@
+{
+    "meta": {
+        "type": "towns"
+    },
+    "residents": {
+        "caffd0a0-042e-4022-910f-608be7fd277e": {
+            "name": "XDA2",
+            "town": "/cm/",
+            "nation": null,
+            "claims": [
+                20,
+                0
+            ],
+            "prefix": "",
+            "suffix": ""
+        }
+    },
+    "towns": {
+        "/animu/": {
+            "uuid": "847883e6-6945-45e6-9eb7-50014a48c595",
+            "leader": null,
+            "home": 2,
+            "spawn": [
+                -248.0,
+                64.0,
+                -344.0
+            ],
+            "color": [
+                83,
+                28,
+                44
+            ],
+            "residents": [],
+            "claimsBonus": 0,
+            "claimsPenalty": [
+                0,
+                0
+            ],
+            "territories": [
+                5,
+                9,
+                2
+            ],
+            "annexed": [],
+            "captured": [],
+            "allies": [],
+            "enemies": [
+                "/cm/"
+            ],
+            "truce": [],
+            "income": {},
+            "incomeEgg": {},
+            "open": false
+        },
+        "/cm/": {
+            "uuid": "8c63f71e-784a-4643-ba7d-adc1c336e226",
+            "leader": "caffd0a0-042e-4022-910f-608be7fd277e",
+            "home": 8,
+            "spawn": [
+                -184.4417516371111,
+                66.28271854438606,
+                -266.20990193356806
+            ],
+            "color": [
+                44,
+                234,
+                152
+            ],
+            "residents": [
+                "caffd0a0-042e-4022-910f-608be7fd277e"
+            ],
+            "claimsBonus": 0,
+            "claimsPenalty": [
+                0,
+                0
+            ],
+            "territories": [
+                8,
+                22,
+                23
+            ],
+            "annexed": [],
+            "captured": [
+                2,
+                5
+            ],
+            "allies": [],
+            "enemies": [
+                "/animu/",
+                "/d/"
+            ],
+            "truce": [],
+            "income": {},
+            "incomeEgg": {},
+            "open": false
+        },
+        "/d/": {
+            "uuid": "ea1fed58-8de5-4aa0-a9b3-923cdb78d4bb",
+            "leader": null,
+            "home": 48,
+            "spawn": [
+                -24.0,
+                73.0,
+                56.0
+            ],
+            "color": [
+                84,
+                26,
+                46
+            ],
+            "residents": [],
+            "claimsBonus": 0,
+            "claimsPenalty": [
+                0,
+                0
+            ],
+            "territories": [
+                48,
+                49,
+                44,
+                45,
+                47
+            ],
+            "annexed": [],
+            "captured": [],
+            "allies": [],
+            "enemies": [
+                "/cm/"
+            ],
+            "truce": [],
+            "income": {},
+            "incomeEgg": {},
+            "open": false
+        },
+        "esfores": {
+            "uuid": "012d3cd3-16db-40ea-b4bc-3e33d506c78d",
+            "leader": null,
+            "home": 7,
+            "spawn": [
+                -376.0,
+                128.0,
+                -232.0
+            ],
+            "color": [
+                27,
+                45,
+                250
+            ],
+            "residents": [],
+            "claimsBonus": 0,
+            "claimsPenalty": [
+                0,
+                0
+            ],
+            "territories": [
+                10,
+                11,
+                12,
+                6,
+                7
+            ],
+            "annexed": [],
+            "captured": [],
+            "allies": [],
+            "enemies": [],
+            "truce": [],
+            "income": {},
+            "incomeEgg": {},
+            "open": false
+        }
+    },
+    "nations": {
+        "waifu": {
+            "uuid": "28bc9def-7b35-404d-979b-b6cc459d9b9c",
+            "capital": "/animu/",
+            "leader": null,
+            "color": [
+                145,
+                77,
+                186
+            ],
+            "towns": [
+                "/animu/",
+                "/d/"
+            ],
+            "allies": [],
+            "enemies": [],
+            "truce": []
+        }
+    }
+}

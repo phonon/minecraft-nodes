@@ -1,0 +1,506 @@
+/**
+ * Armor stand entity nametag attached to players to display
+ * town name and color (ally, enemy, etc...)
+ * 
+ * Handling armor stand packets:
+ * - Cancel default armor stand packet
+ * - When player comes in view, send armor stand spawn packet
+ */
+
+// package phonon.nodes.objects
+
+import com.comphenix.protocol.PacketType
+import com.comphenix.protocol.ProtocolLibrary
+import com.comphenix.protocol.ProtocolManager
+import com.comphenix.protocol.events.*
+import com.comphenix.protocol.wrappers.WrappedDataWatcher
+import org.bukkit.Bukkit
+import org.bukkit.Location
+import org.bukkit.entity.ArmorStand
+import org.bukkit.entity.Entity
+import org.bukkit.entity.EntityType
+import org.bukkit.entity.Player
+import org.bukkit.plugin.Plugin
+import phonon.nodes.Nodes
+import java.lang.reflect.InvocationTargetException
+
+/**
+ * https://wiki.vg/index.php?title=Entity_metadata&oldid=14048#ArmorStand
+ * Armor stand entity metadata packet portion:
+ * Index 14, byte bit mask:
+ * 0x01: is small
+ * 0x04: has arms
+ * 0x08: no baseplate
+ * 0x10: set marker
+ * 
+ * we want small, no arms, no base, market, bit flags b00011001 = 25
+ */
+private const val ARMOR_STAND_META: Byte = 25
+
+// https://wiki.vg/index.php?title=Entity_metadata&oldid=14048
+// https://github.com/dmulloy2/PacketWrapper/blob/2b4bfddd12b2874ff328015541c5f643c3907b3f/PacketWrapper/src/main/java/com/comphenix/packetwrapper/WrapperPlayServerSpawnEntity.java
+private const val ENTITY_TYPE_ARMOR_STAND: Int = 78
+
+// nametag y offset
+private const val NAMETAG_Y_OFFSET: Double = 2.1
+
+public class Nametag(
+    val player: Player,
+    val resident: Resident,
+    val protocolManager: ProtocolManager
+) {
+
+    // armor stand entity used
+    private val entity: Entity
+    
+    // entity id of armor stand
+    public val entityId: Int
+
+    // nametag properties
+    private var visible: Boolean = true
+    
+    init {
+        val loc = player.location
+        loc.y += NAMETAG_Y_OFFSET
+
+        // try creating armor stand entity manually (without spawning into world)
+        val entity: Entity? = EntityCreator.create(EntityType.ARMOR_STAND, loc)
+        val stand = if ( entity !== null ) {
+            entity
+        }
+        // fallback (default spawn + immediately remove from world)
+        else {
+            val world = loc.world
+            val spawned = world.spawn(loc, ArmorStand::class.java)
+            spawned.remove()
+            spawned as Entity
+        }
+
+        // save
+        this.entity = stand
+        this.entityId = stand.entityId
+    }
+
+    /**
+     * Get armor stand custom name as VIEWED by input player
+     */
+    public fun text(viewer: Player): String {
+        val thisTown = this.resident.town
+        if ( thisTown !== null ) {
+            // get input player relation to this.player
+            val otherTown = Nodes.getResident(viewer)?.town
+            if ( otherTown !== null ) {
+                if ( thisTown === otherTown ) {
+                    return thisTown.nametagTown
+                }
+                else if ( thisTown.nation !== null && thisTown.nation === otherTown.nation ) {
+                    return thisTown.nametagNation
+                }
+                else if ( thisTown.allies.contains(otherTown) ) {
+                    return thisTown.nametagAlly
+                }
+                else if ( thisTown.enemies.contains(otherTown) ) {
+                    return thisTown.nametagEnemy
+                }
+            }
+
+            return thisTown.nametagNeutral
+        }
+
+        return ""
+    }
+
+    // manager for name tags, map player -> nametag
+    // handle updates in response to events
+    companion object {
+
+        // map player -> their nametag
+        public val nametags: HashMap<Player, Nametag> = hashMapOf()
+
+        // map nametag armor stand entity id -> nametag
+        public val entityIdToNametag: HashMap<Int, Nametag> = hashMapOf()
+
+        // ProtocolLib manager
+        public var protocolManager: ProtocolManager? = null
+
+        /**
+         * Initialization:
+         * 1. set nametag refresh scheduler
+         * 2. set packet listener to override entity spawn events
+         *    for nametag armor stands (so they don't teleport to random locations)
+         */
+        public fun initialize(plugin: Plugin) {
+            // get protocol manager instance
+            val protocolManager = ProtocolLibrary.getProtocolManager()
+            Nametag.protocolManager = protocolManager
+            
+            // scheduler for refreshing nametag text
+            val task = object: Runnable {
+                override public fun run() {
+                    // schedule main thread to run income tick
+                    Bukkit.getScheduler().runTask(plugin, object: Runnable {
+                        override fun run() {
+                            Nametag.updateAllText()
+                        }
+                    })
+                }
+            }
+
+            Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task, 60, 60)
+
+            // APPARENTLY NOT NEEDED
+            // // packet listener for entity spawn events
+            // // https://github.com/dmulloy2/PacketWrapper/blob/2b4bfddd12b2874ff328015541c5f643c3907b3f/PacketWrapper/src/main/java/com/comphenix/packetwrapper/WrapperPlayServerSpawnEntity.java
+            // // -> if entity is 
+            // protocolManager.addPacketListener(object: PacketAdapter(PacketAdapter.AdapterParameteters()
+            //     .plugin(plugin)
+            //     .connectionSide(ConnectionSide.SERVER_SIDE)
+            //     .types(setOf(PacketType.Play.Server.SPAWN_ENTITY))
+            //     .listenerPriority(ListenerPriority.HIGHEST)
+            // ) {
+            //     override public fun onPacketSending(event: PacketEvent) {
+            //         val packet = event.packet
+                    
+            //         // check if entity is a nametag entity
+            //         val entityId = packet.getIntegers().read(0)
+            //         val entityType = packet.getIntegers().read(6)
+
+            //         println("PACKET SPAWN ENTITY EVENT ${entityId} ${entityType}")
+            //         println(entityIdToNametag.keys)
+            //         if ( entityIdToNametag.contains(entityId) ) {
+            //             println("CANCELING ARMOR STAND PACKET (isReadOnly ${event.isReadOnly()})")
+            //             event.setCancelled(true)
+            //         }
+            //     }
+            // })
+
+            // packet listener for player spawn events
+            // -> when player comes in range, spawn the nametag armor stand
+            protocolManager.addPacketListener(object: PacketAdapter(PacketAdapter.AdapterParameteters()
+                .plugin(plugin)
+                .connectionSide(ConnectionSide.SERVER_SIDE)
+                .types(setOf(PacketType.Play.Server.NAMED_ENTITY_SPAWN))
+                .listenerPriority(ListenerPriority.MONITOR)
+            ) {
+                override public fun onPacketSending(event: PacketEvent) {
+                    val packet = event.packet
+                    
+                    // get player nametag
+                    val uuid = packet.getUUIDs().read(0)
+                    val player = Bukkit.getPlayer(uuid)
+                    if ( player === null ) {
+                        return
+                    }
+
+                    // get nametag
+                    val nametag = Nametag.nametags.get(player)
+                    if ( nametag === null ) {
+                        return
+                    }
+
+                    // get packet target (player viewer)
+                    val viewer = event.player
+
+                    // send armor stand spawn packet + metadata
+                    val packetSpawn = Nametag.createArmorStandSpawnPacket(protocolManager, nametag)
+                    val packetMeta = Nametag.createMetadataPacket(protocolManager, nametag, viewer)
+
+                    try {
+                        protocolManager.sendServerPacket(viewer, packetSpawn, false)
+                        protocolManager.sendServerPacket(viewer, packetMeta, false)
+                    } catch ( error: InvocationTargetException ) {
+                        error.printStackTrace();
+                    }
+                }
+            })
+        }
+
+        /**
+         * create new nametag for player
+         */
+        public fun create(player: Player): Nametag? {
+            val resident = Nodes.getResident(player)
+            val protocolManager = Nametag.protocolManager
+
+            if ( resident !== null && protocolManager !== null ) {
+                val nametag = Nametag(player, resident, protocolManager)
+                Nametag.nametags.put(player, nametag)
+                Nametag.entityIdToNametag.put(nametag.entityId, nametag)
+
+                // re-used between players
+                val packetSpawn = Nametag.createArmorStandSpawnPacket(protocolManager, nametag)
+
+                // send create packet + metadata unique to each player
+                val nearbyPlayers: List<Player> = protocolManager.getEntityTrackers(player)
+                for ( viewer in nearbyPlayers ) {
+                    val packetMeta = Nametag.createMetadataPacket(protocolManager, nametag, viewer)
+
+                    try {
+                        protocolManager.sendServerPacket(viewer, packetSpawn, false)
+                        protocolManager.sendServerPacket(viewer, packetMeta, false)
+                    } catch ( error: InvocationTargetException ) {
+                        error.printStackTrace();
+                    }
+                }
+            }
+            return null
+        }
+
+        /**
+         * destroy player's nametag
+         */
+        public fun destroy(player: Player) {
+            val nametag = Nametag.nametags.remove(player)
+            if ( nametag !== null ) {
+                Nametag.entityIdToNametag.remove(nametag.entityId)
+
+                val protocolManager = Nametag.protocolManager
+                if ( protocolManager !== null ) {
+                    val packet = Nametag.createArmorStandDestroyPacket(protocolManager, nametag)
+                    try {
+                        protocolManager.broadcastServerPacket(packet)
+                    } catch ( error: InvocationTargetException ) {
+                        error.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        /**
+         * destroys all nametags
+         */
+        public fun clear() {
+            // get copy of nametag players
+            val players: List<Player> = Nametag.nametags.keys.toList()
+            for ( player in players ) {
+                Nametag.destroy(player)
+            }
+        }
+
+        /**
+         * hide player's nametag (e.g. sneaking)
+         */
+        public fun visibility(player: Player, visible: Boolean) {
+            val protocolManager = Nametag.protocolManager
+            if ( protocolManager === null ) {
+                return
+            }
+
+            val nametag = Nametag.nametags.get(player)
+            if ( nametag !== null ) {
+                nametag.visible = visible
+
+                val packet = Nametag.createVisibilityPacket(protocolManager, nametag)
+
+                val nearbyPlayers: List<Player> = protocolManager.getEntityTrackers(nametag.player)
+                for ( viewer in nearbyPlayers ) {
+                    protocolManager.sendServerPacket(viewer, packet, false)
+                }
+            }
+        }
+
+        /**
+         * update nametag armorstand position for input player
+         */
+        public fun update(player: Player, loc: Location) {
+            val nametag = Nametag.nametags.get(player)
+            if ( nametag !== null ) {
+                val packet = Nametag.createTeleportPacket(nametag.protocolManager, nametag, loc)
+                nametag.protocolManager.broadcastServerPacket(packet, nametag.player, false)
+            }
+        }
+        
+        /**
+         * update all nametag text (runs periodically by scheduler)
+         */
+        public fun updateAllText() {
+            val protocolManager = Nametag.protocolManager
+            if ( protocolManager === null ) {
+                return
+            }
+
+            for ( nametag in Nametag.nametags.values ) {
+                // get nearby players
+                val nearbyPlayers: List<Player> = protocolManager.getEntityTrackers(nametag.player)
+
+                for ( viewer in nearbyPlayers ) {
+                    val packet = Nametag.createMetadataPacket(protocolManager, nametag, viewer)
+                    try {
+                        protocolManager.sendServerPacket(viewer, packet, false)
+                    } catch ( error: InvocationTargetException ) {
+                        error.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        /**
+         * send full entity metadata packet
+         */
+        public fun createMetadataPacket(protocolManager: ProtocolManager, nametag: Nametag, viewer: Player): PacketContainer {
+            val viewerText = nametag.text(viewer)
+
+            val packet = protocolManager.createPacket(PacketType.Play.Server.ENTITY_METADATA)
+            
+            // entity id
+            packet.getIntegers().write(0, nametag.entityId)
+
+            // create and set data watcher for custom name
+            val watcher: WrappedDataWatcher = WrappedDataWatcher()
+            watcher.setEntity(nametag.entity)
+            watcher.setObject(0, WrappedDataWatcher.Registry.get(java.lang.Byte::class.java), (0x20).toByte()) // set invisible armor stand
+            watcher.setObject(2, WrappedDataWatcher.Registry.get(java.lang.String::class.java), viewerText) // set name
+            watcher.setObject(3, WrappedDataWatcher.Registry.get(java.lang.Boolean::class.java), nametag.visible, false) // is custom name visible
+            watcher.setObject(4, WrappedDataWatcher.Registry.get(java.lang.Boolean::class.java), true, false) // is silent
+            watcher.setObject(5, WrappedDataWatcher.Registry.get(java.lang.Boolean::class.java), true, false) // no gravity
+            watcher.setObject(11, WrappedDataWatcher.Registry.get(java.lang.Byte::class.java), ARMOR_STAND_META, false) // armor stand meta data
+
+            // write entity metadata
+            packet.getWatchableCollectionModifier().write(0, watcher.getWatchableObjects())
+
+            return packet
+        }
+
+        /**
+         * Create teleport to location packet
+         */
+        public fun createTeleportPacket(protocolManager: ProtocolManager, nametag: Nametag, loc: Location): PacketContainer {
+            val packet = protocolManager.createPacket(PacketType.Play.Server.ENTITY_TELEPORT)
+
+            // entity id
+            packet.getIntegers().write(0, nametag.entityId)
+
+            // position
+            packet.getDoubles().write(0, loc.x)
+            packet.getDoubles().write(1, loc.y + NAMETAG_Y_OFFSET)
+            packet.getDoubles().write(2, loc.z)
+
+            // yaw
+            packet.getBytes().write(0, (0f).toByte())
+
+            // pitch
+            packet.getBytes().write(1, (0f).toByte())
+
+            // on ground
+            packet.getBooleans().write(0, nametag.player.isOnGround())
+
+            return packet
+        }
+
+        /**
+         * send visibility packet
+         */
+        public fun createVisibilityPacket(protocolManager: ProtocolManager, nametag: Nametag): PacketContainer {
+            val packet = protocolManager.createPacket(PacketType.Play.Server.ENTITY_METADATA)
+            
+            // entity id
+            packet.getIntegers().write(0, nametag.entityId)
+
+            // create and set data watcher for custom name
+            val watcher: WrappedDataWatcher = WrappedDataWatcher() 
+            watcher.setEntity(nametag.entity)
+            watcher.setObject(3, WrappedDataWatcher.Registry.get(java.lang.Boolean::class.java), nametag.visible, false) // is custom name visible
+
+            // write entity metadata
+            packet.getWatchableCollectionModifier().write(0, watcher.getWatchableObjects())
+
+            return packet
+
+            try {
+                // protocolManager.broadcastServerPacket(packet, nametag.player, false)
+                protocolManager.broadcastServerPacket(packet)
+            } catch ( error: InvocationTargetException ) {
+                error.printStackTrace();
+            }
+        }
+        
+        /**
+         * send full entity spawn packet
+         */
+        public fun createArmorStandSpawnPacket(protocolManager: ProtocolManager, nametag: Nametag): PacketContainer {
+            val location = nametag.player.location
+
+            val packet = protocolManager.createPacket(PacketType.Play.Server.SPAWN_ENTITY)
+            
+            // entity id
+            packet.getIntegers().write(0, nametag.entityId)
+
+            // entity type = armor stand
+            packet.getIntegers().write(6, ENTITY_TYPE_ARMOR_STAND)
+
+            // location
+            packet.getDoubles().write(0, location.x)
+            packet.getDoubles().write(1, location.y + NAMETAG_Y_OFFSET)
+            packet.getDoubles().write(2, location.z)
+
+            return packet
+        }
+
+        /**
+         * Send destroy packet
+         */
+        public fun createArmorStandDestroyPacket(protocolManager: ProtocolManager, nametag: Nametag): PacketContainer {
+            val packet = protocolManager.createPacket(PacketType.Play.Server.ENTITY_DESTROY)
+            
+            // entity id
+            packet.getIntegerArrays().write(0, intArrayOf(nametag.entityId))
+            
+            return packet
+        }
+    }
+}
+
+
+/**
+ * NMS reflection to create entity without spawning into world
+ * https://www.spigotmc.org/threads/creating-entity-without-spawning-it.314683/
+ */
+private object EntityCreator {
+
+    /**
+     * @param entityType The type of entity that you want to create
+     * @param location The location where you want the entity.
+     * @return Entity
+     */
+    public fun create(entityType: EntityType, location: Location): Entity? {
+        try {
+            // We get the craftworld class with nms so it can be used in multiple versions
+            val craftWorldClass = EntityCreator.getNMSClass("org.bukkit.craftbukkit.", "CraftWorld")
+
+            // Cast the bukkit world to the craftworld
+            val craftWorldObject = craftWorldClass.cast(location.getWorld())
+
+            // Create variable with the method that creates the entity
+            // https://hub.spigotmc.org/stash/projects/SPIGOT/repos/craftbukkit/browse/src/main/java/org/bukkit/craftbukkit/CraftWorld.java#896
+            val createEntityMethod = craftWorldObject.javaClass.getMethod("createEntity", Location::class.java, Class::class.java)
+
+            // Attempt to invoke the method that creates the entity itself. This returns a net.minecraft.server entity
+            val entity = createEntityMethod.invoke(craftWorldObject, location, entityType.getEntityClass())
+
+            // finally we run the getBukkitEntity method in the entity class to get a usable object
+            return entity.javaClass.getMethod("getBukkitEntity").invoke(entity) as Entity
+
+        } catch ( exception: Exception ) {
+            exception.printStackTrace();
+        }
+
+        // if something went wrong we just return null
+        return null
+    }
+
+    /**
+     * @param prefix What comes before the version number
+     * @param nmsClassString What comes after the version number
+     * @return Class The class that you tried to access
+     * @throws ClassNotFoundException throws an exception if the class it not found
+     */
+    private fun getNMSClass(prefix: String, nmsClassString: String): Class<*> {
+        // Getting the version by splitting the package
+        val version: String = Bukkit.getServer().javaClass.getPackage().getName().replace(".", ",").split(",")[3] + "."
+
+        // Combining the prefix + version + nmsClassString for the full class path
+        val name: String = prefix + version + nmsClassString
+
+        return Class.forName(name)
+    }
+}

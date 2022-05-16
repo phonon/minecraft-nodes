@@ -1,0 +1,17 @@
+{
+    "meta": {
+        "type": "ports"
+    },
+    "ports": {
+        "north": {
+            "groups": ["one", "two"],
+            "x": 0,
+            "z": -600
+        },
+        "south": {
+            "groups": ["two"],
+            "x": 200,
+            "z": 600
+        }
+    }
+}

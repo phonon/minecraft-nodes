@@ -1,0 +1,21 @@
+/**
+ * input-edit.css
+ * --------------------------------------------------
+ * CSS for input-edit.jsx
+ */
+
+.nodes-input-edit {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+}
+
+.nodes-input-edit-input {
+	vertical-align: top;
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	border: 0;
+	text-align: center;
+}

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+	<title>Minecraft Dynamic Map</title>
+
+	<meta charset="utf-8" />
+	<meta name="keywords" content="minecraft, map, dynamic" />
+	<meta name="description" content="Minecraft Dynamic Map" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+	<!-- These 2 lines make us fullscreen on apple mobile products - remove if you don't like that -->
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />	
+
+	<link rel="icon" href="images/dynmap.ico" type="image/ico" />
+
+	<script type="text/javascript" src="js/jquery-3.5.1.js?_=3.3.2-696"></script>
+	<link rel="stylesheet" type="text/css" href="css/leaflet.css?_=3.3.2-696" />
+	<script type="text/javascript" src="js/leaflet.js?_=3.3.2-696"></script>
+    <!-- FOr source debug on leaflet 	<script type="text/javascript" src="js/leaflet-src.js?_=3.3.2-696"></script> -->
+	<script type="text/javascript" src="js/leaflet-src.js?_=3.3.2-696"></script> 
+	<script type="text/javascript" src="js/custommarker.js?_=3.3.2-696"></script>
+
+	<script type="text/javascript" src="js/dynmaputils.js?_=3.3.2-696"></script>
+	<script type="text/javascript" src="js/sidebarutils.js?_=3.3.2-696"></script>
+
+	<!--<link rel="stylesheet" type="text/css" href="css/embedded.css" media="screen" />-->
+	<link rel="stylesheet" type="text/css" href="css/standalone.css?_=3.3.2-696" media="screen" />
+	<link rel="stylesheet" type="text/css" href="css/dynmap_style.css?_=3.3.2-696" media="screen" />
+	<!-- <link rel="stylesheet" type="text/css" href="css/override.css" media="screen" /> -->
+
+	<script type="text/javascript" src="version.js?_=3.3.2-696"></script>
+	<script type="text/javascript" src="js/jquery.json.js?_=3.3.2-696"></script>
+	<script type="text/javascript" src="js/jquery.mousewheel.js?_=3.3.2-696"></script>
+	<script type="text/javascript" src="js/minecraft.js?_=3.3.2-696"></script>
+	<script type="text/javascript" src="js/map.js?_=3.3.2-696"></script>
+	<script type="text/javascript" src="js/hdmap.js?_=3.3.2-696"></script>
+	<script type="text/javascript" src="standalone/config.js?_=3.3.2-696"></script>
+	
+	<!-- Nodes library -->
+	<script type="text/javascript" src="./js/nodes.js"></script>
+	<link rel="stylesheet" type="text/css" href="css/nodes-global.css">
+
+	<script type="text/javascript">
+		// save old initialize function
+		DynMap.prototype.__original_initialize = DynMap.prototype.initialize;
+		// override dynnmap initialize callback
+		DynMap.prototype.initialize = function() {
+			let self = this;
+			// call original initialization
+			DynMap.prototype.__original_initialize.call(self);
+			// call our own initialization
+			let dynmap = window.dynmap;
+			let container = document.getElementById("nodes-container");
+			let portTooltipContainer = document.getElementById("port-tooltip-container");
+			let options = {
+				container: container,
+				portTooltipContainer: portTooltipContainer,
+				dynmap: dynmap,
+				config: undefined,
+				world: "./nodes/resource_lib.json",
+				towns: undefined,
+				editor: true,
+				resourceIcons: [
+					"./nodes/resource_icons.json",
+					"./nodes/resource_icons_custom.json",
+				],
+			};
+			Nodes.initialize(options, function() {});
+		};
+		// FOR TESTING MODE
+		// disable default update function
+		DynMap.prototype.update = function () {};
+		// disable tile loading
+		DynmapTileLayer.prototype._addTile = function (coords, container) {};
+		
+		$(document).ready(function() {
+			window.dynmap = new DynMap($.extend({
+				container: $("#dynmap")
+			}, config));
+		});
+	</script>
+
+</head>
+<body>
+<noscript>
+ For full functionality of this site it is necessary to enable JavaScript.
+ Here are the <a href="http://www.enable-javascript.com/" target="_blank">
+ instructions how to enable JavaScript in your web browser</a>.
+</noscript>
+
+<div id="page-container">
+	<div id="nodes-container"></div>
+	<div id="dynmap-container">
+		<div id="dynmap"></div> 	
+	</div>
+	<div id="port-tooltip-container"></div>
+</div>
+
+</body>
+</html>

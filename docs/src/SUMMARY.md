@@ -1,0 +1,15 @@
+# Summary
+
+- [Introduction](./1-introduction.md)
+- [Commands](./2-commands.md)
+- [Guide for Brainlets](./3-guide.md)
+- [Mechanics](./4-mechanics.md)
+   - [Territories](./4-1-territories.md)
+   - [Diplomacy and War](./4-2-diplomacy-war.md)
+   - [Town Protections](./4-3-town-protections.md)
+- [Configuration](./5-configuration.md)
+   - [Installation](./5-1-install.md)
+   - [World Structure](./5-2-world.md)
+   - [Resource Nodes](./5-3-resources.md)
+   - [Editor](./5-4-editor.md)
+   - [Nametags](./5-5-nametags.md)

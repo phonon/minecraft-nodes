@@ -1,0 +1,55 @@
+# ===========================================
+# ports list config
+# file contains example implementation
+# ===========================================
+
+# port groups
+groups:
+  - west
+  - east
+
+# =============================
+# ports
+# =============================
+# all possible fields:
+# portname:
+#   x: 420
+#   z: 69
+#   group: [group1, group2]         # can be single or [list]
+#   public: true                    # optional, default to true
+#   costMaterial: MATERIAL_NAME     # optional
+#   costAlly: 0
+#   costNeutral: 1
+#   costEnemy: 3
+#   allowAlly: true
+#   allowNeutral: true
+#   allowEnemy: false
+#   warpTimeModifier: 4.0           # additional seconds added onto baseWarpTime, can be negative
+
+ports:
+  # player owned ports
+  suez:
+    x: 30
+    z: -10
+    group: [west, east]
+    public: false
+
+  capetown:
+    x: -140
+    z: 140
+    group: [west, east]
+    public: false
+    warpTimeModifier: 5.0
+
+  # public ports
+  north:
+    x: -240
+    z: -340
+    group: west
+    public: true
+  
+  comfy:
+    x: -380
+    z: 120
+    group: east
+    public: true

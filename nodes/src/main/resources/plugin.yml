@@ -1,0 +1,81 @@
+main: phonon.nodes.NodesPlugin
+name: nodes
+version: 0.0.9
+api-version: 1.16
+softdepend: [kotlin, Essentials]
+commands:
+  nodesadmin:
+    description: Admin commands for Nodes
+    aliases: [nda]
+    permission: nodes.admin
+    usage: /nodesadmin help or /na help
+  town:
+    description: Manage player towns (Nodes)
+    aliases: [t]
+    permission: nodes.command.town
+    usage: /town help or /t help
+  nation:
+    description: Manage player nations (Nodes)
+    aliases: [n]
+    permission: nodes.command.nation
+    usage: /nation help or /n help
+  nodes:
+    description: Nodes general info (Nodes)
+    aliases: [nd]
+    permission: nodes.command.nodes
+    usage: /nodes help or /nd help
+  ally:
+    description: Make alliance with another town/nation
+    aliases: []
+    permission: nodes.command.ally
+    usage: /ally help
+  unally:
+    description: Break alliance with another town/nation
+    aliases: []
+    permission: nodes.command.unally
+    usage: /unally help
+  war:
+    description: Declare war on another town/nation
+    aliases: []
+    permission: nodes.command.war
+    usage: /war help
+  peace:
+    description: Request peace with another town/nation
+    aliases: []
+    permission: nodes.command.peace
+    usage: /peace help
+  truce:
+    description: View truce list and times remaining
+    aliases: []
+    permission: nodes.command.truce
+    usage: /peace help
+  globalchat:
+    description: Set player chat to global
+    aliases: [gc]
+    permission: nodes.command.chat.global
+    usage: /globalchat or /gc
+  townchat:
+    description: Set player chat to town
+    aliases: [tc]
+    permission: nodes.command.chat.town
+    usage: /townchat or /tc
+  nationchat:
+    description: Set player chat to nation
+    aliases: [nc]
+    permission: nodes.command.chat.nation
+    usage: /nationchat or /nc
+  allychat:
+    description: Set player chat to allies
+    aliases: [ac]
+    permission: nodes.command.chat.ally
+    usage: /allychat or /ac
+  player:
+    description: View player info
+    aliases: [p]
+    permission: nodes.command.player
+    usage: /player [name] or /p [name]
+  territory:
+    description: View territory info
+    aliases: []
+    permission: nodes.command.territory
+    usage: /territory or /territory [id]

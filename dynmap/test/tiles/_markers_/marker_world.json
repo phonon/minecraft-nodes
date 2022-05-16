@@ -1,0 +1,39 @@
+{
+    "sets": {
+        "markers": {
+            "hide": false,
+            "circles": {},
+            "areas": {
+                "_worldborder_world": {
+                    "fillcolor": "#000000",
+                    "ytop": 64,
+                    "color": "#FF0000",
+                    "markup": false,
+                    "x": [
+                        -475,
+                        475,
+                        475,
+                        -475
+                    ],
+                    "weight": 3,
+                    "z": [
+                        -475,
+                        -475,
+                        475,
+                        475
+                    ],
+                    "ybottom": 64,
+                    "label": "Border",
+                    "opacity": 0.8,
+                    "fillopacity": 0
+                }
+            },
+            "label": "Markers",
+            "markers": {
+            },
+            "lines": {},
+            "layerprio": 0
+        }
+    },
+    "timestamp": 1605077375593
+}

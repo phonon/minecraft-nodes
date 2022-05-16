@@ -1,0 +1,23 @@
+{
+    "andesite": "images/nodes/resources_custom/andesite.png",
+    "diorite": "images/nodes/resources_custom/diorite.png",
+    "granite": "images/nodes/resources_custom/granite.png",
+    "gravel": "images/nodes/resources_custom/gravel.png",
+    "corn": "images/nodes/resources_custom/corn.png",
+    "fish": "images/nodes/resources_custom/fish.png",
+    "old_potato": "images/nodes/resources_custom/old_potato.png",
+    "pumpkin": "images/nodes/resources_custom/pumpkin.png",
+    "old_quartz": "images/nodes/resources_custom/old_quartz.png",
+    "sand": "images/nodes/resources_custom/sand.png",
+    "terracotta": "images/nodes/resources_custom/terracotta.png",
+    "cactus": "images/nodes/resources_custom/cactus.png",
+    "grass_block": "images/nodes/resources_custom/grass_block.png",
+    
+    "acacia_log": "images/nodes/resources_custom/acacia_log.png",
+    "oak_log": "images/nodes/resources_custom/oak_log.png",
+    "spruce_log": "images/nodes/resources_custom/spruce_log.png",
+    "dark_oak_log": "images/nodes/resources_custom/dark_oak_log.png",
+    "jungle_log": "images/nodes/resources_custom/jungle_log.png",
+    
+    "poppy": "images/nodes/resources_custom/poppy.png"
+}

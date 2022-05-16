@@ -1,0 +1,17 @@
+main: phonon.ports.PortPlugin
+name: ports
+version: 0.0
+api-version: 1.16
+depend: [nodes]
+softdepend: [kotlin]
+commands:
+  port:
+    description: Port warps
+    aliases: []
+    permission: ports
+    usage: /port help
+  portadmin:
+    description: Port admin management
+    aliases: []
+    permission: portsadmin
+    usage: /portadmin help

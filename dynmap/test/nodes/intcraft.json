@@ -1,0 +1,1164 @@
+{
+    "meta": {
+        "type": "world"
+    },
+    "nodes": {
+        "diamond": {
+            "name": "diamond",
+            "icon": "diamond",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {
+                "diamond_ore": 0.005
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "diamond2": {
+            "name": "diamond2",
+            "icon": "diamond",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {
+                "diamond_ore": 0.005
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "diamond3": {
+            "name": "diamond3",
+            "icon": "diamond",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "diamond": 1
+            },
+            "ore": {
+                "diamond_ore": 0.005
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "emerald": {
+            "name": "emerald",
+            "icon": "emerald",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {
+                "emerald_ore": 0.05
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "emerald2": {
+            "name": "emerald2",
+            "icon": "emerald",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {
+                "emerald_ore": 0.05
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "emerald3": {
+            "name": "emerald3",
+            "icon": "emerald",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "emerald": 1
+            },
+            "ore": {
+                "emerald_ore": 0.05
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "iron": {
+            "name": "iron",
+            "icon": "iron_ingot",
+            "cost": {
+                "scale": 1.5,
+                "constant": 4
+            },
+            "income": {},
+            "ore": {
+                "iron_ore": 0.01
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "iron2": {
+            "name": "iron2",
+            "icon": "iron_ingot",
+            "cost": {
+                "scale": 1,
+                "constant": 15
+            },
+            "income": {},
+            "ore": {
+                "iron_ore": 0.02
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "iron3": {
+            "name": "iron3",
+            "icon": "iron_ingot",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "iron_ore": 1
+            },
+            "ore": {
+                "iron_ore": 0.03
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "gold": {
+            "name": "gold",
+            "icon": "gold_ingot",
+            "cost": {
+                "scale": 1.5,
+                "constant": 4
+            },
+            "income": {},
+            "ore": {
+                "gold_ore": 0.005
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "gold2": {
+            "name": "gold2",
+            "icon": "gold_ingot",
+            "cost": {
+                "scale": 1,
+                "constant": 15
+            },
+            "income": {},
+            "ore": {
+                "gold_ore": 0.005
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "gold3": {
+            "name": "gold3",
+            "icon": "gold_ingot",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "gold_ore": 1
+            },
+            "ore": {
+                "gold_ore": 0.005
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "coal": {
+            "name": "coal",
+            "icon": "coal",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {
+                "coal": 0.03
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "coal2": {
+            "name": "coal2",
+            "icon": "coal",
+            "cost": {
+                "scale": 1.5,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {
+                "coal": 0.04
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "coal3": {
+            "name": "coal3",
+            "icon": "coal",
+            "cost": {
+                "scale": 1,
+                "constant": 15
+            },
+            "income": {
+                "coal": 1
+            },
+            "ore": {
+                "coal": 0.04
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "glowstone": {
+            "name": "glowstone",
+            "icon": "glowstone_dust",
+            "cost": {
+                "scale": 1.2,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {
+                "glowstone_dust": 0.02
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "glowstone2": {
+            "name": "glowstone2",
+            "icon": "glowstone_dust",
+            "cost": {
+                "scale": 1,
+                "constant": 15
+            },
+            "income": {},
+            "ore": {
+                "glowstone_dust": 0.03
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "glowstone3": {
+            "name": "glowstone3",
+            "icon": "glowstone_dust",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "glowstone_dust": 1
+            },
+            "ore": {
+                "glowstone_dust": 0.03
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "redstone": {
+            "name": "redstone",
+            "icon": "redstone",
+            "cost": {
+                "scale": 1.2,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {
+                "redstone": 0.02
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "redstone2": {
+            "name": "redstone2",
+            "icon": "redstone",
+            "cost": {
+                "scale": 1,
+                "constant": 15
+            },
+            "income": {},
+            "ore": {
+                "redstone": 0.03
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "redstone3": {
+            "name": "redstone3",
+            "icon": "redstone",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "redstone": 1
+            },
+            "ore": {
+                "redstone": 0.03
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "lapis": {
+            "icon": "lapis_lazuli",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "lapis_ore": 1
+            },
+            "ore": {
+                "lapis_ore": 0.1
+            }
+        },
+        "lapis2": {
+            "icon": "lapis_lazuli",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "lapis_ore": 1
+            },
+            "ore": {
+                "lapis_ore": 0.1
+            }
+        },
+        "lapis3": {
+            "icon": "lapis_lazuli",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "lapis_ore": 1
+            },
+            "ore": {
+                "lapis_ore": 0.2
+            }
+        },
+        "quartz": {
+            "name": "quartz",
+            "icon": "old_quartz",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "quartz": 1
+            },
+            "ore": {
+                "quartz": 0.1
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "quartz2": {
+            "name": "quartz2",
+            "icon": "old_quartz",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "quartz": 1
+            },
+            "ore": {
+                "quartz": 0.1
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "quartz3": {
+            "name": "quartz3",
+            "icon": "old_quartz",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "quartz": 1
+            },
+            "ore": {
+                "quartz": 0.2
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "horses": {
+            "name": "horses",
+            "icon": "mob_horse",
+            "cost": {
+                "scale": 1.5,
+                "constant": 10
+            },
+            "income": {
+                "spawn_egg_horse": 0.25
+            },
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "horse": 0.2
+            }
+        },
+        "horses2": {
+            "name": "horses2",
+            "icon": "mob_horse",
+            "cost": {
+                "scale": 1,
+                "constant": 15
+            },
+            "income": {},
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "horse": 0.2
+            }
+        },
+        "horses3": {
+            "name": "horses3",
+            "icon": "mob_horse",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "horse": 0.2
+            }
+        },
+        "cows": {
+            "name": "cows",
+            "icon": "mob_cow",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "spawn_egg_cow": 0.25
+            },
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "cow": 0.2
+            }
+        },
+        "cows2": {
+            "name": "cows2",
+            "icon": "mob_cow",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "cow": 0.2
+            }
+        },
+        "cows3": {
+            "name": "cows3",
+            "icon": "mob_cow",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "cow": 0.2
+            }
+        },
+        "sheep": {
+            "name": "sheep",
+            "icon": "mob_sheep",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "spawn_egg_sheep": 0.25
+            },
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "sheep": 0.1
+            }
+        },
+        "sheep2": {
+            "name": "sheep2",
+            "icon": "mob_sheep",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "sheep": 0.2
+            }
+        },
+        "sheep3": {
+            "name": "sheep3",
+            "icon": "mob_sheep",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "sheep": 0.2
+            }
+        },
+        "pigs": {
+            "name": "pigs",
+            "icon": "mob_pig",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "spawn_egg_pig": 0.5
+            },
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "pig": 0.4
+            }
+        },
+        "pigs2": {
+            "name": "pigs2",
+            "icon": "mob_pig",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "pig": 0.2
+            }
+        },
+        "pigs3": {
+            "name": "pigs3",
+            "icon": "mob_pig",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "pig": 0.2
+            }
+        },
+        "chickens": {
+            "name": "chickens",
+            "icon": "mob_chicken",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "spawn_egg_chicken": 0.5
+            },
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "chicken": 0.4
+            }
+        },
+        "chickens2": {
+            "name": "chickens2",
+            "icon": "mob_chicken",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "chicken": 0.2
+            }
+        },
+        "chickens3": {
+            "name": "chickens3",
+            "icon": "mob_chicken",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "chicken": 0.2
+            }
+        },
+        "rabbits": {
+            "name": "rabbits",
+            "icon": "mob_rabbit",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "spawn_egg_rabbit": 1
+            },
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "rabbit": 0.4
+            }
+        },
+        "rabbits2": {
+            "name": "rabbits2",
+            "icon": "mob_rabbit",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "rabbit": 0.2
+            }
+        },
+        "rabbits3": {
+            "name": "rabbits3",
+            "icon": "mob_rabbit",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {},
+            "animals": {
+                "rabbit": 0.2
+            }
+        },
+        "fish": {
+            "name": "fish",
+            "icon": "cod",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "raw_fish": 1
+            },
+            "ore": {},
+            "crops": {},
+            "animals": {}
+        },
+        "dogs": {
+            "name": "dogs",
+            "icon": "mob_wolf",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "spawn_egg_wolf": 0.5
+            },
+            "ore": {},
+            "crops": {},
+            "animals": {}
+        },
+        "cats": {
+            "name": "cats",
+            "icon": "mob_ocelot",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "spawn_egg_ocelot": 0.5
+            },
+            "ore": {},
+            "crops": {},
+            "animals": {}
+        },
+        "polar_bears": {
+            "name": "polar_bears",
+            "icon": "mob_polar_bear",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "spawn_egg_polar_bear": 0.5
+            },
+            "ore": {},
+            "crops": {},
+            "animals": {}
+        },
+        "llamas": {
+            "name": "llamas",
+            "icon": "mob_llama",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "spawn_egg_llama": 0.5
+            },
+            "ore": {},
+            "crops": {},
+            "animals": {}
+        },
+        "parrots": {
+            "name": "parrots",
+            "icon": "mob_parrot",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "spawn_egg_parrot": 0.5
+            },
+            "ore": {},
+            "crops": {},
+            "animals": {}
+        },
+        "wheat": {
+            "name": "wheat",
+            "icon": "wheat",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "seeds": 1
+            },
+            "ore": {},
+            "crops": {
+                "wheat": 0.1
+            },
+            "animals": {}
+        },
+        "wheat2": {
+            "name": "wheat2",
+            "icon": "wheat",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {
+                "wheat": 0.2
+            },
+            "animals": {}
+        },
+        "wheat3": {
+            "name": "wheat3",
+            "icon": "wheat",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "wheat": 1
+            },
+            "ore": {},
+            "crops": {
+                "wheat": 0.2
+            },
+            "animals": {}
+        },
+        "potato": {
+            "name": "potato",
+            "icon": "old_potato",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {
+                "potato": 0.1
+            },
+            "animals": {}
+        },
+        "potato2": {
+            "name": "potato2",
+            "icon": "old_potato",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "potato": 1
+            },
+            "ore": {},
+            "crops": {
+                "potato": 0.2
+            },
+            "animals": {}
+        },
+        "potato3": {
+            "name": "potato3",
+            "icon": "old_potato",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {
+                "potato": 0.2
+            },
+            "animals": {}
+        },
+        "corn": {
+            "name": "corn",
+            "icon": "corn",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "carrot": 1
+            },
+            "ore": {},
+            "crops": {
+                "carrot": 0.1
+            },
+            "animals": {}
+        },
+        "corn2": {
+            "name": "corn2",
+            "icon": "corn",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {
+                "carrot": 0.2
+            },
+            "animals": {}
+        },
+        "corn3": {
+            "name": "corn3",
+            "icon": "corn",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "carrot": 1
+            },
+            "ore": {},
+            "crops": {
+                "potato": 0.2
+            },
+            "animals": {}
+        },
+        "rice": {
+            "name": "rice",
+            "icon": "phantom_membrane",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {
+                "beetroot": 0.1
+            },
+            "animals": {}
+        },
+        "rice2": {
+            "name": "rice2",
+            "icon": "phantom_membrane",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "beetroot": 1
+            },
+            "ore": {},
+            "crops": {
+                "beetroot": 0.2
+            },
+            "animals": {}
+        },
+        "rice3": {
+            "name": "rice3",
+            "icon": "phantom_membrane",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "beetroot": 1
+            },
+            "ore": {},
+            "crops": {
+                "beetroot": 0.2
+            },
+            "animals": {}
+        },
+        "sugarcane": {
+            "name": "sugarcane",
+            "icon": "sugar_cane",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {
+                "sugar_cane": 0.25
+            },
+            "animals": {}
+        },
+        "sugarcane2": {
+            "name": "sugarcane2",
+            "icon": "sugar_cane",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {
+                "sugar_cane": 0.25
+            },
+            "animals": {}
+        },
+        "sugarcane3": {
+            "name": "sugarcane3",
+            "icon": "sugar_cane",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "sugar_cane": 1
+            },
+            "ore": {},
+            "crops": {
+                "sugar_cane": 0.5
+            },
+            "animals": {}
+        },
+        "coffee": {
+            "name": "coffee",
+            "icon": "cocoa_beans",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {
+                "cocoa": 0.1
+            },
+            "animals": {}
+        },
+        "coffee2": {
+            "name": "coffee2",
+            "icon": "cocoa_beans",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {},
+            "ore": {},
+            "crops": {
+                "cocoa": 0.1
+            },
+            "animals": {}
+        },
+        "coffee3": {
+            "name": "coffee3",
+            "icon": "cocoa_beans",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "cocoa": 1
+            },
+            "ore": {},
+            "crops": {
+                "cocoa": 0.1
+            },
+            "animals": {}
+        },
+        "pumpkins": {
+            "name": "pumpkins",
+            "icon": "pumpkin",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "pumpkin_seeds": 1
+            },
+            "ore": {},
+            "crops": {
+                "pumpkin": 0.7
+            },
+            "animals": {}
+        },
+        "melons": {
+            "name": "melons",
+            "icon": "melon_slice",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "melon": 1
+            },
+            "ore": {},
+            "crops": {
+                "melon_slice": 0.7
+            },
+            "animals": {}
+        },
+        "diorite": {
+            "name": "diorite",
+            "icon": "diorite",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "stone:": 2
+            },
+            "ore": {
+                "stone": 0.5
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "andesite": {
+            "name": "andesite",
+            "icon": "andesite",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "stone:": 2
+            },
+            "ore": {
+                "stone": 0.5
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "granite": {
+            "name": "granite",
+            "icon": "granite",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "stone:": 2
+            },
+            "ore": {
+                "stone": 0.5
+            },
+            "crops": {},
+            "animals": {}
+        },
+        "sand": {
+            "name": "sand",
+            "icon": "sand",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "sand": 2
+            },
+            "ore": {},
+            "crops": {},
+            "animals": {}
+        },
+        "oak_wood": {
+            "icon": "oak_log",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "log:": 12
+            }
+        },
+        "spruce_wood": {
+            "icon": "spruce_log",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "log:": 12
+            }
+        },
+        "dark_oak_wood": {
+            "icon": "dark_oak_log",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "log:": 12
+            }
+        },
+        "acacia_wood": {
+            "icon": "acacia_log",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "log:": 12
+            }
+        },
+        "jungle_wood": {
+            "icon": "jungle_log",
+            "cost": {
+                "scale": 1,
+                "constant": 0
+            },
+            "income": {
+                "log:": 12
+            }
+        }
+    }
+}

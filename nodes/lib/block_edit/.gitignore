@@ -1,0 +1,14 @@
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+
+# ignore intellij
+.idea
+
+# ignore vscode
+.vscode
+
+# ignore jar
+lib/*.jar

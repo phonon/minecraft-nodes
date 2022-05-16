@@ -1,0 +1,51 @@
+# ===========================================
+# ports engine config
+# ===========================================
+# dynmap path
+pathDynmap: "plugins/dynmap/web/nodes"
+
+# sea level
+seaLevel: 40.0
+
+# how close to port player needs to be
+maxDistanceFromPortToWarp: 8.0
+
+# time to warp to a port in seconds
+baseWarpTime: 5.0
+
+# multiplier when not in a ship
+notInShipMultiplier: 2.0
+
+# allow port warp without a boat
+allowWarpWithoutBoat: false
+
+# do not allow building in Ports distance around port
+noBuildDistance: 6
+
+# default flags for letting groups warp to port
+defaultAllowAlly: true
+defaultAllowNeutral: false
+defaultAllowEnemy: false
+
+# default material and fee cost
+defaultCostMaterial: GOLD_INGOT
+defaultCostAlly: 0
+defaultCostNeutral: 1
+defaultCostEnemy: 3
+
+# max fee players can set for warp
+maxCost: 64
+
+# port beacon warp pillar indicator
+beaconPillarMaterial: BEDROCK
+beaconPillarHeight: 20
+beaconPillarStartY: 30
+beaconLightMaterial: BEACON
+beaconLightHeight: 1
+
+# ticks period to check if save required
+checkSavePeriod: 1200
+
+# save path
+dirSave: "plugins/ports"
+pathSave: "save.json"

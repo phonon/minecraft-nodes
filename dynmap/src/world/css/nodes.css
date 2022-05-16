@@ -1,0 +1,11 @@
+.leaflet-nodes-pane {
+    z-index: 500;
+}
+
+#nodes-world {
+    z-index: 500;
+}
+
+.leaflet-nodes-pane > svg path {
+    pointer-events: all;
+}

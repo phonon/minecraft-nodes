@@ -1,0 +1,172 @@
+#nodes-editor-pane-world {
+	display: flex;
+	height: 100%;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+#nodes-editor-options-header {
+	height: 24px;
+	min-height: 24px;
+	flex-grow: 0;
+	font-weight: bold;
+	line-height: 24px;
+}
+
+#nodes-editor-options {
+	display: flex;
+	margin-bottom: 4px;
+}
+
+.nodes-editor-option-btn {
+	box-sizing: border-box;
+	width: 36px;
+	height: 36px;
+	margin: 2px;
+}
+
+.nodes-editor-option-btn .nodes-button-icon {
+	opacity: 0.5;
+}
+
+.nodes-editor-option-btn .nodes-button-icon-pressed {
+	opacity: 1.0;
+}
+
+#nodes-editor-town-header {
+	height: 24px;
+	min-height: 24px;
+	flex-grow: 0;
+	font-weight: bold;
+	line-height: 24px;
+	display: flex;
+}
+
+#nodes-editor-town-list {
+	flex-grow: 1;
+	min-height: 100px;
+    background-color: #111;
+}
+
+.nodes-editor-town-list-item {
+	display: flex;
+	box-sizing: border-box;
+	width: 100%;
+	height: 20px;
+	font-size: 14px;
+	user-select: none;
+	cursor: pointer;
+	overflow: hidden;
+}
+
+.nodes-editor-town-list-color {
+	box-sizing: border-box;
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	margin: 2px;
+}
+
+.nodes-editor-town-list-name {
+	margin-left: 4px;
+}
+
+#nodes-editor-town-players-list {
+	flex-grow: 1;
+	min-height: 100px;
+	background-color: #111;
+}
+
+.nodes-editor-town-player-item {
+	display: flex;
+	width: 100%;
+	height: 20px;
+	font-size: 14px;
+	margin: 0px 4px;
+	user-select: none;
+	overflow: hidden;
+}
+
+.nodes-editor-town-player-item-rank {
+	width: 14px;
+	height: 14px;
+	padding: 2px;
+	margin-right: 4px;
+}
+
+#nodes-editor-nodes-list-container {
+	position: relative;
+}
+
+#nodes-editor-world-nodes-list {
+    height: 120px;
+    background-color: #111;
+}
+
+#nodes-editor-resource-tooltip {
+	z-index: 99999;
+	position: fixed;
+	left: 180px;
+	bottom: 0px;
+	box-sizing: border-box;
+	padding: 8px;
+	min-height: 200px;
+	width: 200px;
+	background-color: #222;
+	border: solid 1px #111;
+	user-select: none;
+}
+
+#nodes-editor-resource-tooltip-header {
+	display: flex;
+	width: 100%;
+	height: 32px;
+	user-select: none;
+	margin-bottom: 2px;
+}
+
+#nodes-editor-resource-tooltip-header-name {
+	flex-grow: 1;
+	height: 32px;
+	line-height: 32px;
+	padding-left: 4px;
+	font-size: 18px;
+	font-weight: bold;
+}
+
+#nodes-editor-resource-tooltip-header-icon {
+	box-sizing: border-box;
+	width: 32px;
+	min-width: 32px;
+	height: 32px;
+	flex-grow: 0;
+}
+
+#nodes-editor-resource-tooltip-header-img {
+	width: 24px;
+	height: 24px;
+	padding: 4px;
+}
+
+.nodes-editor-resource-tooltip-property {
+	margin-top: 4px;
+	margin-bottom: 2px;
+	font-weight: bold;
+}
+
+.nodes-editor-resource-tooltip-property-item {
+	padding-left: 8px;
+	margin-bottom: 2px;
+}
+
+.nodes-editor-resource-tooltip-property-none {
+	display: inline-block;
+	margin-left: 4px;
+	color: #777;
+}
+
+#nodes-editor-world-terr-info {
+	display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 8px;
+}

@@ -1,0 +1,162 @@
+#nodes-editor-pane-terr {
+	display: flex;
+	height: 100%;
+    flex-direction: column;
+    position: relative;
+}
+
+#nodes-editor-terr-header {
+	height: 24px;
+	min-height: 24px;
+	flex-grow: 0;
+	font-weight: bold;
+	line-height: 24px;
+	display: flex;
+}
+
+#nodes-editor-terr-chunk {
+    position: absolute;
+    right: 0;
+    top: 0;
+    padding: 8px 8px 0 0;
+}
+
+#nodes-editor-terr-chunk-label {
+    text-align: right;
+}
+
+#nodes-editor-terr-toolbar,
+#nodes-editor-terr-toolbar-g1,
+#nodes-editor-terr-toolbar-g2
+{
+    display: flex;
+}
+
+#nodes-editor-terr-toolbar {
+    margin-bottom: 4px;
+}
+
+#nodes-editor-terr-toolbar-g1 {
+    margin-right: 16px;
+}
+
+.nodes-editor-terr-tool-btn {
+	box-sizing: border-box;
+	width: 24px;
+	height: 24px;
+	margin: 2px;
+}
+
+#nodes-editor-terr-info {
+    margin-top: 4px;
+}
+
+#nodes-editor-terr-list {
+    height: 160px;
+    background-color: #111;
+}
+
+#nodes-editor-terr-add-node {
+    display: flex;
+    height: 30px;
+}
+
+.nodes-editor-terr-tool-btn {
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    min-height: 24px;
+    flex-grow: 0;
+    
+}
+
+.nodes-editor-terr-add-node-input {
+    box-sizing: border-box;
+    flex-grow: 1;
+    height: 30px;
+    padding: 4px;
+}
+
+.nodes-editor-terr-add-node-input input {
+    text-align: left;
+    background-color: #111;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace;
+    padding-left: 4px;
+}
+
+#nodes-editor-terr-selected-header {
+    margin-top: 16px;
+    font-weight: bold;
+}
+
+#nodes-editor-terr-selected-name {
+    display: flex;
+}
+
+#nodes-editor-terr-selected-name-edit {
+    flex-grow: 1;
+    margin-left: 8px;
+    background-color: #111;
+}
+
+#nodes-editor-terr-selected-name-edit input{
+	box-sizing: border-box;
+	width: 100%;
+	text-align: left;
+	padding: 0 4px;
+	background-color: rgba(0,0,0,0);
+	font-family: 'Courier New', Courier, monospace;
+	color: #fff;
+}
+
+.nodes-editor-terr-nodes-list-item {
+	display: flex;
+	width: 100%;
+	height: 20px;
+	user-select: none;
+}
+
+.nodes-editor-terr-nodes-list-name {
+    flex-grow: 1;
+    font-size: 14px;
+    margin-left: 4px;
+}
+
+.nodes-editor-terr-nodes-list-item-icon {
+	box-sizing: border-box;
+	width: 20px;
+	min-width: 20px;
+	height: 20px;
+	flex-grow: 0;
+}
+
+.nodes-editor-terr-nodes-list-item-img {
+	width: 16px;
+	height: 16px;
+	padding: 2px;
+}
+
+.nodes-editor-terr-nodes-list-item-delete {
+	box-sizing: border-box;
+	width: 20px;
+	min-width: 20px;
+	height: 20px;
+	padding: 0;
+	flex-grow: 0;
+}
+
+.nodes-editor-terr-nodes-list-item-x {
+	width: 12px;
+	height: 12px;
+	padding: 4px;
+	opacity: 0.3;
+	cursor: pointer;
+}
+
+#nodes-editor-terr-guide {
+    margin-top: 8px;
+    color: #888;
+    font-size: 12px;
+    user-select: none;
+}
