@@ -12,6 +12,7 @@
 -   Cannot `/nodes reload` world. Inconvenient. TODO.
 -   Get rid of java.io.File, swap to nio
 
+
 # Nodes
 -   Add node tiers with configurable resource boost.
 -   Fix moving stuff back into town nodes income inventory
@@ -20,6 +21,19 @@
     to build supply networks to gather resources from their territories.
     Adds rp/territory management, potentially cancer to manage tho.
     So configurable setting.
+-   Overhaul node resources to be an "Attributes"-style system.
+    Resources are just "attribute" modifiers on a territory. This can be
+    both resources (ore, farm rate, etc.), multipliers (e.g. Tiers, 1.2x resource),
+    and markers (modifier with no effect). These must be sorted by a priority
+    parameter so map designers have control over multiplier modifiers.
+    This makes resources system more flexible to allow other modifiers
+    like "Tiers" (resource multipliers) or "Refinery" marker resources,
+    without hard-coding behavior into the Territory itself.
+-   Don't store direct object references. Use IDs/handles. This allows
+    pointer stability and reduces chance of memory leaks.
+    This brings cost of additional reference indirection, but likely does
+    not matter since these lookups should not be really frequent
+    in hot paths...will need to benchmark.
 
 # Minimap
 -   Port indicator on chunk. Would require a minimap api though since ports
