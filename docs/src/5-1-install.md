@@ -1,8 +1,6 @@
 # Installation
-Nodes is licensed with no warranty or support, use at your own risk, if things fuck up sorry :3
-
 This covers installing nodes onto Minecraft server.
-There is some manual file patching required, so this is more
+There is some manual file copying required, so this is more
 involved than just dragging in plugins.
 
 ## Requirements
@@ -12,19 +10,16 @@ involved than just dragging in plugins.
 - Java 16
 
 ## Plugin Requirements
-- **Dynmap-3.1-beta7-spigot**: To display nodes map. Must match version listed.
-- **WorldBorder**: Used to create a marker on dynmap for nodes to render (in future this requirement will be removed).
+- **Dynmap-3.3.2**: To display nodes map. Must be >=3.3.
 - **kotlin-runtime**: Runtime for kotlin used for nodes.
 - **nodes**: Nodes.
-
-## Installation Steps
-You should receive a `.zip` containing the following:
+- **nodes-ports**: Nodes ports addon.
+- **Essentials**: Nodes has hooks to essentials.
+- **ProtocolLib**: Requirement for nodes.
 
 ![Nodes zip folder](images/install_nodes_zip.png)
 
-**By installing nodes on your server you agree to the
-`end_user_license_agreement.txt` (states no warranty or liability
-for using plugin)**
+## Installation Steps
 
 1. Run paper server so `plugins/` folder is created.
 
@@ -35,32 +30,14 @@ config folders are generated.
    server console, `dynmap fullrender [world]`, where `[world]` is your
    world name in `server.properties`.
 
-4. WorldBorder config:  
-     4.1. Go to dynmap page for server, default is typically
-         <http://localhost:8123/>.  
-     4.2. Check if there is already a red world border around map.
-          If you already have a world border, you do not need to
-          do following step, and can instead remove `WorldBorder.jar`
-          if you want to just use vanilla world border.  
-     4.3. If you do not have a world border, set any type of world
-          border on map. Simplest is a rectangle using  
-          ```
-          wb [world] setcorners x0 z0 x1 z1
-          ```  
-          e.g. `[world]` should be `level-name=____` in `server.properties`.
-          For a default world named "world", set some border like
-          `wb world setcorners 0 0 1000 1000`
-
-![Dynmap with world border](images/install_dynmap_with_border.png)
-
-5. Dynmap file patching:  
+4. Dynmap file patching:  
      4.1. Make sure you have a dynmap rendered with a world border
           like picture above.  
      4.2. Drag the `dynmap/` folder in the .zip into `plugins/`
           so that it overwrites the built-in dynmap files
           contained in `plugins/dynmap/`.  
 
-6. Nodes dynmap verification:  
+5. Nodes dynmap verification:  
      5.1. Keep paper server running so dynmap is running. Open a
           web browser and go to your local nodes editor at
           <http://localhost:8123/editor.html>.  
@@ -73,11 +50,11 @@ config folders are generated.
 
 ![Dynmap with world border](images/install_dynmap_with_nodes.png)
 
-7. Nodes server verification: just type `nodes` in the server
+6. Nodes server verification: just type `nodes` in the server
 console to print nodes world info. The number of territories and
 resources should match the map.
 
-8. Configure `plugins/nodes/config.yml`
+7. Configure `plugins/nodes/config.yml`
 
 ## Default New Nodes .html Pages
 The dynmap patches create the following html pages:

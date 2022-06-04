@@ -13,3 +13,6 @@
    - [Resource Nodes](./5-3-resources.md)
    - [Editor](./5-4-editor.md)
    - [Nametags](./5-5-nametags.md)
+- [Design Documentation](./6-design.md)
+   - [Territory and Resources](./6-1-territory-resources.md)
+   - [Misc](./6-2-misc-design-decisions.md)
