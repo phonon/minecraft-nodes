@@ -132,7 +132,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
 
         // parse subcommand
-        when ( args[0].toLowerCase() ) {
+        when ( args[0].lowercase() ) {
             "help" -> printHelp(sender)
             "reload" -> reload(sender, args)
             "war" -> war(sender, args)
@@ -165,7 +165,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         // match each subcommand format
         else if ( args.size > 1 ) {
             // handle specific subcommands
-            when ( args[0].toLowerCase() ) {
+            when ( args[0].lowercase() ) {
                 "reload" -> {
                     if ( args.size == 2 ) {
                         return filterByStart(RELOAD_SUBCOMMANDS, args[1])
@@ -185,7 +185,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                         return filterByStart(RESIDENT_SUBCOMMANDS, args[1])
                     }
                     else if ( args.size > 2 ) {
-                        when ( args[1].toLowerCase() ) {
+                        when ( args[1].lowercase() ) {
                             // /nodesadmin resident [subcommand] [player]
                             "towncooldown" -> {
                                 if ( args.size == 3 ) {
@@ -203,7 +203,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                     }
                     // handle subcommand
                     else if ( args.size > 2 ) {
-                        when ( args[1].toLowerCase() ) {
+                        when ( args[1].lowercase() ) {
 
                             // /nodesadmin town [subcommand] [town] ...
                             "delete",
@@ -294,7 +294,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                     }
                     // handle subcommand
                     else if ( args.size > 2 ) {
-                        when ( args[1].toLowerCase() ) {
+                        when ( args[1].lowercase() ) {
                             
                             // /nodesadmin nation [subcommand] [nation] ...
                             "delete" -> {
@@ -361,7 +361,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                     }
                     // handle subcommand
                     else if ( args.size > 2 ) {
-                        when ( args[1].toLowerCase() ) {
+                        when ( args[1].lowercase() ) {
                             "resident" -> {
                                 if ( args.size == 3 ) {
                                     return filterResident(args[2])
@@ -418,7 +418,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        val subcommand = args[1].toLowerCase()
+        val subcommand = args[1].lowercase()
         if ( subcommand == "config" ) {
             Nodes.reloadConfig()
             Message.print(sender, "[Nodes] reloaded configs")
@@ -447,7 +447,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         // war subcommands
         else {
-            val function = args[1].toLowerCase()
+            val function = args[1].lowercase()
             // full war: allow annex, can attack any territory
             when ( function ) {
                 "enable" -> {
@@ -530,7 +530,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         else {
             // route subcommand function
-            when ( args[1].toLowerCase() ) {
+            when ( args[1].lowercase() ) {
                 "help" -> printResidentHelp(sender)
                 "towncooldown" -> setResidentTownCooldown(sender, args)
                 else -> { printResidentHelp(sender) }
@@ -576,7 +576,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         else {
             // route subcommand function
-            when ( args[1].toLowerCase() ) {
+            when ( args[1].lowercase() ) {
                 "create" -> createTown(sender, args)
                 "delete" -> deleteTown(sender, args)
                 "addplayer" -> addPlayerToTown(sender, args)
@@ -1430,7 +1430,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         else {
             // route subcommand function
-            when ( args[1].toLowerCase() ) {
+            when ( args[1].lowercase() ) {
                 "create" -> createNation(sender, args)
                 "delete" -> deleteNation(sender, args)
                 "addtown" -> addTownToNation(sender, args)
@@ -2066,7 +2066,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
 
         // get object instance
-        val instance: Any? = when ( args[1].toLowerCase() ) {
+        val instance: Any? = when ( args[1].lowercase() ) {
             "resource" -> Nodes.resourceNodes.get(args[2])
             "chunk" -> Nodes.territoryChunks.get(Coord.fromString(args[2]))
             "territory" -> Nodes.territories.get(TerritoryId(args[2].toInt()))

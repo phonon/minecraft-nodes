@@ -65,7 +65,7 @@ public object Deserializer {
                 val nodeIncomeJson = node.get("income")?.getAsJsonObject()
                 if ( nodeIncomeJson !== null ) {
                     nodeIncomeJson.keySet().forEach { type ->
-                        val itemName = type.toUpperCase()
+                        val itemName = type.uppercase()
 
                         // spawn egg
                         if ( itemName.startsWith("SPAWN_EGG_")) {
@@ -137,7 +137,7 @@ public object Deserializer {
                 if ( nodeAnimalsJson !== null ) {
                     nodeAnimalsJson.keySet().forEach { type ->
                         try {
-                            val entityType = EntityType.valueOf(type.toUpperCase())
+                            val entityType = EntityType.valueOf(type.uppercase())
                             animals.put(entityType, nodeAnimalsJson.get(type).getAsDouble())
                         }
                         catch ( err: Exception ) {

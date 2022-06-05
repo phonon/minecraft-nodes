@@ -62,7 +62,7 @@ public class NationCommand : CommandExecutor, TabCompleter {
         }
 
         // parse subcommand
-        when ( args[0].toLowerCase() ) {
+        when ( args[0].lowercase() ) {
             "help" -> printHelp(sender)
             "create" -> createNation(player, args)
             "new" -> createNation(player, args)
@@ -100,7 +100,7 @@ public class NationCommand : CommandExecutor, TabCompleter {
         // match each subcommand format
         else if ( args.size > 1 ) {
             // handle specific subcommands
-            when ( args[0].toLowerCase() ) {
+            when ( args[0].lowercase() ) {
 
                 // /nation invite town
                 "invite" -> {
@@ -576,7 +576,7 @@ public class NationCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        if ( nation.name.toLowerCase() == args[1].toLowerCase() ) {
+        if ( nation.name.lowercase() == args[1].lowercase() ) {
             Message.error(player, "Your nation is already named ${nation.name}")
             return
         }

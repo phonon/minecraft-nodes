@@ -52,7 +52,7 @@ public class NodesCommand : CommandExecutor, TabCompleter {
         }
 
         // parse subcommand
-        when ( args[0].toLowerCase() ) {
+        when ( args[0].lowercase() ) {
             "help" -> printHelp(sender)
             "resource" -> printResourceNodeInfo(sender, args)
             "territory" -> printTerritoryInfo(sender, args)
@@ -83,7 +83,7 @@ public class NodesCommand : CommandExecutor, TabCompleter {
         // match each subcommand format
         else if ( args.size > 1 ) {
             // handle specific subcommands
-            when ( args[0].toLowerCase() ) {
+            when ( args[0].lowercase() ) {
 
                 // /nodes town name
                 "town",

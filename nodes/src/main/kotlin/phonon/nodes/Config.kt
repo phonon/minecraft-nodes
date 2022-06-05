@@ -499,7 +499,7 @@ private fun parseGlobalResources(globalResourcesSection: ConfigurationSection): 
 
     globalResourcesSection.getConfigurationSection("income")?.let { section ->
         for ( item in section.getKeys(false) ) {
-            val itemName = item.toUpperCase()
+            val itemName = item.uppercase()
             // spawn egg
             if ( itemName.startsWith("SPAWN_EGG_")) {
                 val entityType = EntityType.valueOf(itemName.replace("SPAWN_EGG_", ""))
@@ -552,7 +552,7 @@ private fun parseGlobalResources(globalResourcesSection: ConfigurationSection): 
     globalResourcesSection.getConfigurationSection("animals")?.let { section -> 
         for ( item in section.getKeys(false) ) {
             try {
-                val entityType = EntityType.valueOf(item.toUpperCase())
+                val entityType = EntityType.valueOf(item.uppercase())
                 animals.put(entityType, section.getDouble(item))
             }
             catch ( err: Exception ) {

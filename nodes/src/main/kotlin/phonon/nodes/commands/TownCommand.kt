@@ -156,7 +156,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // parse subcommand
-        when ( args[0].toLowerCase() ) {
+        when ( args[0].lowercase() ) {
             "help" -> printHelp(sender)
             "create" -> createTown(player, args)
             "new" -> createTown(player, args)
@@ -216,7 +216,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         // match each subcommand format
         else if ( args.size > 1 ) {
             // handle specific subcommands
-            when ( args[0].toLowerCase() ) {
+            when ( args[0].lowercase() ) {
 
                 // /town [subcommand] [resident]
                 "officer",
@@ -810,7 +810,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
                 town.applications.forEach { k, v ->
                     applicant = k
                 }
-                if ( args.size > 1 && args[1].toLowerCase() != applicant.name.toLowerCase()) {
+                if ( args.size > 1 && args[1].lowercase() != applicant.name.lowercase()) {
                     Message.error(player, "That player has not applied or their application has expired")
                     return
                 }
@@ -1443,7 +1443,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         // setting personal prefix
         else if ( args.size == 2 ) {
             val prefix = args[1]
-            if ( prefix.toLowerCase() == "remove" ) {
+            if ( prefix.lowercase() == "remove" ) {
                 Nodes.setResidentPrefix(resident, "")
                 Message.print(player, "Removed your prefix.")
             }
@@ -1481,7 +1481,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             }
 
             val prefix = args[2]
-            if ( prefix.toLowerCase() == "remove" ) {
+            if ( prefix.lowercase() == "remove" ) {
                 Nodes.setResidentPrefix(target, "")
                 Message.print(player, "Removed ${target.name} prefix.")
             }
@@ -1520,7 +1520,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         // setting personal prefix
         else if ( args.size == 2 ) {
             val prefix = args[1]
-            if ( prefix.toLowerCase() == "remove" ) {
+            if ( prefix.lowercase() == "remove" ) {
                 Nodes.setResidentSuffix(resident, "")
                 Message.print(player, "Removed your suffix.")
             }
@@ -1558,7 +1558,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             }
 
             val prefix = args[2]
-            if ( prefix.toLowerCase() == "remove" ) {
+            if ( prefix.lowercase() == "remove" ) {
                 Nodes.setResidentSuffix(target, "")
                 Message.print(player, "Removed ${target.name} suffix.")
             }
@@ -1605,7 +1605,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        if ( town.name.toLowerCase() == args[1].toLowerCase() ) {
+        if ( town.name.lowercase() == args[1].lowercase() ) {
             Message.error(player, "Your town is already named ${town.name}")
             return
         }
@@ -1732,7 +1732,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // match permissions and group
-        val permissions: TownPermissions = when ( args[1].toLowerCase() ) {
+        val permissions: TownPermissions = when ( args[1].lowercase() ) {
             "build" -> TownPermissions.BUILD
             "destroy" -> TownPermissions.DESTROY
             "interact" -> TownPermissions.INTERACT
@@ -1745,7 +1745,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             }
         }
 
-        val group: PermissionsGroup = when ( args[2].toLowerCase() ) {
+        val group: PermissionsGroup = when ( args[2].lowercase() ) {
             "town" -> PermissionsGroup.TOWN
             "nation" -> PermissionsGroup.NATION
             "ally" -> PermissionsGroup.ALLY
@@ -1758,7 +1758,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // get flag state (allow/deny)
-        val flag = when ( args[3].toLowerCase() ) {
+        val flag = when ( args[3].lowercase() ) {
             "allow",
             "true" -> { true }
             
@@ -1800,7 +1800,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
         
         if ( args.size > 1 ) {
-            if ( args[1].toLowerCase() == "show" ) {
+            if ( args[1].lowercase() == "show" ) {
                 Message.print(player, "Protected chests:")
                 // print protected chests
                 for ( block in town.protectedBlocks ) {
@@ -2068,7 +2068,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
         else {
             // route subcommand function
-            when ( args[1].toLowerCase() ) {
+            when ( args[1].lowercase() ) {
                 "list" -> outpostList(player, args)
                 "setspawn" -> outpostSetSpawn(player, args)
                 else -> { printOutpostHelp(sender) }

@@ -834,9 +834,9 @@ public object Nodes {
         }
         // search through residents and try to match name
         else {
-            val playerNameLowercase = name.toLowerCase()
+            val playerNameLowercase = name.lowercase()
             for ( r in Nodes.residents.values ) {
-                if ( r.name.toLowerCase() == playerNameLowercase ) {
+                if ( r.name.lowercase() == playerNameLowercase ) {
                     return r
                 }
             }

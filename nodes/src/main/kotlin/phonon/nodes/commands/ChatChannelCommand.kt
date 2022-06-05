@@ -69,7 +69,7 @@ public class GlobalChatCommand : CommandExecutor, TabCompleter {
         }
         else {
             // parse subcommand
-            when ( args[0].toLowerCase() ) {
+            when ( args[0].lowercase() ) {
                 "join" -> enableChannel(sender)
                 "unmute" -> enableChannel(sender)
                 "leave" -> disableChannel(sender)
@@ -124,7 +124,7 @@ public class TownChatCommand : CommandExecutor, TabCompleter {
         }
         else {
             // parse subcommand
-            when ( args[0].toLowerCase() ) {
+            when ( args[0].lowercase() ) {
                 "leave" -> leaveChannel(sender)
                 else -> { Message.error(player, "Invalid command") }
             }
@@ -166,7 +166,7 @@ public class NationChatCommand : CommandExecutor, TabCompleter {
         }
         else {
             // parse subcommand
-            when ( args[0].toLowerCase() ) {
+            when ( args[0].lowercase() ) {
                 "leave" -> leaveChannel(sender)
                 else -> { Message.error(player, "Invalid command") }
             }
@@ -208,7 +208,7 @@ public class AllyChatCommand : CommandExecutor, TabCompleter {
         }
         else {
             // parse subcommand
-            when ( args[0].toLowerCase() ) {
+            when ( args[0].lowercase() ) {
                 "leave" -> leaveChannel(sender)
                 else -> { Message.error(player, "Invalid command") }
             }
