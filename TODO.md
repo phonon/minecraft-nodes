@@ -29,11 +29,6 @@
     This makes resources system more flexible to allow other modifiers
     like "Tiers" (resource multipliers) or "Refinery" marker resources,
     without hard-coding behavior into the Territory itself.
--   Don't store direct object references. Use IDs/handles. This allows
-    pointer stability and reduces chance of memory leaks.
-    This brings cost of additional reference indirection, but likely does
-    not matter since these lookups should not be really frequent
-    in hot paths...will need to benchmark.
 
 # Minimap
 -   Port indicator on chunk. Would require a minimap api though since ports

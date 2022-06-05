@@ -635,19 +635,19 @@ private fun hasWildernessPermissions(territory: Territory?): Boolean {
  * player: player interacting in town
  */
 private fun hasTownPermissions(perms: TownPermissions, town: Town, player: Resident): Boolean {
-    if ( town.permissions.get(perms)!!.contains(PermissionsGroup.TOWN) && player.town === town ) {
+    if ( town.permissions[perms].contains(PermissionsGroup.TOWN) && player.town === town ) {
         return true
     }
-    else if ( town.permissions.get(perms)!!.contains(PermissionsGroup.TRUSTED) && player.town === town && player.trusted ) {
+    else if ( town.permissions[perms].contains(PermissionsGroup.TRUSTED) && player.town === town && player.trusted ) {
         return true
     }
-    else if ( town.permissions.get(perms)!!.contains(PermissionsGroup.NATION) && town.nation !== null && player.nation === town.nation ) {
+    else if ( town.permissions[perms].contains(PermissionsGroup.NATION) && town.nation !== null && player.nation === town.nation ) {
         return true
     }
-    else if ( town.permissions.get(perms)!!.contains(PermissionsGroup.ALLY) && (town.allies.contains(player.town) == true) ) {
+    else if ( town.permissions[perms].contains(PermissionsGroup.ALLY) && (town.allies.contains(player.town) == true) ) {
         return true
     }
-    else if ( town.permissions.get(perms)!!.contains(PermissionsGroup.OUTSIDER) ) {
+    else if ( town.permissions[perms].contains(PermissionsGroup.OUTSIDER) ) {
         return true
     }
 

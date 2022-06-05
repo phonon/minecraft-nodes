@@ -1128,8 +1128,8 @@ public object Nodes {
 
         // add permission flags
         for ( (type, groups) in permissions ) {
-            town.permissions.get(type)!!.clear()
-            town.permissions.get(type)!!.addAll(groups)
+            town.permissions[type].clear()
+            town.permissions[type].addAll(groups)
         }
 
         // calculate max claims
@@ -1815,13 +1815,13 @@ public object Nodes {
     /**
      * Set town permissions
      */
-    public fun setTownPermissions(town: Town, permissions: TownPermissions, group: PermissionsGroup, flag: Boolean) {
+    public fun setTownPermissions(town: Town, perm: TownPermissions, group: PermissionsGroup, flag: Boolean) {
         // add perms
         if ( flag == true ) {
-            town.permissions.get(permissions)!!.add(group)
+            town.permissions[perm].add(group)
         }
         else { // remove perms
-            town.permissions.get(permissions)!!.remove(group)
+            town.permissions[perm].remove(group)
         }
 
         town.needsUpdate()

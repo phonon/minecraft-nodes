@@ -5,6 +5,10 @@
 
 package phonon.nodes.objects
 
+import java.util.UUID
+import java.util.concurrent.ThreadLocalRandom
+import java.util.EnumMap
+import java.util.EnumSet
 import org.bukkit.ChatColor
 import org.bukkit.Location
 import org.bukkit.Material
@@ -16,11 +20,12 @@ import org.bukkit.scheduler.BukkitTask
 import phonon.nodes.Message
 import phonon.nodes.constants.PermissionsGroup
 import phonon.nodes.constants.TownPermissions
+import phonon.nodes.utils.EnumArrayMap
+import phonon.nodes.utils.createEnumArrayMap
 import phonon.nodes.utils.Color
 import phonon.nodes.utils.string.stringArrayFromSet
 import phonon.nodes.utils.string.stringMapFromMap
 import phonon.nodes.serdes.JsonSaveState
-import java.util.*
 
 
 /**
@@ -35,8 +40,6 @@ value class TownId(private val id: UUID) {
 // internal town id counter
 private var townNametagIdCounter: Int = 0
 
-// random number generator
-private val random = Random()
 
 public class Town(
     val uuid: UUID,
@@ -100,7 +103,7 @@ public class Town(
     // permission flags, map of
     // town permissions category -> set of allowed groups in (town, ally, nation, outsider)
     // TODO: replace with EnumArrayMap custom data structure
-    val permissions: EnumMap<TownPermissions, EnumSet<PermissionsGroup>>
+    val permissions: EnumArrayMap<TownPermissions, EnumSet<PermissionsGroup>>
 
     // protected chest blocks in town (for leader, officers, + trusted players)
     val protectedBlocks: HashSet<Block> = hashSetOf()
@@ -133,10 +136,7 @@ public class Town(
         townNametagIdCounter += 1
         
         // create permissions object
-        this.permissions = enumValues<TownPermissions>().toList().associateWithTo(
-            EnumMap<TownPermissions, EnumSet<PermissionsGroup>>(TownPermissions::class.java),
-            {_ -> EnumSet.of(PermissionsGroup.TOWN)}
-        )
+        this.permissions = createEnumArrayMap<TownPermissions, EnumSet<PermissionsGroup>>({_ -> EnumSet.of(PermissionsGroup.TOWN)})
 
         if ( leader != null ) {
             // add creator to residents list
@@ -149,6 +149,7 @@ public class Town(
         }
 
         // assign town random color
+        val random = ThreadLocalRandom.current()
         this.color = Color(
             random.nextInt(256),
             random.nextInt(256),
@@ -240,7 +241,7 @@ public class Town(
         public val home = t.home
         public val spawnpoint = doubleArrayOf(t.spawnpoint.x, t.spawnpoint.y, t.spawnpoint.z)
         public val color = intArrayOf(t.color.r, t.color.g, t.color.b)
-        public val permissions = t.permissions.clone()
+        public val permissions = t.permissions.copyOf()
         public val residents = t.residents.map{ x -> x.uuid }
         public val officers =  t.officers.map{ x -> x.uuid }
         public val claimsBonus = t.claimsBonus
@@ -333,13 +334,14 @@ public class Town(
 }
 
 // string format for town permissions
-private fun permissionsToJsonString(permissions: EnumMap<TownPermissions, EnumSet<PermissionsGroup>>): String {
+private fun permissionsToJsonString(permissions: EnumArrayMap<TownPermissions, EnumSet<PermissionsGroup>>): String {
     val str = StringBuilder()
 
     str.append("{")
 
     var index: Int = 0
-    for ( (type, groups) in permissions ) {
+    for ( type in enumValues<TownPermissions>() ) {
+        val groups = permissions[type]
         str.append("\"${type}\":")
         str.append(stringArrayFromSet<PermissionsGroup>(groups, {g -> "${g.ordinal}"}))
         if ( index < permissions.size - 1 ) {

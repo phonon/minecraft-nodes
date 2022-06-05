@@ -1396,10 +1396,10 @@ public class TownCommand : CommandExecutor, TabCompleter {
         val hasPermissions = if ( resident === town.leader || town.officers.contains(resident) ) {
             true
         }
-        else if ( town.permissions.get(TownPermissions.INCOME)!!.contains(PermissionsGroup.TOWN) && resident.town === town ) {
+        else if ( town.permissions[TownPermissions.INCOME].contains(PermissionsGroup.TOWN) && resident.town === town ) {
             true
         }
-        else if ( town.permissions.get(TownPermissions.INCOME)!!.contains(PermissionsGroup.TRUSTED) && resident.town === town && resident.trusted ) {
+        else if ( town.permissions[TownPermissions.INCOME].contains(PermissionsGroup.TRUSTED) && resident.town === town && resident.trusted ) {
             true
         }
         else {
@@ -1711,7 +1711,8 @@ public class TownCommand : CommandExecutor, TabCompleter {
         if ( args.size < 4 ) {
             // print current town permissions
             Message.print(player, "Town Permissions:")
-            for ( (perm, groups) in town.permissions ) {
+            for ( perm in enumValues<TownPermissions>() ) {
+                val groups = town.permissions[perm]
                 Message.print(player, "- ${perm}${ChatColor.WHITE}: ${groups}")
             }
 
