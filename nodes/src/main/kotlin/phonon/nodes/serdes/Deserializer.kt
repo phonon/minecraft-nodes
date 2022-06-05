@@ -155,9 +155,6 @@ public object Deserializer {
         val jsonTerritories = jsonObj.get("territories")?.getAsJsonObject()
         if ( jsonTerritories !== null ) {
 
-            // temp struct to store map of territory id -> [ neighbor ids ]
-            val neighborGraph: HashMap<Int, List<Int>> = hashMapOf()
-
             jsonTerritories.keySet().forEach { idString -> 
                 val territory = jsonTerritories[idString].getAsJsonObject()
 
@@ -221,15 +218,10 @@ public object Deserializer {
                     coreChunk,
                     chunks as ArrayList<Coord>,
                     bordersWilderness,
+                    neighbors.toIntArray(),
                     resourceNodes as ArrayList<String>
                 )
-
-                neighborGraph.put(id, neighbors as List<Int>)
             }
-
-            // final initialization
-            // establish territory links
-            Nodes.setTerritoryNeighbors(neighborGraph)
         }
 
     }

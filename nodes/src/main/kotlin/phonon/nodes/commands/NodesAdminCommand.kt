@@ -653,8 +653,8 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         // map ids to territories
         val territories: MutableList<Territory> = mutableListOf()
         for ( i in 3 until args.size ) {
-            val id = args[i].toInt()
-            val terr = Nodes.territories.get(id)
+            val id = TerritoryId(args[i].toInt())
+            val terr = Nodes.territories[id]
             if ( terr == null || terr.town != null ) {
                 Message.error(sender, "Invalid territory id=${id}: either does not exist or already has town")
                 return
@@ -793,8 +793,8 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         // map ids to territories
         val territories: MutableList<Territory> = mutableListOf()
         for ( i in 3 until args.size ) {
-            val id = args[i].toInt()
-            val terr = Nodes.territories.get(id)
+            val id = TerritoryId(args[i].toInt())
+            val terr = Nodes.territories[id]
             if ( terr == null || terr.town != null ) {
                 Message.error(sender, "Invalid territory id=${id}: either does not exist or already has town")
                 return
@@ -833,8 +833,8 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         // map ids to territories
         val territories: MutableList<Territory> = mutableListOf()
         for ( i in 3 until args.size ) {
-            val id = args[i].toInt()
-            val terr = Nodes.territories.get(id)
+            val id = TerritoryId(args[i].toInt())
+            val terr = Nodes.territories[id]
             if ( terr == null || terr?.town != town ) {
                 Message.error(sender, "Invalid territory id=${id}: does not belong to town")
                 return
@@ -877,8 +877,8 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         // map ids to territories
         val territories: MutableList<Territory> = mutableListOf()
         for ( i in 3 until args.size ) {
-            val id = args[i].toInt()
-            val terr = Nodes.territories.get(id)
+            val id = TerritoryId(args[i].toInt())
+            val terr = Nodes.territories[id]
             if ( terr == null || terr.town == town ) {
                 Message.error(sender, "Invalid territory id=${id}: either does not exist or belongs to town")
                 return
@@ -910,8 +910,8 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         // map ids to territories
         val territories: MutableList<Territory> = mutableListOf()
         for ( i in 2 until args.size ) {
-            val id = args[i].toInt()
-            val terr = Nodes.territories.get(id)
+            val id = TerritoryId(args[i].toInt())
+            val terr = Nodes.territories[id]
             if ( terr == null ) {
                 Message.error(sender, "Invalid territory id=${id}: does not exist")
                 return
@@ -1291,8 +1291,8 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
 
         // get new home territory
-        val id = args[3].toInt()
-        val terr = Nodes.territories.get(id)
+        val id = TerritoryId(args[3].toInt())
+        val terr = Nodes.territories[id]
         if ( terr == null ) {
             Message.error(sender, "Invalid territory id=${id}: does not exist")
             return
@@ -1362,7 +1362,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         
         // get outpost territory
-        val id = args[4].toInt()
+        val id = TerritoryId(args[4].toInt())
         val terr = Nodes.territories.get(id)
         if ( terr == null ) {
             Message.error(sender, "Invalid territory id=${id}: does not exist")
@@ -1980,7 +1980,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                     }
                     
                     // get territory
-                    val territory = Nodes.getTerritoryFromId(args[6].toInt())
+                    val territory = Nodes.getTerritoryFromId(TerritoryId(args[6].toInt()))
                     if ( territory === null ) {
                         Message.error(sender, "Invalid territory id")
                         return
@@ -2071,7 +2071,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         val instance: Any? = when ( args[1].toLowerCase() ) {
             "resource" -> Nodes.resourceNodes.get(args[2])
             "chunk" -> Nodes.territoryChunks.get(Coord.fromString(args[2]))
-            "territory" -> Nodes.territories.get(args[2].toInt())
+            "territory" -> Nodes.territories.get(TerritoryId(args[2].toInt()))
             "resident" -> Nodes.getResidentFromName(args[2])
             "town" -> Nodes.towns.get(args[2])
             "nation" -> Nodes.nations.get(args[2])

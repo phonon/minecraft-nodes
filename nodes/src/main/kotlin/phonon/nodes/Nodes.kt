@@ -64,7 +64,7 @@ public object Nodes {
     internal val territoryChunks: HashMap<Coord, TerritoryChunk> = hashMapOf()
 
     // map territory id -> Territory
-    internal val territories: HashMap<Int, Territory> = hashMapOf()
+    internal val territories: HashMap<TerritoryId, Territory> = hashMapOf()
 
     // list of all towns
     internal val towns: LinkedHashMap<String, Town> = LinkedHashMap()
@@ -625,6 +625,7 @@ public object Nodes {
         core: Coord,
         chunks: ArrayList<Coord>,
         bordersWilderness: Boolean,
+        neighbors: IntArray,
         resourceNodes: ArrayList<String>
     ) {
 
@@ -654,44 +655,28 @@ public object Nodes {
         
         // create territory
         val territory = Territory(
-            id,
+            TerritoryId(id),
             name,
             color,
             core,
             chunks,
             bordersWilderness,
+            TerritoryIdArray(neighbors),
             resourceNodes,
             territoryResources.income,
             territoryResources.incomeSpawnEgg,
             ores,
             territoryResources.crops,
             territoryResources.animals,
-            cost
+            cost,
         )
         
         // set territory
-        Nodes.territories.put(id, territory)
+        Nodes.territories.put(TerritoryId(id), territory)
 
         // create territory chunks in world grid and map to territory
         chunks.forEach { c -> 
             Nodes.territoryChunks.put(c, TerritoryChunk(c, territory))
-        }
-    }
-
-    // goes through territories and establishes territory-territory
-    // neighbor links
-    public fun setTerritoryNeighbors(neighborGraph: HashMap<Int, List<Int>>) {
-        neighborGraph.forEach { id, neighborList -> 
-            val territory = Nodes.territories.get(id)
-            if ( territory != null ) {
-                territory.neighbors.clear() // clear existing
-                neighborList.forEach { neighborId -> 
-                    val neighbor = Nodes.territories.get(neighborId)
-                    if ( neighbor != null ) {
-                        territory.neighbors.add(neighbor)
-                    }
-                }
-            }
         }
     }
 
@@ -721,7 +706,7 @@ public object Nodes {
         return Nodes.territories.size
     }
 
-    public fun getTerritoryFromId(id: Int): Territory? {
+    public fun getTerritoryFromId(id: TerritoryId): Territory? {
         return Nodes.territories.get(id)
     }
 
@@ -1051,7 +1036,7 @@ public object Nodes {
         }
 
         // make sure home territory exists
-        val home = Nodes.getTerritoryFromId(homeId)
+        val home = Nodes.getTerritoryFromId(TerritoryId(homeId))
         if ( home == null ) {
             System.err.println("Failed to create town ${name} with home (id = ${homeId})")
             return null
@@ -1062,7 +1047,7 @@ public object Nodes {
             spawn
         }
         else { // get default value
-            val homeTerritory = Nodes.territories.get(homeId)
+            val homeTerritory = Nodes.territories.get(TerritoryId(homeId))
             if ( homeTerritory != null ) {
                 Nodes.getDefaultSpawnLocation(homeTerritory)
             }
@@ -1092,7 +1077,7 @@ public object Nodes {
 
         // add territory claims and claims power used
         for ( id in territoryIds ) { 
-            Nodes.getTerritoryFromId(id)?.let { terr -> 
+            Nodes.getTerritoryFromId(TerritoryId(id))?.let { terr -> 
                 town.territories.add(terr)
                 terr.town = town
                 town.claimsUsed += terr.cost
@@ -1102,7 +1087,7 @@ public object Nodes {
         // add annexed territories
         // (duplicated in territoryIds, so just add ids)
         for ( id in annexedTerritoryIds ) { 
-            Nodes.getTerritoryFromId(id)?.let { terr -> 
+            Nodes.getTerritoryFromId(TerritoryId(id))?.let { terr -> 
                 if ( town.territories.contains(terr) ) {
                     town.annexed.add(terr)
                     town.claimsUsed -= terr.cost
@@ -1112,7 +1097,7 @@ public object Nodes {
 
         // add captured territories
         for ( id in capturedTerritoryIds ) { 
-            Nodes.getTerritoryFromId(id)?.let { terr -> 
+            Nodes.getTerritoryFromId(TerritoryId(id))?.let { terr -> 
                 // check if territory already occupied, remove current occupier
                 // should never occur, but just in case
                 val currentOccupier: Town? = terr.occupier
@@ -1161,7 +1146,7 @@ public object Nodes {
         for ( (name, outpostData) in outposts ) {
             val terrId = outpostData.first
             val spawn = outpostData.second
-            val terr = Nodes.getTerritoryFromId(terrId)
+            val terr = Nodes.getTerritoryFromId(TerritoryId(terrId))
             if ( terr !== null && town.territories.contains(terr) ) {
                 town.outposts.put(name, TownOutpost(
                     name,
@@ -1407,8 +1392,8 @@ public object Nodes {
         // check if territory is connected to town's existing territories
         // iterate this territory neighbors, check if any link to town
         var isNeighbor = false
-        for ( neighbor in territory.neighbors ) {
-            if ( neighbor.town === town ) {
+        for ( neighborId in territory.neighbors ) {
+            if ( Nodes.getTerritoryFromId(neighborId)?.town === town ) {
                 isNeighbor = true
                 break
             }

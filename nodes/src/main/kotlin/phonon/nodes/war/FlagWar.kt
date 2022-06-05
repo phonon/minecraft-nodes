@@ -642,8 +642,9 @@ public object FlagWar {
         }
 
         // otherwise, check if any neighbor territory is not owned by the town
-        for ( neighborTerritory in territory.neighbors ) {
-            if ( neighborTerritory.town !== territory.town ) {
+        for ( neighborTerritoryId in territory.neighbors ) {
+            val neighborTerritory = Nodes.territories[neighborTerritoryId]
+            if ( neighborTerritory !== null && neighborTerritory.town !== territoryTown ) {
                 return true
             }
         }

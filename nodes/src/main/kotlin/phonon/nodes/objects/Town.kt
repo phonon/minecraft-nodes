@@ -22,6 +22,15 @@ import phonon.nodes.utils.string.stringMapFromMap
 import phonon.nodes.serdes.JsonSaveState
 import java.util.*
 
+
+/**
+ * Wrapper type for town uuid.
+ */
+@JvmInline
+value class TownId(private val id: UUID) {
+    fun toUUID(): UUID = id
+}
+
 // internal town id counter
 private var townNametagIdCounter: Int = 0
 

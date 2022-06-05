@@ -14,28 +14,71 @@ import org.bukkit.entity.EntityType
 import phonon.nodes.Message
 import java.util.*
 
+
+/**
+ * Wrapper type for territory id int.
+ */
+@JvmInline
+value class TerritoryId(private val id: Int) {
+    fun toInt(): Int = id
+}
+
+/**
+ * Wrapper type for list of territory ids as IntArray backing.
+ * Used to describe territory neighbor id sets.
+ * However, does not 
+ */
+@JvmInline
+value class TerritoryIdArray(private val ids: IntArray) {
+    /**
+     * Return true if this territory id array contains given territory id.
+     */
+    fun contains(id: TerritoryId): Boolean {
+        for ( i in ids ) {
+            if ( id == TerritoryId(i) ) {
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
+     * Return iterator over territory ids.
+     */
+    operator fun iterator(): TerritoryIdIterator {
+        return TerritoryIdIterator(ids.iterator())
+    }
+
+    /**
+     * Wrapper iterator to emit TerritoryId instead of int.
+     */
+    public class TerritoryIdIterator(val intIter: IntIterator): Iterator<TerritoryId> {
+        override fun hasNext(): Boolean = intIter.hasNext()
+        override fun next(): TerritoryId = TerritoryId(intIter.nextInt())
+    }
+}
+
 data class Territory(
-    val id: Int,
+    val id: TerritoryId,
     val name: String,
     val color: Int,
     val core: Coord,
-    val chunks: ArrayList<Coord>,
-    val bordersWilderness: Boolean, //  if territory is next to wilderness (region without any territories)
-    val resourceNodes: ArrayList<String>,
-    var income: EnumMap<Material, Double>,
-    var incomeSpawnEgg: EnumMap<EntityType, Double>,
+    val chunks: List<Coord>,
+    val bordersWilderness: Boolean,  // if territory is next to wilderness (region without any territories)
+    val neighbors: TerritoryIdArray, // neighboring territories (touching chunks/shares border)
+    val resourceNodes: List<String>,
+    val income: EnumMap<Material, Double>,
+    val incomeSpawnEgg: EnumMap<EntityType, Double>,
     val ores: OreSampler,
-    var crops: EnumMap<Material, Double>,
-    var animals: EnumMap<EntityType, Double>,
-    val cost: Int
+    val crops: EnumMap<Material, Double>,
+    val animals: EnumMap<EntityType, Double>,
+    val cost: Int,
+    val customProperties: HashMap<String, Any> = HashMap(0),
 ) {
-    // neighboring territories (touching chunks)
-    val neighbors: HashSet<Territory> = hashSetOf()
-    
-    var containsIncome: Boolean
-    var containsOre: Boolean
-    var cropsCanGrow: Boolean
-    var animalsCanBreed: Boolean
+    val containsIncome: Boolean
+    val containsOre: Boolean
+    val cropsCanGrow: Boolean
+    val animalsCanBreed: Boolean
 
     // town owner
     var town: Town? = null
@@ -52,7 +95,7 @@ data class Territory(
     
     // id is forced to be unique by system
     override public fun hashCode(): Int {
-        return this.id
+        return this.id.toInt()
     }
 
     // print territory info

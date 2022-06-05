@@ -13,6 +13,7 @@ import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 import phonon.nodes.Message
 import phonon.nodes.Nodes
+import phonon.nodes.objects.TerritoryId
 import phonon.nodes.utils.string.filterByStart
 import phonon.nodes.utils.string.filterNation
 import phonon.nodes.utils.string.filterResident
@@ -192,8 +193,8 @@ public class NodesCommand : CommandExecutor, TabCompleter {
         }
         else {
             // parse input as id
-            val id = args[1].toInt()
-            val getTerritory = Nodes.territories.get(id)
+            val id = TerritoryId(args[1].toInt())
+            val getTerritory = Nodes.territories[id]
             if ( getTerritory == null ) {
                 Message.error(sender, "Invalid territory id \"${id}\"")
                 return
