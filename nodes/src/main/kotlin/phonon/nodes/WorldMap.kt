@@ -146,6 +146,30 @@ private val COLOR_OCCUPIED_ENEMY: Array<String> = arrayOf(
     "${ChatColor.DARK_RED}${CONQUERED1}"
 )
 
+/**
+ * Map from a color token to alternate color token.
+ */
+private fun getAlternativeColor(c: String): String {
+    when ( c ) {
+        "${ChatColor.GRAY}" -> return "${ChatColor.WHITE}"
+        "${ChatColor.DARK_GRAY}" -> return "${ChatColor.GRAY}"
+
+        "${ChatColor.GREEN}" -> return "${ChatColor.DARK_GREEN}"
+        "${ChatColor.DARK_GREEN}" -> return "${ChatColor.GREEN}"
+
+        "${ChatColor.YELLOW}" -> return "${ChatColor.GOLD}"
+        "${ChatColor.GOLD}" -> return "${ChatColor.YELLOW}"
+
+        "${ChatColor.AQUA}" -> return "${ChatColor.DARK_AQUA}"
+        "${ChatColor.DARK_AQUA}" -> return "${ChatColor.AQUA}"
+
+        "${ChatColor.RED}" -> return "${ChatColor.DARK_RED}"
+        "${ChatColor.DARK_RED}" -> return "${ChatColor.RED}"
+        
+        else -> return "${ChatColor.WHITE}"
+    }
+}
+
 public object WorldMap {
 
     // render a horizontal line (constant z)
@@ -297,7 +321,8 @@ public object WorldMap {
 
                 if ( coord == playerCoord ) {
                     // take coord token color and append player token
-                    "${coordToken.substring(0 until (coordToken.length - 1))}${playerToken}"
+                    val color = coordToken.substring(0 until (coordToken.length - 1))
+                    "${getAlternativeColor(color)}${playerToken}"
                 } else {
                     coordToken
                 }
