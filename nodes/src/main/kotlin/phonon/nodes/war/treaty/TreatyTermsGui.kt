@@ -12,6 +12,7 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
+import phonon.nodes.Nodes
 import phonon.nodes.gui.*
 import phonon.nodes.objects.Territory
 import phonon.nodes.objects.Town
@@ -100,7 +101,12 @@ val ICON_CONFIRM = ItemIcon(
 
 // render a territory occupation treaty term
 public fun renderTreatyTermOccupation(screen: GuiWindow, x: Int, y: Int, treaty: Treaty, term: TreatyTermOccupation, cancellable: Boolean) {
-    val terr = term.territory
+    val terrId = term.territoryId
+    val terr = Nodes.getTerritoryFromId(terrId)
+    if ( terr === null ) {
+        Nodes.logger?.severe("renderTreatyTermOccupation(): territory ${terrId} not found")
+        return
+    }
 
     val title = if ( terr.name != "" ) {
         "${ChatColor.RED}${ChatColor.BOLD}${term.receiver.name} will occupy ${terr.name} (ID: ${terr.id})"
@@ -141,7 +147,12 @@ public fun renderTreatyTermOccupation(screen: GuiWindow, x: Int, y: Int, treaty:
 
 // render a territory release treaty term
 public fun renderTreatyTermRelease(screen: GuiWindow, x: Int, y: Int, treaty: Treaty, term: TreatyTermRelease, cancellable: Boolean) {
-    val terr = term.territory
+    val terrId = term.territoryId
+    val terr = Nodes.getTerritoryFromId(terrId)
+    if ( terr === null ) {
+        Nodes.logger?.severe("renderTreatyTermRelease(): territory ${terrId} not found")
+        return
+    }
 
     val title = if ( terr.name != "" ) {
         "${ChatColor.RED}${ChatColor.BOLD}${term.receiver.name} will release ${terr.name} (ID: ${terr.id})"

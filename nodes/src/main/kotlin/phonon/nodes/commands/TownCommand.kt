@@ -1076,7 +1076,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         var teleportTimerTicks = Math.max(0.0, Config.townSpawnTime * 20.0)
 
         // multiplier during war and if home occupied
-        if ( Nodes.war.enabled && town.home?.occupier !== null ) {
+        if ( Nodes.war.enabled && Nodes.getTerritoryFromId(town.home)?.occupier !== null ) {
             Message.error(player, "${ChatColor.BOLD}Your home is occupied, town spawn will take much longer...")
             teleportTimerTicks *= Config.occupiedHomeTeleportMultiplier
         }
@@ -1928,7 +1928,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             Message.error(player, "This is not your territory")
             return
         }
-        if ( town.home === territory ) {
+        if ( town.home == territory.id ) {
             Message.error(player, "This is already your home territory")
             return
         }
@@ -2032,7 +2032,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             Message.error(player, "You have not occupied this territory")
             return
         }
-        if ( territoryTown.home === territory && territoryTown.territories.size > 1 ) {
+        if ( territoryTown.home == territory.id && territoryTown.territories.size > 1 ) {
             Message.error(player, "You must annex all of this town's other territories before you can annex its home territory")
             return
         }
@@ -2103,7 +2103,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             Message.print(player, "Town outposts:")
             for ( (name, outpost) in town.outposts ) {
                 val spawn = outpost.spawn
-                Message.print(player, "- ${name}${ChatColor.WHITE}: Territory (id=${outpost.territory.id}, Spawn = (${spawn.x}, ${spawn.y}, ${spawn.z})")
+                Message.print(player, "- ${name}${ChatColor.WHITE}: Territory (id=${outpost.territory}, Spawn = (${spawn.x}, ${spawn.y}, ${spawn.z})")
             }
         }
         else {
@@ -2147,7 +2147,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         
         // match outpost to territory
         for ( outpost in town.outposts.values ) {
-            if ( outpost.territory === territory ) {
+            if ( outpost.territory == territory.id ) {
                 val result = Nodes.setOutpostSpawn(town, outpost, player.location)
                 if ( result == true ) {
                     Message.print(player, "Set outpost \"${outpost.name}\" spawn to current location")

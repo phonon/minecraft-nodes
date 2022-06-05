@@ -12,7 +12,7 @@ import phonon.nodes.Nodes
 import phonon.nodes.Message
 import phonon.nodes.gui.Gui
 import phonon.nodes.objects.Resident
-import phonon.nodes.objects.Territory
+import phonon.nodes.objects.TerritoryId
 import phonon.nodes.objects.Town
 import phonon.nodes.objects.TownPair
 
@@ -32,11 +32,12 @@ public interface TreatyTerm {
 public data class TreatyTermOccupation(
     override val provider: Town,
     override val receiver: Town,
-    val territory: Territory
+    val territoryId: TerritoryId,
 ): TreatyTerm {
     
     override public fun execute() {
-        if ( provider === territory.town ) {
+        val territory = Nodes.getTerritoryFromId(territoryId)
+        if ( territory !== null && provider === territory.town ) {
             Nodes.captureTerritory(receiver, territory)
             
             val territoryName = if ( territory.name !== "" ) "${territory.name} " else territory.name
@@ -52,11 +53,12 @@ public data class TreatyTermOccupation(
 public data class TreatyTermRelease(
     override val provider: Town,
     override val receiver: Town,
-    val territory: Territory
+    val territoryId: TerritoryId,
 ): TreatyTerm {
     
     override public fun execute() {
-        if ( provider === territory.occupier ) {
+        val territory = Nodes.getTerritoryFromId(territoryId)
+        if ( territory !== null && provider === territory.occupier ) {
             Nodes.releaseTerritory(territory)
 
             val territoryName = if ( territory.name !== "" ) "${territory.name} " else territory.name

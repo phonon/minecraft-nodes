@@ -11,7 +11,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 version = ""
 
 // custom versioning flag
-val VERSION = "0.0.9"
+val VERSION = "0.0.10"
 
 // jvm target
 val JVM = 16 // 1.8 for 8, 11 for 11

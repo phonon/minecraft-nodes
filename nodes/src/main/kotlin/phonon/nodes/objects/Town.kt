@@ -28,6 +28,7 @@ import java.util.*
  */
 @JvmInline
 value class TownId(private val id: UUID) {
+    override fun toString(): String = id.toString()
     fun toUUID(): UUID = id
 }
 
@@ -40,7 +41,7 @@ private val random = Random()
 public class Town(
     val uuid: UUID,
     var name: String,
-    var home: Territory, // main territory owned by town
+    var home: TerritoryId, // main territory owned by town
     var leader: Resident?,
     var spawnpoint: Location
 ) {
@@ -56,14 +57,14 @@ public class Town(
     
     // territories owned by town
     // this includes annexed territories
-    val territories: HashSet<Territory> = hashSetOf(home)
+    val territories: HashSet<TerritoryId> = hashSetOf(home)
 
     // separate set of all annexed territories
     // config: for these to count towards total claims
-    val annexed: HashSet<Territory> = hashSetOf()
+    val annexed: HashSet<TerritoryId> = hashSetOf()
 
     // territories captured by town (but not annexed)
-    val captured: HashSet<Territory> = hashSetOf()
+    val captured: HashSet<TerritoryId> = hashSetOf()
 
     // outposts in town, players can /t spawn [output]
     // map name -> town outpost
@@ -98,6 +99,7 @@ public class Town(
 
     // permission flags, map of
     // town permissions category -> set of allowed groups in (town, ally, nation, outsider)
+    // TODO: replace with EnumArrayMap custom data structure
     val permissions: EnumMap<TownPermissions, EnumSet<PermissionsGroup>>
 
     // protected chest blocks in town (for leader, officers, + trusted players)
@@ -145,9 +147,6 @@ public class Town(
                 this.playersOnline.add(leader!!.player()!!)
             }
         }
-
-        // set home territory town to this
-        home.town = this
 
         // assign town random color
         this.color = Color(
@@ -220,7 +219,7 @@ public class Town(
         }
 
         Message.print(sender, "${ChatColor.BOLD}Town ${this.name}:")
-        Message.print(sender, "- Home${ChatColor.WHITE}: Territory (id = ${this.home.id})")
+        Message.print(sender, "- Home${ChatColor.WHITE}: Territory (id = ${this.home})")
         Message.print(sender, "- Territories${ChatColor.WHITE}: ${this.territories.size}")
         Message.print(sender, "- Claim Power${ChatColor.WHITE}: ${claimsUsedColor}${this.claimsUsed}/${claimsMaxColor}${this.claimsMax}")
         Message.print(sender, "- Nation${ChatColor.WHITE}: ${nation}")
@@ -238,7 +237,7 @@ public class Town(
     public class TownSaveState(t: Town): JsonSaveState {
         public val uuid = t.uuid
         public val leader = t.leader?.uuid
-        public val home = t.home.id
+        public val home = t.home
         public val spawnpoint = doubleArrayOf(t.spawnpoint.x, t.spawnpoint.y, t.spawnpoint.z)
         public val color = intArrayOf(t.color.r, t.color.g, t.color.b)
         public val permissions = t.permissions.clone()
@@ -248,9 +247,9 @@ public class Town(
         public val claimsAnnexed = t.claimsAnnexed
         public val claimsPenalty = t.claimsPenalty
         public val claimsPenaltyTime = t.claimsPenaltyTime
-        public val territories = t.territories.map{ x -> x.id }
-        public val annexed = t.annexed.map{ x -> x.id }
-        public val captured = t.captured.map{ x -> x.id }
+        public val territories = t.territories.toList()
+        public val annexed = t.annexed.toList()
+        public val captured = t.captured.toList()
         public val outposts: HashMap<String, TownOutpost> = HashMap(t.outposts)
         public val allies = t.allies.map{ x -> x.name }
         public val enemies = t.enemies.map{ x -> x.name }

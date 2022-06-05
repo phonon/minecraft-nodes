@@ -123,9 +123,7 @@ private val DEBUG_SUBCOMMANDS: List<String> = listOf(
 public class NodesAdminCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
-        
-        val player = if ( sender is Player ) sender else null
-    
+            
         // no args, print plugin info
         if ( args.size == 0 ) {
             Message.print(sender, "${ChatColor.BOLD}Nodes ${Nodes.version}")
@@ -839,7 +837,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                 Message.error(sender, "Invalid territory id=${id}: does not belong to town")
                 return
             }
-            else if ( town.home == terr ) {
+            else if ( town.home == terr.id ) {
                 Message.error(sender, "Cannot remove town's home territory id=${id}")
                 return
             }
@@ -1304,7 +1302,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        if ( town.home === terr ) {
+        if ( town.home == terr.id ) {
             Message.error(sender, "Invalid territory id=${id}: already is home territory")
             return
         }
@@ -1986,7 +1984,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                         return
                     }
                     
-                    treaty.add(TreatyTermOccupation(provider, receiver, territory))
+                    treaty.add(TreatyTermOccupation(provider, receiver, territory.id))
 
                     Message.print(sender, "Added occupation term to treaty between ${town1.name} and ${town2.name}")
                 }

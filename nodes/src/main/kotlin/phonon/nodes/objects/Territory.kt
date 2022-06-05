@@ -20,6 +20,7 @@ import java.util.*
  */
 @JvmInline
 value class TerritoryId(private val id: Int) {
+    override fun toString(): String = id.toString()
     fun toInt(): Int = id
 }
 
@@ -30,6 +31,9 @@ value class TerritoryId(private val id: Int) {
  */
 @JvmInline
 value class TerritoryIdArray(private val ids: IntArray) {
+    override fun toString(): String = ids.toString()
+    fun toIntArray(): IntArray = ids.copyOf()
+
     /**
      * Return true if this territory id array contains given territory id.
      */

@@ -1,6 +1,6 @@
 # Prefer Handles/IDs over References
 
-**tl;dr store handles like `TerritoryId` instead of direct
+**tl;dr prefer storing handles like `TerritoryId` instead of direct
 `Territory` pointer references. Avoid forming pointer dependencies.**
 
 ## Problem: Cancerous dependency web
@@ -78,6 +78,17 @@ territories = Map<TerritoryId, Territory>
     becomes a concern. Likely not an issue since Nodes does not
     run big tasks each server tick.
 
+
+## When Handles
+Prefer handles for
+- Long lived storage with interlocked dependencies (e.g. Town-Territory
+  object dependencies). In this case, Territories are intended to be
+  re-created in real time, while Towns are not, so use TerritoryId,
+  but TownId not as necessary.
+
+Ok direct references:
+- Hot paths (getting Territory from TerritoryChunk, very common)
+- Short lived objects that are not stored (e.g. events)
 
 ## Type safe handles
 Kotlin allows type safe wrappers around basic identifiers with [value

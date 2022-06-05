@@ -970,8 +970,11 @@ public object Nodes {
             return Result.failure(ErrorPlayerHasTown)
         }
 
-        val town = Town(UUID.randomUUID(), name, territory, leader, spawnpoint)
+        val town = Town(UUID.randomUUID(), name, territory.id, leader, spawnpoint)
         town.claimsUsed = territory.cost
+
+        // set home territory town
+        territory.town = town
 
         if ( leader != null ) {
             leader.town = town
@@ -1056,7 +1059,7 @@ public object Nodes {
             }
         }
 
-        val town = Town(uuid, name, home, leaderAsResident, spawnpoint)
+        val town = Town(uuid, name, home.id, leaderAsResident, spawnpoint)
         leaderAsResident?.town = town
 
         // add residents
@@ -1076,9 +1079,10 @@ public object Nodes {
         }
 
         // add territory claims and claims power used
-        for ( id in territoryIds ) { 
-            Nodes.getTerritoryFromId(TerritoryId(id))?.let { terr -> 
-                town.territories.add(terr)
+        for ( id in territoryIds ) {
+            val terrId = TerritoryId(id)
+            Nodes.getTerritoryFromId(terrId)?.let { terr -> 
+                town.territories.add(terrId)
                 terr.town = town
                 town.claimsUsed += terr.cost
             }
@@ -1087,26 +1091,28 @@ public object Nodes {
         // add annexed territories
         // (duplicated in territoryIds, so just add ids)
         for ( id in annexedTerritoryIds ) { 
-            Nodes.getTerritoryFromId(TerritoryId(id))?.let { terr -> 
-                if ( town.territories.contains(terr) ) {
-                    town.annexed.add(terr)
+            val terrId = TerritoryId(id)
+            Nodes.getTerritoryFromId(terrId)?.let { terr -> 
+                if ( town.territories.contains(terrId) ) {
+                    town.annexed.add(terrId)
                     town.claimsUsed -= terr.cost
                 }
             }
         }
 
         // add captured territories
-        for ( id in capturedTerritoryIds ) { 
-            Nodes.getTerritoryFromId(TerritoryId(id))?.let { terr -> 
+        for ( id in capturedTerritoryIds ) {
+            val terrId = TerritoryId(id)
+            Nodes.getTerritoryFromId(terrId)?.let { terr -> 
                 // check if territory already occupied, remove current occupier
                 // should never occur, but just in case
                 val currentOccupier: Town? = terr.occupier
                 if ( currentOccupier != null ) {
-                    currentOccupier.captured.remove(terr)
+                    currentOccupier.captured.remove(terrId)
                 }
 
                 // capture territory for town
-                town.captured.add(terr)
+                town.captured.add(terrId)
                 terr.occupier = town
             }
         }
@@ -1144,14 +1150,14 @@ public object Nodes {
 
         // load outposts
         for ( (name, outpostData) in outposts ) {
-            val terrId = outpostData.first
+            val terrId = TerritoryId(outpostData.first)
             val spawn = outpostData.second
-            val terr = Nodes.getTerritoryFromId(TerritoryId(terrId))
-            if ( terr !== null && town.territories.contains(terr) ) {
+            val terr = Nodes.getTerritoryFromId(terrId)
+            if ( terr !== null && town.territories.contains(terrId) ) {
                 town.outposts.put(name, TownOutpost(
                     name,
-                    terr,
-                    spawn
+                    terrId,
+                    spawn,
                 ))
             }
         }
@@ -1180,13 +1186,13 @@ public object Nodes {
         }
 
         // remove territory claim links
-        town.territories.forEach() { terr -> 
-            terr.town = null
+        town.territories.forEach() { terrId -> 
+            Nodes.getTerritoryFromId(terrId)?.town = null
         }
 
         // remove occupied territories
-        town.captured.forEach() { terr ->
-            terr.occupier = null
+        town.captured.forEach() { terrId ->
+            Nodes.getTerritoryFromId(terrId)?.occupier = null
         }
 
         // remove resident town links
@@ -1408,7 +1414,7 @@ public object Nodes {
         }
 
         // passed checks, add territory to town
-        town.territories.add(territory)
+        town.territories.add(territory.id)
         territory.town = town
 
         // increase claims power used
@@ -1427,31 +1433,31 @@ public object Nodes {
     public fun unclaimTerritory(town: Town, territory: Territory): Result<Territory> {
         
         // check if town owns territory
-        if ( !town.territories.contains(territory) ) {
+        if ( !town.territories.contains(territory.id) ) {
             return Result.failure(ErrorTerritoryNotInTown)
         }
 
         // check if territory is town's home territory
-        if ( town.home == territory ) {
+        if ( town.home == territory.id ) {
             return Result.failure(ErrorTerritoryIsTownHome)
         }
 
         // passed checks, remove territory from town
-        town.territories.remove(territory)
+        town.territories.remove(territory.id)
         territory.town = null
         
         // remove any outposts with this territory
-        town.outposts.entries.removeAll({ (k, v) -> v.territory === territory })
+        town.outposts.entries.removeAll({ (name, outpost) -> outpost.territory == territory.id })
 
         // if territory was not annexed, remove territory cost
         // from claims used, add to penalty until it decays
-        if ( !town.annexed.contains(territory) ) {
+        if ( !town.annexed.contains(territory.id) ) {
             town.claimsUsed -= territory.cost
             town.claimsPenalty += territory.cost
             town.claimsMax = Nodes.calculateMaxClaims(town)
         }
         else {
-            town.annexed.remove(territory)
+            town.annexed.remove(territory.id)
         }
 
         // mark dirty
@@ -1475,7 +1481,7 @@ public object Nodes {
         }
 
         // add territory to town
-        town.territories.add(territory)
+        town.territories.add(territory.id)
         territory.town = town
 
         // increase claims power used
@@ -1496,7 +1502,7 @@ public object Nodes {
         // check if territory already occupied, remove current occupier
         val currentOccupier: Town? = territory.occupier
         if ( currentOccupier != null ) {
-            currentOccupier.captured.remove(territory)
+            currentOccupier.captured.remove(territory.id)
             territory.occupier = null
 
             currentOccupier.needsUpdate()
@@ -1504,7 +1510,7 @@ public object Nodes {
 
         // handle capturing enemy territory
         if ( territory.town != town ) {
-            town.captured.add(territory)
+            town.captured.add(territory.id)
             territory.occupier = town
         }
 
@@ -1520,7 +1526,7 @@ public object Nodes {
         // check if territory currently occupied, remove current occupier
         val currentOccupier: Town? = territory.occupier
         if ( currentOccupier != null ) {
-            currentOccupier.captured.remove(territory)
+            currentOccupier.captured.remove(territory.id)
             territory.occupier = null
 
             currentOccupier.needsUpdate()
@@ -1551,7 +1557,7 @@ public object Nodes {
         // remove from old town
         if ( oldTown !== null ) {
             // check if this is their home territory
-            if ( territory === oldTown.home ) {
+            if ( territory.id == oldTown.home ) {
                 // can only annex home territory last
                 if ( oldTown.territories.size > 1 ) {
                     return false
@@ -1564,8 +1570,8 @@ public object Nodes {
             }
             // else, just a normal territory
             else {
-                if ( oldTown.annexed.contains(territory) ) {
-                    oldTown.annexed.remove(territory)
+                if ( oldTown.annexed.contains(territory.id) ) {
+                    oldTown.annexed.remove(territory.id)
                 }
                 // if territory was not an annexed territory, adjust claims
                 else {
@@ -1574,7 +1580,7 @@ public object Nodes {
                 }
 
                 // remove territory and re-calculate claims
-                oldTown.territories.remove(territory)
+                oldTown.territories.remove(territory.id)
                 oldTown.claimsMax = Nodes.calculateMaxClaims(town)
     
                 oldTown.needsUpdate()
@@ -1582,9 +1588,9 @@ public object Nodes {
         }
 
         // add territory to town and annexed territories
-        town.territories.add(territory)
-        town.annexed.add(territory)
-        town.captured.remove(territory)
+        town.territories.add(territory.id)
+        town.annexed.add(territory.id)
+        town.captured.remove(territory.id)
 
         // update territory
         territory.town = town
@@ -1616,7 +1622,7 @@ public object Nodes {
     public fun setTownSpawn(town: Town, spawnpoint: Location): Boolean {
         // enforce spawnpoint in town's home territory
         val territory = Nodes.getTerritoryFromChunk(spawnpoint.chunk)
-        if ( territory !== town.home ) {
+        if ( territory === null || territory.id != town.home ) {
             return false
         }
 
@@ -1811,7 +1817,7 @@ public object Nodes {
      */
     public fun setTownPermissions(town: Town, permissions: TownPermissions, group: PermissionsGroup, flag: Boolean) {
         // add perms
-        if ( flag === true ) {
+        if ( flag == true ) {
             town.permissions.get(permissions)!!.add(group)
         }
         else { // remove perms
@@ -1826,17 +1832,15 @@ public object Nodes {
      * set town's home territory
      */
     public fun setTownHomeTerritory(town: Town, territory: Territory) {
-
-        // set town home territory
         if ( town !== territory.town ) {
             return
         }
-        if ( town.home === territory ) {
+        if ( town.home == territory.id ) {
             return
         }
 
         // set town home
-        town.home = territory
+        town.home = territory.id
 
         // set town spawn to new home territory
         town.spawnpoint = Nodes.getDefaultSpawnLocation(territory)
@@ -1864,7 +1868,7 @@ public object Nodes {
      */
     public fun createTownOutpost(town: Town, name: String, territory: Territory): Boolean {
         // town must own the territory
-        if ( !town.territories.contains(territory) ) {
+        if ( !town.territories.contains(territory.id) ) {
             return false
         }
 
@@ -1877,7 +1881,7 @@ public object Nodes {
 
         town.outposts.put(name, TownOutpost(
             name,
-            territory,
+            territory.id,
             spawn
         ))
 
@@ -1910,7 +1914,7 @@ public object Nodes {
      */
     public fun setOutpostSpawn(town: Town, outpost: TownOutpost, spawn: Location): Boolean {
         // verify location is inside territory
-        if ( Nodes.getTerritoryFromChunk(spawn.chunk) !== outpost.territory ) {
+        if ( Nodes.getTerritoryFromChunk(spawn.chunk)?.id != outpost.territory ) {
             return false
         }
 
@@ -2310,7 +2314,12 @@ public object Nodes {
         val taxRate = Config.taxIncomeRate
 
         for ( town in Nodes.towns.values ) {
-            for ( territory in town.territories ) {
+            for ( terrId in town.territories ) {
+                val territory = Nodes.getTerritoryFromId(terrId)
+                if ( territory === null ) {
+                    continue
+                }
+
                 val occupier = territory.occupier
                 if ( occupier != null ) {
                     // regular item income

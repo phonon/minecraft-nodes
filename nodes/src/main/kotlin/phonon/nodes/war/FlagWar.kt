@@ -423,9 +423,9 @@ public object FlagWar {
 
         // run checks that chunk attack is valid
         
-        // check chunk has territory and town
-        if ( territory === null || territoryTown === null ) {
-            return Result.failure(ErrorNoTerritory)
+        // check chunk has a town
+        if ( territoryTown === null ) {
+            return Result.failure(ErrorNotEnemy)
         }
 
         // check if town blacklisted
@@ -547,7 +547,7 @@ public object FlagWar {
         if ( territory.bordersWilderness ) {
             attackTime *= Config.chunkAttackFromWastelandMultiplier
         }
-        if ( territory === territory.town?.home ) {
+        if ( territory.id == territory.town?.home ) {
             attackTime *= Config.chunkAttackHomeMultiplier
         }
 
@@ -590,7 +590,7 @@ public object FlagWar {
         val attack = Attack(
             attacker,
             attackingTown,
-            chunk,
+            chunk.coord,
             flagBase,
             flagBlock,
             flagTorch,
@@ -632,7 +632,7 @@ public object FlagWar {
     internal fun isBorderTerritory(territory: Territory): Boolean {
         // do not allow attacking home territory
         val territoryTown = territory.town
-        if ( territoryTown !== null && territoryTown.home === territory ) {
+        if ( territoryTown !== null && territoryTown.home == territory.id ) {
             return false
         }
 
@@ -905,8 +905,8 @@ public object FlagWar {
     // TODO: signal event that chunk defended (broadcast message)
     internal fun cancelAttack(attack: Attack) {
         // remove status from territory chunk
-        val chunk = attack.chunk
-        chunk.attacker = null
+        val chunk = Nodes.getTerritoryChunkFromCoord(attack.coord)
+        chunk?.attacker = null
 
         // remove progress bar from player
         attack.progressBar.removeAll()
@@ -926,20 +926,22 @@ public object FlagWar {
 
         // remove attack instance references
         FlagWar.attackers.get(attack.attacker)?.remove(attack)
-        FlagWar.chunkToAttacker.remove(chunk.coord)
+        FlagWar.chunkToAttacker.remove(attack.coord)
         FlagWar.blockToAttacker.remove(attack.flagBlock)
         
         // mark save needed
         FlagWar.needsSave = true
 
         // run cancel attack event
-        val event = WarAttackCancelEvent(
-            attack.attacker,
-            attack.town,
-            attack.chunk.territory,
-            attack.flagBase
-        )
-        Bukkit.getPluginManager().callEvent(event)
+        if ( chunk !== null ) {
+            val event = WarAttackCancelEvent(
+                attack.attacker,
+                attack.town,
+                chunk.territory,
+                attack.flagBase
+            )
+            Bukkit.getPluginManager().callEvent(event)
+        }
     }
 
     /**
@@ -974,28 +976,35 @@ public object FlagWar {
 
         // remove attack instance references
         FlagWar.attackers.get(attack.attacker)?.remove(attack)
-        FlagWar.chunkToAttacker.remove(attack.chunk.coord)
+        FlagWar.chunkToAttacker.remove(attack.coord)
         FlagWar.blockToAttacker.remove(attack.flagBlock)
 
         // mark that save required
         FlagWar.needsSave = true
         
+        // chunk should not be null unless territory swapped
+        // out during attack and chunks were modified in new territory
+        val chunk = Nodes.getTerritoryChunkFromCoord(attack.coord)
+        if ( chunk == null ) {
+            Nodes.logger?.severe("finishAttack(): TerritoryChunk at ${attack.coord} is null")
+            return
+        }
+
         // check if attack finish is cancelled
         val event = WarAttackFinishEvent(
             attack.attacker,
             attack.town,
-            attack.chunk.territory,
+            chunk.territory,
             attack.flagBase
         )
         Bukkit.getPluginManager().callEvent(event);
         if ( event.isCancelled() ) {
-            attack.chunk.attacker = null
+            chunk.attacker = null
             return
         }
 
         // handle occupation state of chunk
         // if chunk is core chunk of territory, attacking town occupies territory
-        val chunk = attack.chunk
         if ( chunk.coord == chunk.territory.core ) {
             val territory = chunk.territory
             val territoryTown = territory.town

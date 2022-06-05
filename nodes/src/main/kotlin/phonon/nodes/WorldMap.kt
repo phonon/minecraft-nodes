@@ -240,7 +240,7 @@ public object WorldMap {
                             }
                             else {
                                 // town's home territory
-                                if ( territory === town.home ) {
+                                if ( territory.id == town.home ) {
                                     // town
                                     if ( town === residentTown ) {
                                         HOME_TOWN

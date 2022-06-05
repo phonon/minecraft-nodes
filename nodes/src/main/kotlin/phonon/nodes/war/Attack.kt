@@ -20,7 +20,7 @@ import phonon.nodes.objects.Town
 public class Attack(
     val attacker: UUID,        // attacker's UUID
     val town: Town,            // attacker's town
-    val chunk: TerritoryChunk, // chunk under attack
+    val coord: Coord,          // chunk coord under attack
     val flagBase: Block,       // fence base of flag
     val flagBlock: Block,      // wool block for flag
     val flagTorch: Block,      // torch block of flag
@@ -65,7 +65,7 @@ public class Attack(
         // pre-generate main part of the JSON serialization string
         this.jsonStringBase = generateFixedJsonBase(
             this.attacker,
-            this.chunk.coord,
+            this.coord,
             this.flagBase
         )
         
