@@ -176,8 +176,7 @@ private class ItemDistribution(inputItems: List<OreDeposit>) {
  */
 class OreSampler(
     val ores: ArrayList<OreDeposit>
-)
-{
+) {
     // array maps each y height level -> OreTable
     // array is thus always 256 sized pointers to OreTable
     private val itemsAtHeight: Array<ItemDistribution?> = arrayOfNulls(256)

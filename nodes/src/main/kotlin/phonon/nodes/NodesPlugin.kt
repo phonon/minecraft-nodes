@@ -103,7 +103,7 @@ public class NodesPlugin : JavaPlugin() {
         // load world
         val pluginPath = Config.pathPlugin
         logger.info("Loading world from: ${pluginPath}")
-        if ( Nodes.loadWorld(pluginPath) == true ) { // successful load
+        if ( Nodes.loadWorld() == true ) { // successful load
             // print number of resource nodes and territories loaded
             logger.info("- Resource Nodes: ${Nodes.getResourceNodeCount()}")
             logger.info("- Territories: ${Nodes.getTerritoryCount()}")

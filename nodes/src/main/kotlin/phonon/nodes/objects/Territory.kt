@@ -7,12 +7,14 @@
 
 package phonon.nodes.objects
 
+import java.util.logging.Logger
+import java.util.EnumMap
+import com.google.gson.JsonObject
 import org.bukkit.ChatColor
 import org.bukkit.Material
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.EntityType
 import phonon.nodes.Message
-import java.util.*
 
 
 /**
@@ -62,6 +64,131 @@ value class TerritoryIdArray(private val ids: IntArray) {
     }
 }
 
+
+/**
+ * Intermediary struct for building a territory, contains the fixed
+ * structural properties of a territory in the world:
+ * name, chunks, neighbors, etc.
+ * These are all non-resource properties. These are loaded from the
+ * json, then combined with a TerritoryResources object (calculated 
+ * from resource node names attached to the territory) to build the
+ * final "compiled" Territory.
+ */
+data class TerritoryStructure(
+    val id: TerritoryId,
+    val name: String,
+    val color: Int,
+    val core: Coord,
+    val chunks: List<Coord>,
+    val bordersWilderness: Boolean,
+    val neighbors: TerritoryIdArray,
+    val resourceNodes: List<String>,
+) {
+    companion object {
+        /**
+         * Load list of territory structures from world json object.
+         * If `ids` list is specified, only load those ids (if they exist).
+         * Otherwise, load all ids.
+         */
+        public fun loadFromJson(json: JsonObject, ids: List<Int>? = null): List<TerritoryStructure> {
+            val idStrings = if ( ids != null ) {
+                ids.asSequence()
+                    .map{ id -> id.toString() }
+            } else {
+                json.keySet().asSequence()
+            }
+
+            val territories = idStrings
+                .map { id -> TerritoryStructure.fromJson(id.toInt(), json[id].getAsJsonObject()) }
+                .toList()
+            
+            return territories
+        }
+
+        /**
+         * Load a single territory structure from world json object.
+         * Note this will cause error if json is invalid.
+         */
+        public fun fromJson(id: Int, json: JsonObject): TerritoryStructure {
+            // territory name
+            val name: String = json.get("name")?.getAsString() ?: "";
+
+            // territory color, 6 possible colors -> integer in range [0, 5]
+            // if null (editor error?), assign 5, the least likely color
+            val color: Int = json.get("color")?.getAsInt() ?: 5;
+
+            // core chunk (required)
+            val coreChunkArray = json.get("coreChunk")!!.getAsJsonArray()!!
+            val coreChunk = Coord(coreChunkArray[0].getAsInt(), coreChunkArray[1].getAsInt())
+
+            // chunks:
+            // parse interleaved coordinate buffer
+            // [x1, y1, x2, y2, ... , xN, yN]
+            val chunks: MutableList<Coord> = mutableListOf()
+            val jsonChunkArray = json.get("chunks")?.getAsJsonArray()
+            if ( jsonChunkArray !== null ) {
+                for ( i in 0 until jsonChunkArray.size() step 2 ) {
+                    val c = Coord(jsonChunkArray[i].getAsInt(), jsonChunkArray[i+1].getAsInt())
+                    chunks.add(c)
+                }
+            }
+
+            // resource nodes
+            val resourceNodes: MutableList<String> = mutableListOf()
+            val jsonNodesArray = json.get("nodes")?.getAsJsonArray()
+            if ( jsonNodesArray !== null ) {
+                jsonNodesArray.forEach { nodeJson ->
+                    val s = nodeJson.getAsString()
+                    resourceNodes.add(s)
+                }
+            }
+            
+            // neighbor territory ids
+            val neighbors: MutableList<Int> = mutableListOf()
+            val jsonNeighborsArray = json.get("neighbors")?.getAsJsonArray()
+            if ( jsonNeighborsArray !== null ) {
+                jsonNeighborsArray.forEach { neighborId ->
+                    neighbors.add(neighborId.getAsInt())
+                }
+            }
+
+            // flag that territory borders wilderness (regions without any territories)
+            val bordersWilderness: Boolean = json.get("isEdge")?.getAsBoolean() ?: false
+
+            return TerritoryStructure(
+                TerritoryId(id),
+                name,
+                color,
+                coreChunk,
+                chunks as List<Coord>,
+                bordersWilderness,
+                TerritoryIdArray(neighbors.toIntArray()),
+                resourceNodes as List<String>
+            )
+        }
+    }
+}
+
+/**
+ * Intermediary struct for building a territory. This is passed through
+ * resource loaders to merge data from all territory resource attributes
+ * before compiling into a final immutable Territory.
+ */
+data class TerritoryResources(
+    val income: EnumMap<Material, Double> = EnumMap<Material, Double>(Material::class.java),
+    val incomeSpawnEgg: EnumMap<EntityType, Double> = EnumMap<EntityType, Double>(EntityType::class.java),
+    val ores: EnumMap<Material, OreDeposit> = EnumMap<Material, OreDeposit>(Material::class.java),
+    val crops: EnumMap<Material, Double> = EnumMap<Material, Double>(Material::class.java),
+    val animals: EnumMap<EntityType, Double> = EnumMap<EntityType, Double>(EntityType::class.java),
+    val customProperties: HashMap<String, Any> = HashMap(0),
+) {
+
+}
+
+/**
+ * Final territory object. Territory fixed properties and resource 
+ * properties should not change after this is built.
+ */
 data class Territory(
     val id: TerritoryId,
     val name: String,
@@ -71,12 +198,13 @@ data class Territory(
     val bordersWilderness: Boolean,  // if territory is next to wilderness (region without any territories)
     val neighbors: TerritoryIdArray, // neighboring territories (touching chunks/shares border)
     val resourceNodes: List<String>,
+    // resource properties, should be derived from a TerritoryResources object
+    val cost: Int,
     val income: EnumMap<Material, Double>,
     val incomeSpawnEgg: EnumMap<EntityType, Double>,
     val ores: OreSampler,
     val crops: EnumMap<Material, Double>,
     val animals: EnumMap<EntityType, Double>,
-    val cost: Int,
     val customProperties: HashMap<String, Any> = HashMap(0),
 ) {
     val containsIncome: Boolean

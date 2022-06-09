@@ -15,7 +15,7 @@ import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.Material
 import org.bukkit.entity.EntityType
-import phonon.nodes.objects.ResourceNode
+import phonon.nodes.objects.TerritoryResources
 import phonon.nodes.objects.OreDeposit
 
 public object Config {
@@ -70,17 +70,7 @@ public object Config {
     public var incomePeriod: Long = 3600000L
 
     // global resource node in all territories
-    public var globalResources = ResourceNode(
-        "",
-        "",
-        EnumMap<Material, Double>(Material::class.java),
-        EnumMap<EntityType, Double>(EntityType::class.java),
-        EnumMap<Material, OreDeposit>(Material::class.java),
-        EnumMap<Material, Double>(Material::class.java),
-        EnumMap<EntityType, Double>(EntityType::class.java),
-        0,
-        1.0
-    )
+    public var globalResources = TerritoryResources()
 
     // hidden ore blocks, stone only
     public var oreBlocks = EnumSet.of(
@@ -490,7 +480,7 @@ public object Config {
 }
 
 // parse global resources section in config.yml
-private fun parseGlobalResources(globalResourcesSection: ConfigurationSection): ResourceNode {
+private fun parseGlobalResources(globalResourcesSection: ConfigurationSection): TerritoryResources {
     val income: EnumMap<Material, Double> = EnumMap<Material, Double>(Material::class.java)
     val incomeSpawnEgg: EnumMap<EntityType, Double> = EnumMap<EntityType, Double>(EntityType::class.java)
     val ores: EnumMap<Material, OreDeposit> = EnumMap<Material, OreDeposit>(Material::class.java)
@@ -561,16 +551,12 @@ private fun parseGlobalResources(globalResourcesSection: ConfigurationSection): 
         }
     }
 
-    return ResourceNode(
-        "",
-        "",
-        income,
-        incomeSpawnEgg,
-        ores,
-        crops,
-        animals,
-        0,
-        1.0
+    return TerritoryResources(
+        income = income,
+        incomeSpawnEgg = incomeSpawnEgg,
+        ores = ores,
+        crops = crops,
+        animals = animals,
     )
 }
 

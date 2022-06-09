@@ -55,7 +55,7 @@ private val BACKUP_DATE_FORMATTER = SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
 public object Nodes {
     
     // version string
-    internal val version: String = "1.12.2 v0.0.0"
+    internal val version: String = "1.16.5 v0.0.10"
 
     // library of resource node definitions
     internal val resourceNodes: HashMap<String, ResourceNode> = hashMapOf()
@@ -112,7 +112,7 @@ public object Nodes {
     
     // initialization:
     // - set links to plugin variables
-    public fun initialize(plugin: Plugin) {
+    internal fun initialize(plugin: Plugin) {
         Nodes.plugin = plugin
         Nodes.logger = plugin.getLogger()
     }
@@ -120,7 +120,7 @@ public object Nodes {
     /**
      * reload config file
      */
-    public fun reloadConfig() {
+    internal fun reloadConfig() {
         val plugin = Nodes.plugin
         if ( plugin === null ) {
             return
@@ -144,7 +144,7 @@ public object Nodes {
     /**
      * Reload background managers/tasks
      */
-    public fun reloadManagers() {
+    internal fun reloadManagers() {
         SaveManager.stop()
         PeriodicTickManager.stop()
         OverMaxClaimsReminder.stop()
@@ -163,7 +163,7 @@ public object Nodes {
 
     // mark all current players in game as online
     // needed to correctly mark online players after reloading plugin
-    public fun initializeOnlinePlayers() {
+    internal fun initializeOnlinePlayers() {
         for ( player in Bukkit.getOnlinePlayers() ) {
             // create resident for player if it does not exist
             Nodes.createResident(player)
@@ -181,7 +181,7 @@ public object Nodes {
 
     // clean up any world details
     // run when plugin disabled
-    public fun cleanup() {
+    internal fun cleanup() {
 
         // cleanup residents
         for ( r in Nodes.residents.values ) {
@@ -221,21 +221,103 @@ public object Nodes {
         saveStringToFile(currTimeString, Config.pathLastIncomeTime)
     }
 
+    internal fun loadTerritories(pathWorld: Path) {
+        val (jsonResources, jsonTerritories) = Deserializer.worldFromJson(Config.pathWorld)
+
+        if ( jsonResources !== null ) {
+            // TODO: generalize to multiple loaders
+            Nodes.resourceNodes.putAll(DefaultResourceAttributeLoader.load(HashMap(0), jsonResources))
+        }
+
+        if ( jsonTerritories !== null ) {
+            val territoryStructures: List<TerritoryStructure> = TerritoryStructure.loadFromJson(jsonTerritories)
+            
+            // first create intermediary resource graph before creating
+            // final compiled territories
+            val terrResourceGraph: HashMap<TerritoryId, TerritoryResources> = HashMap(0)
+
+            for ( t in territoryStructures ) {
+                val resources = t.resourceNodes
+                    .map { name -> Nodes.resourceNodes[name]!! }
+                    .sortedBy { r -> r.priority }
+                
+                terrResourceGraph[t.id] = resources.fold(Config.globalResources.copy(), { terr, r -> r.apply(terr) })
+            }
+
+            // TODO: apply neighboring territory modifier properties
+            for ( t in territoryStructures ) {
+                for ( neighborId in t.neighbors ) {
+                    // TODO
+                    // terrResourceGraph[t.id] = t.applyNeighborModifiers(terrResourceGraph[neighborId]!!)
+                }
+            }
+
+            // merge territory structure properties and resources
+            // to create final territory
+            for ( t in territoryStructures ) {
+                // ensure coreChunk inside chunks
+                if ( !t.chunks.contains(t.core) ) {
+                    Nodes.logger?.warning("[Nodes] Territory ${t.id} chunk does not contain core")
+                    return
+                }
+
+                val resources = terrResourceGraph[t.id]!!
+
+                // sorted resource names
+                val resourceNamesSorted = t.resourceNodes.sortedBy { name -> Nodes.resourceNodes[name]!!.priority }
+
+                // create OreSampler from ores map
+                val ores = OreSampler(ArrayList(resources.ores.values))
+
+                // calculate territory cost
+                val cost = Nodes.calculateTerritoryCost(t.chunks.size, resourceNamesSorted)
+                
+                // create territory
+                val territory = Territory(
+                    id = t.id,
+                    name = t.name,
+                    color = t.color,
+                    core = t.core,
+                    chunks = t.chunks,
+                    bordersWilderness = t.bordersWilderness,
+                    neighbors = t.neighbors,
+                    resourceNodes = resourceNamesSorted,
+                    cost = cost,
+                    income = resources.income,
+                    incomeSpawnEgg = resources.incomeSpawnEgg,
+                    ores = ores,
+                    crops = resources.crops,
+                    animals = resources.animals,
+                    customProperties = resources.customProperties,
+                )
+                
+                // set territory
+                Nodes.territories.put(t.id, territory)
+
+                // create territory chunks in world grid and map to territory
+                t.chunks.forEach { c -> 
+                    Nodes.territoryChunks.put(c, TerritoryChunk(c, territory))
+                }
+            }
+        }
+    }
+
     // load world from path
     // returns status of world load:
     // true - successful load
     // false - failed
-    public fun loadWorld(pathPlugin: String): Boolean {
+    internal fun loadWorld(): Boolean {
         // clear storage
-        territoryChunks.clear()
-        territories.clear()
-        towns.clear()
-        nations.clear()
-        residents.clear()
+        Nodes.resourceNodes.clear()
+        Nodes.territoryChunks.clear()
+        Nodes.territories.clear()
+        Nodes.towns.clear()
+        Nodes.nations.clear()
+        Nodes.residents.clear()
         
         // load world from JSON storage
         if ( Files.exists(Config.pathWorld) ) {
-            Deserializer.worldFromJson(Config.pathWorld)
+            Nodes.loadTerritories(Config.pathWorld)
             
             // load world.json to dynmap folder
             if ( Nodes.dynmap == true || Config.dynmapCopyTowns ) {
@@ -244,7 +326,7 @@ public object Nodes {
             }
             
             // load towns from json after main world load finishes
-            if ( Files.exists(Config.pathTowns) ) {                
+            if ( Files.exists(Config.pathTowns) ) {
                 Deserializer.townsFromJson(Config.pathTowns)
 
                 // pre-generate initial json strings for all world objects
@@ -280,7 +362,7 @@ public object Nodes {
         return true
     }
 
-    public fun copyWorldtoDynmap() {
+    internal fun copyWorldtoDynmap() {
         // copy towns to dynmap folder
         if ( Nodes.dynmap || Config.dynmapCopyTowns ) {
             Bukkit.getScheduler().runTaskAsynchronously(Nodes.plugin!!, Nodes.dynmapWriteTask)
@@ -289,7 +371,7 @@ public object Nodes {
 
     // asynchronous file save of town.json
     // (world.json not saved, that's read only)
-    public fun saveWorld(checkIfNeedsSave: Boolean = true) {
+    internal fun saveWorld(checkIfNeedsSave: Boolean = true) {
         if ( checkIfNeedsSave == false || Nodes.needsSave == true ) {
 
             // world pre-processing
@@ -318,7 +400,7 @@ public object Nodes {
     // alternative save world method
     // 1. updates individual object JSON strings on main thread (for thread safety)
     // 2. combines into a full json string on async thread
-    public fun saveWorldAsync(checkIfNeedsSave: Boolean = true) {
+    internal fun saveWorldAsync(checkIfNeedsSave: Boolean = true) {
         if ( checkIfNeedsSave == false || Nodes.needsSave == true ) {
 
             // world pre-processing
@@ -366,7 +448,7 @@ public object Nodes {
     // performs synchronous save of the world
     // much slower, but needed on events that cannot
     // use threads (e.g. on plugin shutdown, scheduler cancelled)
-    public fun saveWorldSync(): Boolean {
+    internal fun saveWorldSync(): Boolean {
         // world pre-processing
         Nodes.saveWorldPreprocess()
 
@@ -410,7 +492,7 @@ public object Nodes {
     /**
      * Run backup
      */
-    public fun doBackup() {
+    internal fun doBackup() {
         val pathTowns = Config.pathTowns
         if ( Files.exists(pathTowns) ) {
             val pathBackupDir = Config.pathBackup
@@ -561,40 +643,9 @@ public object Nodes {
     // Resource Node functions
     // ==============================================
 
-    public fun createResourceNode(
-        name: String,
-        icon: String?,
-        income: EnumMap<Material, Double>,
-        incomeSpawnEgg: EnumMap<EntityType, Double>,
-        ores: EnumMap<Material, OreDeposit>,
-        crops: EnumMap<Material, Double>,
-        animals: EnumMap<EntityType, Double>,
-        costConstant: Int,
-        costScale: Double
-    ) {
-        if ( !Nodes.resourceNodes.containsKey(name) ) {
-            Nodes.resourceNodes.put(name, ResourceNode(name, icon, income, incomeSpawnEgg, ores, crops, animals, costConstant, costScale))
-        }
-    }
-
     // return number of resource node types
     public fun getResourceNodeCount(): Int {
         return Nodes.resourceNodes.size
-    }
-
-    // forces re-render of online player minimaps
-    public fun renderMinimaps() {
-        for ( player in Bukkit.getOnlinePlayers() ) {
-            val resident = Nodes.getResident(player)
-            if ( resident?.minimap != null ) {
-                // get current location coord
-                val loc = player.getLocation()
-                val coordX = kotlin.math.floor(loc.x).toInt()
-                val coordZ = kotlin.math.floor(loc.z).toInt()
-                val coord = Coord.fromBlockCoords(coordX, coordZ)
-                resident.updateMinimap(coord)
-            }
-        }
     }
 
     // ==============================================
@@ -613,77 +664,10 @@ public object Nodes {
     // Territory functions
     // ==============================================
 
-    // create new territory
-    // id: identifier of territory (unique)
-    // core: chunk coordinate "core" of territory to capture during war
-    // chunks: array of chunks in territory
-    // resourceNodes: array of string names of resource nodes
-    public fun createTerritory(
-        id: Int,
-        name: String,
-        color: Int,
-        core: Coord,
-        chunks: ArrayList<Coord>,
-        bordersWilderness: Boolean,
-        neighbors: IntArray,
-        resourceNodes: ArrayList<String>
-    ) {
-
-        // ensure coreChunk inside chunks
-        if ( !chunks.contains(core) ) {
-            System.err.println("[Nodes] Territory chunks does not contain core")
-            return
-        }
-
-        // calculate net resources by combining resource nodes
-        // use a local temporary resource node for merging
-        // use globalResources as baseline resources
-        val territoryResources = Config.globalResources.clone()
-
-        resourceNodes.forEach { type -> 
-            Nodes.resourceNodes.get(type)?.let { resource ->
-                territoryResources.merge(resource)
-            }
-        }
-
-        // create OreSampler from ores map
-        val oresAsArray = ArrayList(territoryResources.ores.values)
-        val ores = OreSampler(oresAsArray)
-
-        // calculate territory cost
-        val cost = Nodes.calculateTerritoryCost(chunks.size, resourceNodes)
-        
-        // create territory
-        val territory = Territory(
-            TerritoryId(id),
-            name,
-            color,
-            core,
-            chunks,
-            bordersWilderness,
-            TerritoryIdArray(neighbors),
-            resourceNodes,
-            territoryResources.income,
-            territoryResources.incomeSpawnEgg,
-            ores,
-            territoryResources.crops,
-            territoryResources.animals,
-            cost,
-        )
-        
-        // set territory
-        Nodes.territories.put(TerritoryId(id), territory)
-
-        // create territory chunks in world grid and map to territory
-        chunks.forEach { c -> 
-            Nodes.territoryChunks.put(c, TerritoryChunk(c, territory))
-        }
-    }
-
     // calculate territory cost from:
     // 1. territory size in chunks
     // 2. list of resource names
-    public fun calculateTerritoryCost(size: Int, resourceNodes: ArrayList<String>): Int {
+    public fun calculateTerritoryCost(size: Int, resourceNodes: List<String>): Int {
         // initialize with global cost rates
         var costConstant = Config.territoryCostBase
         var costScale = Config.territoryCostScale
@@ -941,6 +925,21 @@ public object Nodes {
         }
     }
 
+    // forces re-render of online player minimaps
+    public fun renderMinimaps() {
+        for ( player in Bukkit.getOnlinePlayers() ) {
+            val resident = Nodes.getResident(player)
+            if ( resident?.minimap != null ) {
+                // get current location coord
+                val loc = player.getLocation()
+                val coordX = kotlin.math.floor(loc.x).toInt()
+                val coordZ = kotlin.math.floor(loc.z).toInt()
+                val coord = Coord.fromBlockCoords(coordX, coordZ)
+                resident.updateMinimap(coord)
+            }
+        }
+    }
+    
     // ==============================================
     // Town functions
     // ==============================================

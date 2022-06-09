@@ -2032,7 +2032,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
     // TODO: add optional path name for world data to load?
     private fun loadWorld(sender: CommandSender) {
         Message.print(sender, "[Nodes] Loading world")
-        Nodes.loadWorld(Config.pathPlugin)
+        Nodes.loadWorld()
     }
 
     // =============================================================
