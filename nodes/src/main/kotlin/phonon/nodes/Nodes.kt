@@ -244,11 +244,17 @@ public object Nodes {
                 terrResourceGraph[t.id] = resources.fold(Config.globalResources.copy(), { terr, r -> r.apply(terr) })
             }
 
-            // TODO: apply neighboring territory modifier properties
-            for ( t in territoryStructures ) {
-                for ( neighborId in t.neighbors ) {
-                    // TODO
-                    // terrResourceGraph[t.id] = t.applyNeighborModifiers(terrResourceGraph[neighborId]!!)
+            // apply neighboring territory modifier properties
+            for ( terr in territoryStructures ) {
+                val terrResources = terrResourceGraph[terr.id]
+                if ( terrResources != null ) {
+                    var terrAfterNeighborModifiers: TerritoryResources = terrResources // required assignment to ensure terrAfterNeighborModifiers is not null 
+                    for ( neighborId in terr.neighbors ) {
+                        terrResourceGraph[neighborId]?.let { neighborResources ->
+                            terrAfterNeighborModifiers = terrAfterNeighborModifiers.applyNeighborModifiers(neighborResources)
+                        }
+                    }
+                    terrResourceGraph[terr.id] = terrAfterNeighborModifiers
                 }
             }
 

@@ -21,6 +21,12 @@
     to build supply networks to gather resources from their territories.
     Adds rp/territory management, potentially cancer to manage tho.
     So configurable setting.
+-   Add guard to disable world interactions if nodes fails to load
+    world. If nodes fails to load territories or towns, then
+    the system world protections will be disabled, giving window
+    for players to modifier protected areas. Add guard event listener
+    that disables world interaction if any error occurs during
+    nodes world loading.
 -   Overhaul node resources to be an "Attributes"-style system.
     Resources are just "attribute" modifiers on a territory. This can be
     both resources (ore, farm rate, etc.), multipliers (e.g. Tiers, 1.2x resource),

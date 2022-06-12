@@ -175,14 +175,161 @@ data class TerritoryStructure(
  * before compiling into a final immutable Territory.
  */
 data class TerritoryResources(
+    // core properties
     val income: EnumMap<Material, Double> = EnumMap<Material, Double>(Material::class.java),
     val incomeSpawnEgg: EnumMap<EntityType, Double> = EnumMap<EntityType, Double>(EntityType::class.java),
     val ores: EnumMap<Material, OreDeposit> = EnumMap<Material, OreDeposit>(Material::class.java),
     val crops: EnumMap<Material, Double> = EnumMap<Material, Double>(Material::class.java),
     val animals: EnumMap<EntityType, Double> = EnumMap<EntityType, Double>(EntityType::class.java),
     val customProperties: HashMap<String, Any> = HashMap(0),
+    // neighbor modifiers
+    val neighborIncome: EnumMap<Material, Double>? = null,
+    val neighborIncomeSpawnEgg: EnumMap<EntityType, Double>? = null,
+    val neighborOres: EnumMap<Material, OreDeposit>? = null,
+    val neighborCrops: EnumMap<Material, Double>? = null,
+    val neighborAnimals: EnumMap<EntityType, Double>? = null,
+    val neighborTotalIncomeMultiplier: Double? = null,
+    val neighborTotalOresMultiplier: Double? = null,
+    val neighborTotalCropsMultiplier: Double? = null,
+    val neighborTotalAnimalsMultiplier: Double? = null,
+    val neighborIncomeMultiplier: EnumMap<Material, Double>? = null,
+    val neighborIncomeSpawnEggMultiplier: EnumMap<EntityType, Double>? = null,
+    val neighborOresMultiplier: EnumMap<Material, Double>? = null,
+    val neighborCropsMultiplier: EnumMap<Material, Double>? = null,
+    val neighborAnimalsMultiplier: EnumMap<EntityType, Double>? = null,
 ) {
+    // flag that this resource contains a non-null neighbor modifier.
+    // this is used to avoid unnecessarily running `applyNeighborModifiers`
+    // on a TerritoryResources for all its neighbors, since most neighbors
+    // will not contain any neighbor modifiers.
+    val hasNeighborModifier: Boolean = (
+        neighborIncome != null ||
+        neighborIncomeSpawnEgg != null ||
+        neighborOres != null ||
+        neighborCrops != null ||
+        neighborAnimals != null ||
+        neighborTotalIncomeMultiplier != null ||
+        neighborTotalOresMultiplier != null ||
+        neighborTotalCropsMultiplier != null ||
+        neighborTotalAnimalsMultiplier != null ||
+        neighborIncomeMultiplier != null ||
+        neighborIncomeSpawnEggMultiplier != null ||
+        neighborOresMultiplier != null ||
+        neighborCropsMultiplier != null ||
+        neighborAnimalsMultiplier != null
+    )
 
+    /**
+     * Returns a new TerritoryResources with neighbor
+     * TerritoryResources object's neighbor modifiers applied
+     * onto this object's resource properties. 
+     */
+    public fun applyNeighborModifiers(neighbor: TerritoryResources): TerritoryResources {
+        val newIncome = this.income.clone()
+        val newIncomeSpawnEgg = this.incomeSpawnEgg.clone()
+        val newOres = this.ores.clone()
+        val newCrops = this.crops.clone()
+        val newAnimals = this.animals.clone()
+        
+        // income direct addition
+        neighbor.neighborIncome?.forEach { (type, amount) ->
+            newIncome[type] = newIncome.getOrDefault(type, 0.0) + amount
+        }
+        neighbor.neighborIncomeSpawnEgg?.forEach { (type, amount) ->
+            newIncomeSpawnEgg[type] = newIncomeSpawnEgg.getOrDefault(type, 0.0) + amount
+        }
+        // income multiplier
+        neighbor.neighborTotalIncomeMultiplier?.let { multiplier ->
+            newIncome.forEach { (type, value) ->
+                newIncome[type] = value * multiplier
+            }
+            newIncomeSpawnEgg.forEach { (type, value) ->
+                newIncomeSpawnEgg[type] = value * multiplier
+            }
+        }
+        neighbor.neighborIncomeMultiplier?.let { multipliers ->
+            multipliers.forEach { (type, multiplier) ->
+                if ( newIncome.containsKey(type) ) {
+                    newIncome[type] = newIncome[type]!! * multiplier
+                }
+            }
+        }
+        neighbor.neighborIncomeSpawnEggMultiplier?.let { multipliers ->
+            multipliers.forEach { (type, multiplier) ->
+                if ( newIncomeSpawnEgg.containsKey(type) ) {
+                    newIncomeSpawnEgg[type] = newIncomeSpawnEgg[type]!! * multiplier
+                }
+            }
+        }
+
+        // ore direct addition
+        neighbor.neighborOres?.forEach { (type, ore) ->
+            if ( newOres.containsKey(type) ) {
+                val oreDeposit = newOres[type]!!
+                newOres[type] = oreDeposit.copy(dropChance = oreDeposit.dropChance + ore.dropChance)
+            } else {
+                newOres[type] = ore.copy()
+            }
+        }
+        // ores multiplier
+        neighbor.neighborTotalOresMultiplier?.let { multiplier ->
+            newOres.forEach { (type, oreDeposit) ->
+                newOres[type] = oreDeposit.copy(dropChance = oreDeposit.dropChance * multiplier)
+            }
+        }
+        neighbor.neighborOresMultiplier?.let { multipliers ->
+            multipliers.forEach { (type, multiplier) ->
+                if ( newOres.containsKey(type) ) {
+                    val oreDeposit = newOres[type]!!
+                    newOres[type] = oreDeposit.copy(dropChance = oreDeposit.dropChance * multiplier)
+                }
+            }
+        }
+
+        // crops direct addition
+        neighbor.neighborCrops?.forEach { (type, amount) ->
+            newCrops[type] = newCrops.getOrDefault(type, 0.0) + amount
+        }
+        // crops multiplier
+        neighbor.neighborTotalCropsMultiplier?.let { multiplier ->
+            newCrops.forEach { (type, value) ->
+                newCrops[type] = value * multiplier
+            }
+        }
+        neighbor.neighborCropsMultiplier?.let { multipliers ->
+            multipliers.forEach { (type, multiplier) ->
+                if ( newCrops.containsKey(type) ) {
+                    newCrops[type] = newCrops[type]!! * multiplier
+                }
+            }
+        }
+
+        // animals direct addition
+        neighbor.neighborAnimals?.forEach { (type, amount) ->
+            newAnimals[type] = newAnimals.getOrDefault(type, 0.0) + amount
+        }
+        // animals multiplier
+        neighbor.neighborTotalAnimalsMultiplier?.let { multiplier ->
+            newAnimals.forEach { (type, value) ->
+                newAnimals[type] = value * multiplier
+            }
+        }
+        neighbor.neighborAnimalsMultiplier?.let { multipliers ->
+            multipliers.forEach { (type, multiplier) ->
+                if ( newAnimals.containsKey(type) ) {
+                    newAnimals[type] = newAnimals[type]!! * multiplier
+                }
+            }
+        }
+
+        return this.copy(
+            income = newIncome,
+            incomeSpawnEgg = newIncomeSpawnEgg,
+            ores = newOres,
+            crops = newCrops,
+            animals = newAnimals,
+        )
+    }
 }
 
 /**
