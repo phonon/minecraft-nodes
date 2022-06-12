@@ -14,7 +14,6 @@
 
 
 # Nodes
--   Add node tiers with configurable resource boost.
 -   Fix moving stuff back into town nodes income inventory
 -   Consider attaching node income into income chests/inventories on
     territories instead of global town income storage. Force players
@@ -27,14 +26,6 @@
     for players to modifier protected areas. Add guard event listener
     that disables world interaction if any error occurs during
     nodes world loading.
--   Overhaul node resources to be an "Attributes"-style system.
-    Resources are just "attribute" modifiers on a territory. This can be
-    both resources (ore, farm rate, etc.), multipliers (e.g. Tiers, 1.2x resource),
-    and markers (modifier with no effect). These must be sorted by a priority
-    parameter so map designers have control over multiplier modifiers.
-    This makes resources system more flexible to allow other modifiers
-    like "Tiers" (resource multipliers) or "Refinery" marker resources,
-    without hard-coding behavior into the Territory itself.
 
 # Minimap
 -   Port indicator on chunk. Would require a minimap api though since ports
