@@ -74,7 +74,7 @@ value class TerritoryIdArray(private val ids: IntArray) {
  * from resource node names attached to the territory) to build the
  * final "compiled" Territory.
  */
-data class TerritoryStructure(
+data class TerritoryPreprocessing(
     val id: TerritoryId,
     val name: String,
     val color: Int,
@@ -90,16 +90,15 @@ data class TerritoryStructure(
          * If `ids` list is specified, only load those ids (if they exist).
          * Otherwise, load all ids.
          */
-        public fun loadFromJson(json: JsonObject, ids: List<Int>? = null): List<TerritoryStructure> {
+        public fun loadFromJson(json: JsonObject, ids: List<TerritoryId>? = null): List<TerritoryPreprocessing> {
             val idStrings = if ( ids != null ) {
-                ids.asSequence()
-                    .map{ id -> id.toString() }
+                ids.asSequence().map{ id -> id.toInt().toString() }
             } else {
                 json.keySet().asSequence()
             }
 
             val territories = idStrings
-                .map { id -> TerritoryStructure.fromJson(id.toInt(), json[id].getAsJsonObject()) }
+                .map { id -> TerritoryPreprocessing.fromJson(id.toInt(), json[id].getAsJsonObject()) }
                 .toList()
             
             return territories
@@ -109,7 +108,7 @@ data class TerritoryStructure(
          * Load a single territory structure from world json object.
          * Note this will cause error if json is invalid.
          */
-        public fun fromJson(id: Int, json: JsonObject): TerritoryStructure {
+        public fun fromJson(id: Int, json: JsonObject): TerritoryPreprocessing {
             // territory name
             val name: String = json.get("name")?.getAsString() ?: "";
 
@@ -155,7 +154,7 @@ data class TerritoryStructure(
             // flag that territory borders wilderness (regions without any territories)
             val bordersWilderness: Boolean = json.get("isEdge")?.getAsBoolean() ?: false
 
-            return TerritoryStructure(
+            return TerritoryPreprocessing(
                 TerritoryId(id),
                 name,
                 color,
@@ -375,6 +374,22 @@ data class Territory(
     // id is forced to be unique by system
     override public fun hashCode(): Int {
         return this.id.toInt()
+    }
+
+    // Returns territory structural properties (chunks, id, neighbors, etc.)
+    // as a TerritoryPreprocessing object. Used when rebuilding territories
+    // in territory hot reloading.
+    public fun toPreprocessing(): TerritoryPreprocessing {
+        return TerritoryPreprocessing(
+            id = this.id,
+            name = this.name,
+            color = this.color,
+            core = this.core,
+            chunks = this.chunks,
+            bordersWilderness = this.bordersWilderness,
+            neighbors = this.neighbors,
+            resourceNodes = this.resourceNodes,
+        )
     }
 
     // print territory info

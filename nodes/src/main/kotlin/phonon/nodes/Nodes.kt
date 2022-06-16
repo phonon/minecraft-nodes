@@ -19,6 +19,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel
 import java.nio.file.StandardCopyOption
 import java.util.logging.Logger
+import com.google.gson.JsonObject
 import org.bukkit.plugin.Plugin
 import org.bukkit.event.HandlerList
 import org.bukkit.entity.Player
@@ -221,93 +222,216 @@ public object Nodes {
         saveStringToFile(currTimeString, Config.pathLastIncomeTime)
     }
 
-    internal fun loadTerritories(pathWorld: Path) {
-        val (jsonResources, jsonTerritories) = Deserializer.worldFromJson(Config.pathWorld)
+    /**
+     * Load resource nodes from json files and insert them into
+     * the global `Nodes.resourceNodes` map.
+     */
+    internal fun loadResources(json: JsonObject) {
+        // TODO: generalize to multipler loaders
+        Nodes.resourceNodes.putAll(DefaultResourceAttributeLoader.load(HashMap(0), json))
+    }
 
-        if ( jsonResources !== null ) {
-            // TODO: generalize to multiple loaders
-            Nodes.resourceNodes.putAll(DefaultResourceAttributeLoader.load(HashMap(0), jsonResources))
-        }
+    /**
+     * Load territories from json and insert into the global
+     * `Nodes.territories` map. Raises exceptions if any territory ids
+     * do not exist.
+     */
+    internal fun loadTerritories(json: JsonObject, ids: List<TerritoryId>? = null) {
+        val territoryPreprocessing: List<TerritoryPreprocessing> = TerritoryPreprocessing.loadFromJson(json, ids)
+        
+        // first create intermediary resource graph before creating
+        // final compiled territories.
+        // - if ids == null, we are re-creating all territories, so this
+        // will be populated with resources from all territories
+        // - if ids != null, we are re-creating only a subset of territories,
+        // so we need to also pre-populate this with resources from existing
+        // territory neighbors AND NEIGHBOR's NEIGHBORS. This is because we cannot
+        // know if neighbor's neighbors also have neighbor modifiers, so this
+        // must pre-emptively load neighbor's neighbors resources.
+        val terrResourceGraph: HashMap<TerritoryId, TerritoryResources> = HashMap(0)
 
-        if ( jsonTerritories !== null ) {
-            val territoryStructures: List<TerritoryStructure> = TerritoryStructure.loadFromJson(jsonTerritories)
-            
-            // first create intermediary resource graph before creating
-            // final compiled territories
-            val terrResourceGraph: HashMap<TerritoryId, TerritoryResources> = HashMap(0)
+        if ( ids != null ) { // add neighbor territories to terrResourceGraph
+            val neighborResourcesToLoad = HashSet<TerritoryId>()
 
-            for ( t in territoryStructures ) {
-                val resources = t.resourceNodes
-                    .map { name -> Nodes.resourceNodes[name]!! }
-                    .sortedBy { r -> r.priority }
-                
-                terrResourceGraph[t.id] = resources.fold(Config.globalResources.copy(), { terr, r -> r.apply(terr) })
+            for ( id in ids ) {
+                val currTerr = Nodes.territories[id]
+                if ( currTerr != null ) {
+                    // add neighbor territory resources into territory resource graph
+                    for ( neighborId in currTerr.neighbors ) {
+                        val neighborTerr = Nodes.territories[neighborId]
+                        if ( neighborTerr != null ) {
+                            neighborResourcesToLoad.add(neighborId)
+                            // also add neighbor's neighbor ids
+                            for ( nnId in neighborTerr.neighbors ) {
+                                neighborResourcesToLoad.add(nnId)
+                            }
+                        } else {
+                            Nodes.logger!!.warning("`loadTerritories()` Territory ${id} neighbor ${neighborId} does not exist")
+                        }
+                    }
+                } else {
+                    Nodes.logger!!.warning("`loadTerritories()` reloading territory ${id} does not exist")
+                }
             }
 
-            // apply neighboring territory modifier properties
-            for ( terr in territoryStructures ) {
-                val terrResources = terrResourceGraph[terr.id]
-                if ( terrResources != null ) {
-                    var terrAfterNeighborModifiers: TerritoryResources = terrResources // required assignment to ensure terrAfterNeighborModifiers is not null 
+            for ( id in neighborResourcesToLoad ) {
+                val neighborTerr = Nodes.territories[id]
+                if ( neighborTerr != null ) {
+                    val resources = neighborTerr.resourceNodes
+                        .map { name -> Nodes.resourceNodes[name]!! }
+                        .sortedBy { r -> r.priority }
+                    
+                    terrResourceGraph[id] = resources.fold(Config.globalResources.copy(), { terr, r -> r.apply(terr) })
+                } else {
+                    Nodes.logger!!.warning("`loadTerritories()` neighbor territory ${id} does not exist")
+                }
+            }
+        }
+
+        // adds territories to be loaded to terrResourceGraph
+        for ( terr in territoryPreprocessing ) {
+            val resources = terr.resourceNodes
+                .map { name -> Nodes.resourceNodes[name]!! }
+                .sortedBy { r -> r.priority }
+            
+            terrResourceGraph[terr.id] = resources.fold(Config.globalResources.copy(), { tr, r -> r.apply(tr) })
+        }
+
+        // Determine final territories to be built.
+        // If ids == null, then all territories in preprocessing phase are built.
+        // If ids != null, then all territories in preprocessing AND
+        //    their neighbors IF territory has neighbor modifiers.
+        val territoriesToBuild: List<TerritoryPreprocessing> = if ( ids == null ) {
+            territoryPreprocessing
+        } else {
+            val neighborIdsToRebuild = HashSet<TerritoryId>()
+            for ( terr in territoryPreprocessing ) {
+                if ( terrResourceGraph[terr.id]!!.hasNeighborModifier ) {
                     for ( neighborId in terr.neighbors ) {
-                        terrResourceGraph[neighborId]?.let { neighborResources ->
+                        neighborIdsToRebuild.add(neighborId)
+                    }
+                }
+            }
+
+            // remove main reloaded territory ids to avoid double-counting
+            for ( terr in territoryPreprocessing ) {
+                neighborIdsToRebuild.remove(terr.id)
+            }
+
+            val terrNeighborsToRebuild = neighborIdsToRebuild
+                .map { id -> Nodes.territories.get(id)?.toPreprocessing() }
+                .filterNotNull()
+
+            territoryPreprocessing + terrNeighborsToRebuild
+        }
+
+        // Apply neighboring territory modifier properties to territories to be built
+        for ( terr in territoriesToBuild ) {
+            val terrResources = terrResourceGraph[terr.id]
+            if ( terrResources != null ) {
+                var terrAfterNeighborModifiers: TerritoryResources = terrResources // required assignment to ensure terrAfterNeighborModifiers is not null 
+                for ( neighborId in terr.neighbors ) {
+                    terrResourceGraph[neighborId]?.let { neighborResources ->
+                        if ( neighborResources.hasNeighborModifier ) {
                             terrAfterNeighborModifiers = terrAfterNeighborModifiers.applyNeighborModifiers(neighborResources)
                         }
                     }
-                    terrResourceGraph[terr.id] = terrAfterNeighborModifiers
                 }
+                terrResourceGraph[terr.id] = terrAfterNeighborModifiers
+            } else {
+                Nodes.logger?.warning("`loadTerritories()` Invalid territory id: ${terr.id}")
+            }
+        }
+
+        // merge territory structural properties and resources
+        // to create final territory
+        for ( t in territoriesToBuild ) {
+            // ensure coreChunk inside chunks
+            if ( !t.chunks.contains(t.core) ) {
+                Nodes.logger?.warning("[Nodes] Territory ${t.id} chunk does not contain core")
+                return
             }
 
-            // merge territory structure properties and resources
-            // to create final territory
-            for ( t in territoryStructures ) {
-                // ensure coreChunk inside chunks
-                if ( !t.chunks.contains(t.core) ) {
-                    Nodes.logger?.warning("[Nodes] Territory ${t.id} chunk does not contain core")
-                    return
-                }
+            val resources = terrResourceGraph[t.id]!!
 
-                val resources = terrResourceGraph[t.id]!!
+            // sorted resource names
+            val resourceNamesSorted = t.resourceNodes.sortedBy { name -> Nodes.resourceNodes[name]!!.priority }
 
-                // sorted resource names
-                val resourceNamesSorted = t.resourceNodes.sortedBy { name -> Nodes.resourceNodes[name]!!.priority }
+            // create OreSampler from ores map
+            val ores = OreSampler(ArrayList(resources.ores.values))
 
-                // create OreSampler from ores map
-                val ores = OreSampler(ArrayList(resources.ores.values))
+            // calculate territory cost
+            val cost = Nodes.calculateTerritoryCost(t.chunks.size, resourceNamesSorted)
+            
+            // create territory
+            val territory = Territory(
+                id = t.id,
+                name = t.name,
+                color = t.color,
+                core = t.core,
+                chunks = t.chunks,
+                bordersWilderness = t.bordersWilderness,
+                neighbors = t.neighbors,
+                resourceNodes = resourceNamesSorted,
+                cost = cost,
+                income = resources.income,
+                incomeSpawnEgg = resources.incomeSpawnEgg,
+                ores = ores,
+                crops = resources.crops,
+                animals = resources.animals,
+                customProperties = resources.customProperties,
+            )
+            
+            // if previous territory existed, first do cleanup
+            Nodes.territories[t.id]?.let { oldTerritory ->
+                // remove old territory chunks
+                oldTerritory.chunks.forEach { c -> Nodes.territoryChunks.remove(c) }
+            }
+            
+            // set territory
+            Nodes.territories.put(t.id, territory)
 
-                // calculate territory cost
-                val cost = Nodes.calculateTerritoryCost(t.chunks.size, resourceNamesSorted)
-                
-                // create territory
-                val territory = Territory(
-                    id = t.id,
-                    name = t.name,
-                    color = t.color,
-                    core = t.core,
-                    chunks = t.chunks,
-                    bordersWilderness = t.bordersWilderness,
-                    neighbors = t.neighbors,
-                    resourceNodes = resourceNamesSorted,
-                    cost = cost,
-                    income = resources.income,
-                    incomeSpawnEgg = resources.incomeSpawnEgg,
-                    ores = ores,
-                    crops = resources.crops,
-                    animals = resources.animals,
-                    customProperties = resources.customProperties,
-                )
-                
-                // set territory
-                Nodes.territories.put(t.id, territory)
-
-                // create territory chunks in world grid and map to territory
-                t.chunks.forEach { c -> 
-                    Nodes.territoryChunks.put(c, TerritoryChunk(c, territory))
-                }
+            // create territory chunks in world grid and map to territory
+            t.chunks.forEach { c -> 
+                Nodes.territoryChunks.put(c, TerritoryChunk(c, territory))
             }
         }
     }
 
+    /**
+     * Wrapper for reloading resources or territories.
+     * Returns boolean if reload was successful.
+     */
+    internal fun reloadWorldJson(
+        reloadResources: Boolean,
+        reloadTerritories: Boolean,
+        territoryIds: List<TerritoryId>? = null,
+    ): Boolean {
+        if ( Files.exists(Config.pathWorld) ) {
+            val (jsonResources, jsonTerritories) = Deserializer.worldFromJson(Config.pathWorld)
+
+            // if resources are reloaded, ALL territories must be updated (ignore ids input)
+            if ( reloadResources && jsonResources != null ) {
+                Nodes.loadResources(jsonResources)
+                if ( jsonTerritories != null ) Nodes.loadTerritories(jsonTerritories)
+            }
+            // just reload territories specified
+            else if ( reloadTerritories && jsonTerritories != null ) {
+                Nodes.loadTerritories(jsonTerritories, territoryIds)
+            }
+
+            // no errors happened: copy world.json to dynmap folder
+            if ( Nodes.dynmap == true || Config.dynmapCopyTowns ) {
+                Files.createDirectories(Nodes.DYNMAP_DIR)
+                Files.copy(Config.pathWorld, Nodes.DYNMAP_PATH_WORLD, StandardCopyOption.REPLACE_EXISTING)    
+            }
+            
+            return true
+        }
+
+        return false
+    }
+    
     // load world from path
     // returns status of world load:
     // true - successful load
@@ -323,7 +447,9 @@ public object Nodes {
         
         // load world from JSON storage
         if ( Files.exists(Config.pathWorld) ) {
-            Nodes.loadTerritories(Config.pathWorld)
+            val (jsonResources, jsonTerritories) = Deserializer.worldFromJson(Config.pathWorld)
+            if ( jsonResources != null ) Nodes.loadResources(jsonResources)
+            if ( jsonTerritories != null ) Nodes.loadTerritories(jsonTerritories)
             
             // load world.json to dynmap folder
             if ( Nodes.dynmap == true || Config.dynmapCopyTowns ) {

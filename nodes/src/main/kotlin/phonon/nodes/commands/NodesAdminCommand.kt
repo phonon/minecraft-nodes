@@ -57,7 +57,8 @@ private val SUBCOMMANDS: List<String> = listOf(
 private val RELOAD_SUBCOMMANDS: List<String> = listOf(
     "config",
     "managers",
-    "world"
+    "resources",
+    "territory",
 )
 
 // war subcommands
@@ -66,12 +67,12 @@ private val WAR_SUBCOMMANDS: List<String> = listOf(
     "skirmish",
     "disable",
     "whitelist",
-    "blacklist"
+    "blacklist",
 )
 
 // resident/player subcommands
 private val RESIDENT_SUBCOMMANDS: List<String> = listOf(
-    "towncooldown"
+    "towncooldown",
 )
 
 // town subcommands
@@ -98,7 +99,7 @@ private val TOWN_SUBCOMMANDS: List<String> = listOf(
     "sethome",
     "sethomecooldown",
     "addoutpost",
-    "removeoutpost"
+    "removeoutpost",
 )
 
 // nation subcommands
@@ -391,6 +392,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
 
     private fun printHelp(sender: CommandSender) {
         Message.print(sender, "[Nodes] Admin commands:")
+        Message.print(sender, "/nodesadmin reload${ChatColor.WHITE}: Reloads modules of plugin")
         Message.print(sender, "/nodesadmin war${ChatColor.WHITE}: Enable/disable war")
         Message.print(sender, "/nodesadmin town${ChatColor.WHITE}: Manage towns (see \"/nodesadmin town help\")")
         Message.print(sender, "/nodesadmin nation${ChatColor.WHITE}: Manage nations (see \"/nodesadmin nation help\")")
@@ -408,13 +410,13 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
     }
 
     /**
-     * @command /nodesadmin reload [config|listeners|world]
+     * @command /nodesadmin reload [config|managers|territory]
      * Reload components of Nodes engine
      */
     private fun reload(sender: CommandSender, args: Array<String>) {
         // print general war state
         if ( args.size < 2 ) {
-            Message.print(sender, "Reload possibilities: \"/nodesadmin reload [config|managers|world]\"")
+            Message.print(sender, "Reload possibilities: \"/nodesadmin reload [config|managers|resources|territory]\"")
             return
         }
 
@@ -427,11 +429,66 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
             Nodes.reloadManagers()
             Message.print(sender, "[Nodes] reloaded manager tasks")
         }
-        else if ( subcommand == "world" ) {
-            Message.error(sender, "Reload world is TODO")
+        else if ( subcommand == "resources" ) {
+            val success = Nodes.reloadWorldJson(
+                reloadResources = true,
+                reloadTerritories = false,
+            )
+            if ( success ) {
+                Message.print(sender, "[Nodes] reloaded resources and territories")
+            } else {
+                Message.error(sender, "[Nodes] failed to reload resources and territories")
+            }
+        }
+        else if ( subcommand == "territory" ) {
+            // parse territory ids
+            if ( args.size < 3 ) {
+                Message.print(sender, "Usage: \"/nodesadmin reload territory *\"${ChatColor.WHITE}: reloads ALL territories")
+                Message.print(sender, "Usage: \"/nodesadmin reload territory id1 id2 id3 ...\"${ChatColor.WHITE}: reloads specific ids")
+                return
+            }
+
+            val terrIds: List<TerritoryId>? = if ( args[2] == "*" ) { // reload ALL territories (don't specify ids)
+                null
+            } else { // load specific ids: parse from chat input
+                val ids = HashSet<TerritoryId>()
+                
+                // validate id exists in territories (don't allow reloading NEW territories,
+                // since this can cause issues and instability if ids/neighbors are changing)
+                for ( i in 2 until args.size ) {
+                    try {
+                        val id = TerritoryId(args[i].toInt())
+                        val terr = Nodes.getTerritoryFromId(id)
+                        if ( terr == null ) {
+                            Message.error(sender, "Territory id \"${id}\" does not exist. This can only reload existing territories.")
+                            return
+                        }
+                        ids.add(id)
+                    } catch ( err: Exception ) {
+                        Message.error(sender, "Invalid id: \"${args[i]}\"")
+                        return
+                    }
+                }
+
+                ids.toList()
+            }
+
+            val success = Nodes.reloadWorldJson(
+                reloadResources = false,
+                reloadTerritories = true,
+                territoryIds = terrIds,
+            )
+
+            val terrIdsString = terrIds?.let { ids -> "territories ${ids}" } ?: "all territories"
+
+            if ( success ) {
+                Message.print(sender, "[Nodes] reloaded ${terrIdsString}")
+            } else {
+                Message.error(sender, "[Nodes] failed to reload ${terrIdsString}")
+            }
         }
         else {
-            Message.print(sender, "Reload possibilities: \"/nodesadmin reload [config|managers|world]\"")
+            Message.print(sender, "Reload possibilities: \"/nodesadmin reload [config|managers|resources|territory]\"")
         }
     }
 
