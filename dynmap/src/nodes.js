@@ -27,10 +27,11 @@ const createNewNode = (name) => {
 	return {
 		name: name,
 		icon: null,
-		cost:{
+		cost: {
 			scale: 1.0,
 			constant: 0,
 		},
+		priority: 0,
 	};
 };
 
@@ -1506,8 +1507,28 @@ const Nodes = {
 
 	_setNodeData: (name, data) => {
 		if ( Nodes.nodes.has(name) ) {
+			// save old and new resource node cost values, for checking if we need
+			// to re-calculate territory costs
+			const oldCost = Nodes.nodes.get(name).cost;
+			const newCost = data.cost;
+			
+			// update resource node data
 			Object.assign(Nodes.nodes.get(name), data);
 			Nodes.renderEditor();
+			
+			// check if cost changed, if so need to re-render territories with this node
+			if ( oldCost?.scale !== newCost?.scale || oldCost?.constant !== newCost?.constant ) {
+				// find territory ids that have this node, update cost and re-render
+				const ids = [];
+				Nodes.territories.forEach((territory, id) => {
+					if ( territory.nodes.indexOf(name) !== -1 ) {
+						ids.push(id);
+					}
+				});
+				ids.forEach(id => Nodes._calculateTerritoryCost(id));
+				Nodes._updateTerritoryElementIds(ids);
+				Nodes.renderWorld();
+			}
 		}
 	},
 
