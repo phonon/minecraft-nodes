@@ -10,9 +10,6 @@ const webpack = require('webpack');
 
 module.exports = {
 	context: path.resolve(__dirname, '../src'),
-	node: {
-		fs: 'empty'
-	},
 	resolve: {
 		modules: [
 			'node_modules',
@@ -23,22 +20,11 @@ module.exports = {
 	output: {
 		globalObject: 'self'
 	},
+	experiments: {
+		asyncWebAssembly: true,
+	},
 	module: {
 		rules: [
-			{
-				test: /\.js$/,
-				exclude: /node_modules/,
-				use: {
-					loader: 'babel-loader',
-				}
-			},
-			{
-				test: /\.jsx$/,
-				exclude: /node_modules/,
-				use: {
-					loader: 'babel-loader',
-				}
-			},
 			{
 				test: /\.css$/,
 				use: [
@@ -54,7 +40,7 @@ module.exports = {
 						noquotes: true
 					}
 				}
-			}
+			},
 		]
 	},
 	plugins: [
@@ -62,6 +48,5 @@ module.exports = {
 			React: 'react',
 			FileSaver: 'file-saver',
 		})
-	]
-
+	],
 };

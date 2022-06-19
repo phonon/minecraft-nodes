@@ -8,10 +8,6 @@
  * See: https://github.com/rustwasm/wasm-pack
  */
 
-'use strict';
-
-import 'react-hot-loader';
-
 let Nodes = {
 	initialize: function(options, callback) {
 		import('./nodes.js')

@@ -8,17 +8,17 @@
 
 // require polyfill
 import "@babel/polyfill";
-import ReactDOM, { createPortal } from "react-dom";
+import { createRoot } from "react-dom/client";
 
-import {saveAs} from "file-saver";
+import { saveAs } from "file-saver";
 
-import {StripePattern} from "ui/stripe-pattern.jsx";
-import {Editor} from "editor/editor.jsx";
-import {WorldRenderer} from "world/world.jsx";
-import {Territory} from "world/territory.jsx";
-import {Port, PortTooltip} from "world/port.jsx";
+import { StripePattern } from "ui/stripe-pattern.jsx";
+import { Editor } from "editor/editor.jsx";
+import { WorldRenderer } from "world/world.jsx";
+import { Territory } from "world/territory.jsx";
+import { Port, PortTooltip } from "world/port.jsx";
 
-import {World, IndexSampler} from "wasm_main";
+import { World, IndexSampler } from "wasm_main";
 
 /**
  * Constructor for required nodes data (needed by editor)
@@ -95,7 +95,7 @@ const handleWindowMouseUp = (e) => {
 
 const handleMouseDown = (e) => {
 	e.preventDefault();
-	e.stopPropagation();
+	// e.stopPropagation(); // problem: nodes pane is overlaid on top, prevents dragging map
 	
 	if ( e.button === 2 ) { // right click only
 		Nodes._startPaint();
@@ -330,13 +330,16 @@ const Nodes = {
 	dynmap: undefined,
 
 	// hook to custom dynmap overlay pane svg container
-	dynmapSvgContainer: undefined,
+	dynmapSvgContainer: undefined, // dom element
+	dynmapSvgContainerRoot: undefined, // react root
 
 	// editor container
-	editorContainer: undefined,
+	editorContainer: undefined, // dom element
+	editorContainerRoot: undefined, // react root
 
 	// port tooltip container:
-	portTooltipContainer: undefined,
+	portTooltipContainer: undefined, // dom element
+	portTooltipContainerRoot: undefined, // react root
 	
 	// constants
 	RESIDENT_RANK_NONE: 0,    // resident ranks
@@ -408,7 +411,9 @@ const Nodes = {
 
 	initialize: (options, callback) => {
 		Nodes.editorContainer = options.container;
+		Nodes.editorContainerRoot = createRoot(options.container);
 		Nodes.portTooltipContainer = options.portTooltipContainer;
+		Nodes.portTooltipContainerRoot = createRoot(options.portTooltipContainer);
 
 		// world background image config
 		if ( options.backgroundImage !== undefined ) {
@@ -462,8 +467,7 @@ const Nodes = {
 		let layerNodesRenderer = new NodesSvgRenderer(Nodes.setMapTransform, {});
 		layerNodesRenderer.addTo(dynmap.map);
 		Nodes.dynmapSvgContainer = customOverlayPane;
-
-		// dynmap.map.setNodesHook(Nodes.setInitialMapTransform, Nodes.setMapTransform);
+		Nodes.dynmapSvgContainerRoot = createRoot(customOverlayPane);
 
 		// key detect handler
 		// NOTE: does not work for iframe region
@@ -1011,9 +1015,7 @@ const Nodes = {
 			backgroundImageEndY: Nodes.backgroundImageEndY,
 		};
 
-		if ( Nodes.dynmapSvgContainer !== undefined ) {
-			ReactDOM.render(<WorldRenderer {...props}/>, Nodes.dynmapSvgContainer);
-		}
+		Nodes.dynmapSvgContainerRoot?.render(<WorldRenderer {...props}/>);
 	},
 
 	/**
@@ -1074,7 +1076,7 @@ const Nodes = {
 			selectTown: Nodes._selectTown,
 		};
 
-		ReactDOM.render(<Editor {...props}/>, Nodes.editorContainer);
+		Nodes.editorContainerRoot?.render(<Editor {...props}/>);
 	},
 
 	// handler for mouse movement
@@ -2298,7 +2300,7 @@ const Nodes = {
 			clientY: cy,
 			port: port,
 		};
-		ReactDOM.render(<PortTooltip {...props}/>, Nodes.portTooltipContainer);
+		Nodes.portTooltipContainerRoot?.render(<PortTooltip {...props}/>);
 	},
 
 	/**
