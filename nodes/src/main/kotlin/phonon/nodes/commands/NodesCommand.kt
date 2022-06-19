@@ -70,12 +70,6 @@ public class NodesCommand : CommandExecutor, TabCompleter {
     }
 
     override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<String>): List<String> {
-        val player: Player = if ( sender is Player ) {
-            sender
-        } else {
-            return listOf()
-        }
-
         // match subcommand
         if ( args.size == 1 ) {
             return filterByStart(subcommands, args[0])
