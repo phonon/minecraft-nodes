@@ -982,7 +982,13 @@ public object DefaultResourceAttributeLoader: ResourceAttributeLoader {
                 val attributes: ArrayList<ResourceAttribute> = arrayListOf()
                 
                 // icon
-                val icon = node.get("icon")?.getAsString()
+                val icon = node.get("icon")?.let { jsonIcon -> 
+                    if ( jsonIcon.isJsonPrimitive() ) {
+                        jsonIcon.getAsString()
+                    } else {
+                        null
+                    }
+                }
 
                 // cost
                 val costJson = node.get("cost")?.getAsJsonObject()
