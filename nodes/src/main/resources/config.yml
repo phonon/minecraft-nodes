@@ -9,6 +9,10 @@
 # engine settings
 # only adjust if know what doing
 # ===================================
+# disable world when nodes world.json or towns.json fails due to errors
+# (e.g. stops block place/destroy and other world interactions)
+disableWorldWhenLoadFails: true
+
 # save period in ticks
 savePeriod: 600
 

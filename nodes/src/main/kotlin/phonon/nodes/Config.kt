@@ -37,6 +37,9 @@ public object Config {
     public var pathLastBackupTime = Paths.get(pathPlugin, "lastBackupTime.txt").normalize()
     public var pathLastIncomeTime = Paths.get(pathPlugin, "lastIncomeTime.txt").normalize()
     
+    // disable world when nodes world.json or towns.json fails due to errors
+    public var disableWorldWhenLoadFails = true
+
     // period for running world save
     public var savePeriod: Long = 600L
     
@@ -353,6 +356,7 @@ public object Config {
     public fun load(config: FileConfiguration) {
 
         // engine settings
+        Config.disableWorldWhenLoadFails = config.getBoolean("disableWorldWhenLoadFails", Config.disableWorldWhenLoadFails)
         Config.savePeriod = config.getLong("savePeriod", Config.savePeriod)
         Config.backupPeriod = config.getLong("backupPeriod", Config.backupPeriod)
         Config.mainPeriodicTick = config.getLong("mainPeriodicTick", Config.mainPeriodicTick)

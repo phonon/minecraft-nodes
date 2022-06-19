@@ -58,6 +58,35 @@ public class NodesPlugin : JavaPlugin() {
 
         Nodes.war.initialize(Config.flagMaterials)
 
+        // try load world
+        val pluginPath = Config.pathPlugin
+        logger.info("Loading world from: ${pluginPath}")
+        try {
+            if ( Nodes.loadWorld() == true ) { // successful load
+                // print number of resource nodes and territories loaded
+                logger.info("- Resource Nodes: ${Nodes.getResourceNodeCount()}")
+                logger.info("- Territories: ${Nodes.getTerritoryCount()}")
+                logger.info("- Residents: ${Nodes.getResidentCount()}")
+                logger.info("- Towns: ${Nodes.getTownCount()}")
+                logger.info("- Nations: ${Nodes.getNationCount()}")
+            } else {
+                logger.severe("Error loading world: Invalid world file at ${pluginPath}/${Config.pathWorld}")
+                if ( Config.disableWorldWhenLoadFails ) {
+                    logger.severe("Disabling world interactions due to world load error")
+                    pluginManager.registerEvents(DisabledWorldListener(), this)
+                    return
+                }
+            }
+        } catch (err: Exception) {
+            err.printStackTrace()
+            logger.severe("Error loading world: ${err}")
+            if ( Config.disableWorldWhenLoadFails ) {
+                logger.severe("Disabling world interactions due to world load error")
+                pluginManager.registerEvents(DisabledWorldListener(), this)
+                return
+            }
+        }
+
         // register listeners
         pluginManager.registerEvents(NodesBlockGrowListener(), this)
         pluginManager.registerEvents(NodesChatListener(), this)
@@ -100,18 +129,6 @@ public class NodesPlugin : JavaPlugin() {
         this.getCommand("gc")?.setTabCompleter(this.getCommand("globalchat")?.getExecutor() as TabCompleter)
         this.getCommand("p")?.setTabCompleter(this.getCommand("player")?.getExecutor() as TabCompleter)
         
-        // load world
-        val pluginPath = Config.pathPlugin
-        logger.info("Loading world from: ${pluginPath}")
-        if ( Nodes.loadWorld() == true ) { // successful load
-            // print number of resource nodes and territories loaded
-            logger.info("- Resource Nodes: ${Nodes.getResourceNodeCount()}")
-            logger.info("- Territories: ${Nodes.getTerritoryCount()}")
-            logger.info("- Residents: ${Nodes.getResidentCount()}")
-            logger.info("- Towns: ${Nodes.getTownCount()}")
-            logger.info("- Nations: ${Nodes.getNationCount()}")
-        }
-
         // load current income tick
         val currTime = System.currentTimeMillis()
         Nodes.lastBackupTime = loadLongFromFile(Config.pathLastBackupTime) ?: currTime
