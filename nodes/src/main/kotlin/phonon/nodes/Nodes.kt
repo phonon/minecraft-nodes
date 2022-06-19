@@ -278,7 +278,7 @@ public object Nodes {
                 val neighborTerr = Nodes.territories[id]
                 if ( neighborTerr != null ) {
                     val resources = neighborTerr.resourceNodes
-                        .map { name -> Nodes.resourceNodes[name]!! }
+                        .map { name -> Nodes.resourceNodes[name] ?: throw Exception("Resource node '${name}' does not exist (for territory id=${neighborTerr.id})") }
                         .sortedBy { r -> r.priority }
                     
                     terrResourceGraph[id] = resources.fold(Config.globalResources.copy(), { terr, r -> r.apply(terr) })
@@ -291,7 +291,7 @@ public object Nodes {
         // adds territories to be loaded to terrResourceGraph
         for ( terr in territoryPreprocessing ) {
             val resources = terr.resourceNodes
-                .map { name -> Nodes.resourceNodes[name]!! }
+                .map { name -> Nodes.resourceNodes[name] ?: throw Exception("Resource node '${name}' does not exist (for territory id=${terr.id})") }
                 .sortedBy { r -> r.priority }
             
             terrResourceGraph[terr.id] = resources.fold(Config.globalResources.copy(), { tr, r -> r.apply(tr) })
