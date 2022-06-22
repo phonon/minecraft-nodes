@@ -1,22 +1,22 @@
 # Territory + Resource Design Specification
 
-**Date:** 2022-6-4
+**Date:** 2022-6-19
+
 
 ## Territories
 Territories are the core unit in Nodes. These are a group of
 chunks with some "resource" properties attached. Territories
-also form a graph with adjacent territories. Below is a
-simplified high-level example of a territory.
-**This design document specifies how territories and resources
-are defined and loaded into the Nodes world.**
+also form a graph with adjacent territories. Below is a simplified
+high-level example of a territory. **This design document describes
+how territories and resources are loaded and created in the Nodes engine.**
 ```
 Territory {
-    // fixed properties
+    // fixed structural properties
     id: 420,
     chunks: [(x0, z0), (x1, z1), (x2, z2)]
     neighbors: [TerritoryId(69), TerritoryId(9000)]
 
-    // resource-defined properties
+    // resource properties
     resources: ["town", "diamond"]
     income: [DIAMOND],
     crops: [WHEAT, CARROT]
@@ -25,9 +25,6 @@ Territory {
     customProperties: {
         manpower: 5,
     }
-
-    // mutable properties
-    owner: TownId?,
 }
 ```
 
@@ -39,11 +36,6 @@ Territory {
     to avoid territory pointer graph dependencies. This makes it easier
     to swap in / recreate territory objects on the fly (so long as overall
     world territory graph unchanged).
--   Territory fixed properties are immutable properties created in
-    world editor. Resource properties in a territory can be changed by
-    re-compiling a territory with new resources or after resources are
-    modified. Mutable properties are mainly town owner.
-    *(TODO: consider removing all mutable properties.)*
 -   Territory fixed and resource properties should be immutable after
     territory is created. If these need to change, create a new Territory
     object.
@@ -52,56 +44,120 @@ Territory {
 -   External addons can add additional functionality using the
     `customProperties: Map<String, Any>`.
 
-## Resources are groups of "attribute" functions: `A(T) -> T`
-Resources are composed of a list of `ResourceAttribute` interface 
-objects. These are functions applied to a territory to create a
-modified territory (e.g. to add resources, or apply modifiers).
+
+## Territory creation process
+Territory creation/initialization itself can be expensive (due to
+creating potentially expensive data structures during initialization).
+Our goals:
+-   Territory created is immutable
+-   Multiple passes of resource node modification by main plugin
+    and external addon plugins before creating final ResourceNode.
+-   Territory resource graph neighbor-neighbor interactions.
+    (e.g. neighbor bonuses).
 ```
-ResourceAttribute {
-    apply(t: Territory) -> Territory
+           [world.json]
+                |_____________________________________
+                |                                    |
+                v                                    v
+           Territories                           Resources
+              Json                                 Json
+                |____________________                |
+                |                   |                |
+                v                   v                |
+    territoriesToBuild:      territoryResources:     |
+    Map<Id, FixedProperties>  Map<Id, List<String>>  |
+                |                   |           _____v______
+                |                   |           | Default  |
+                |                   |           | Resource |
+                |                   |           |  Loader  |
+                |                   |           |__________|
+                |                   |                |
+                |                   |           _____v______
+                |                   |           | External | (Can be
+                |                   |           | Resource |  multiple
+                |                   |           |  Loaders |  external
+                |                   |           |__________|  loaders)
+                |                   |                |
+                |                   |               ...
+                |                   |                |
+                |                   |                v
+                |                   |   resources: Map<String, ResourceNode>
+                |                   |                |
+                |                   |                |
+                |            _______v_________       |
+                |           | Build Territory |      |
+                |           | Resource Graph  |<-----|
+                |           |_________________|
+                |                   |
+                |                   v
+                |             resourceGraph:
+                |            Map<Id, Resources>
+                |                   |
+                |            _______v_________
+                |           | Graph           | (e.g. neighbor-neighbor
+                |---------->| Message passing |  modifiers)
+                |           |_________________|
+                |                   |
+                |                   v
+                |           finalResourceGraph:
+                |           Map<Id, Resources>
+                |                   |
+                |        ___________v_________________________
+                |       | Combine territory fixed properties | 
+                |------>| and resources and compile          | 
+                        |____________________________________|
+                                    |
+                                    v
+                                territories:
+                             Map<Id, Territory>
+```
+
+
+## Territory Resources Compilation
+
+**Resources are groups of "attribute" functions: `A(T) -> T`**
+
+Resource nodes are composed of a list of `ResourceAttribute` interface 
+objects. These are functions applied to a `TerritoryResources` to create a
+new `TerritoryResources` (e.g. to add resources, or apply modifiers).
+```
+TerritoryResources {
+    income: List<Item>,
+    crops: List<Crop>
+    animals: List<Animal>,
+    ore: List<Item>,
+    customProperties: Map<String, Any>,
 }
 
-Resource {
+ResourceAttribute {
+    apply(t: TerritoryResources) -> TerritoryResources
+}
+
+ResourceNode {
     attributes: List<ResourceAttribute>
     priority: 69
 }
 ```
 
-A single territory's "compilation" process is shown below:
-1.  Start with a blank territory with its fixed world properties.
-2.  Sort territory resources by priority (e.g. so that modifiers like bonus
+A single `TerritoryResources`'s "compilation" process is shown below:
+1.  Start with a blank `TerritoryResources` (or default properties).
+2.  Sort a list of resource nodes by priority (e.g. so that modifiers like bonus
     ore percent is applied after base ore rates are added).
-3.  Foreach resource, foreach attribute, apply the attribute function
-    to the territory. The `Territory.apply` wrapper will enforce that the
-    resource attribute functions do not override territory's fixed world
-    properties.
+3.  Foreach resource node, foreach attribute, apply the attribute function
+    to the `TerritoryResources`.
 ```
-Territory {
-    ...
-
-    apply(attribute: ResourceAttribute) -> Territory {
-        modified = attribute.apply(this)
-
-        Territory {
-            // copy fixed properties + mutable properties
-            ...
-            // use modified territory resource properties
-            ...
-        }
-    }
-}
+t = TerritoryResources.default()
 
 resources = [
-    Resource { [BonusOreAttribute], priority: 69 },
-    Resource { [IncomeAttribute, OreAttribute], priority: 0 },
+    ResourceNode { [BonusOreAttribute], priority: 69 },
+    ResourceNode { [IncomeAttribute, OreAttribute], priority: 0 },
 ]
 
-terr = Territory.create(id, resources)
-
-for resource in sort(resources, key = resource.priority()):
-    for attribute in resource.attributes:
-        terr = terr.apply(attribute)
+for r in sort(resources, key = resource.priority()):
+    for attribute in r.attributes:
+        t = t.apply(attribute)
 ```
+
 
 ## Resource Attribute Priority
 Default in nodes plugin:
@@ -109,29 +165,27 @@ Default in nodes plugin:
 - **Bonus modifiers (+10% income, +10% ore, etc.):** 50
 - **Neighbor modifiers (+10% neighbor ore, etc.):** 100
 
+
 ## Resource Loaders and Addons
 `ResourceLoader` interface loads json resource object tree into
 resource attributes. Intermediate `ResourceBuilder` state is passed
 through all loader systems before finishing compiling into
-immutable `Resource` object definitions.
+immutable `ResourceNode` object definitions.
 ```
+ResourceBuilder {
+    attributes: List<ResourceAttribute>
+
+    build() -> ResourceNode
+}
+
 ResourceBuilderLibrary {
     resources: Map<String, ResourceBuilder>
 
-    build() -> Map<String, Resource>
+    build() -> Map<String, ResourceNode>
 }
 
 ResourceLoader {
     apply(resources: ResourceBuilderLibrary, json: Json) -> ResourceBuilderLibrary
-}
-
-ResourceBuilder {
-    attributes: MutableList<ResourceAttribute>
-    ...
-    // other mutable resource intermediate state
-    ...
-    
-    build() -> Resource
 }
 
 // load resources
@@ -143,10 +197,12 @@ loaders: List<ResourceLoader> = [
 
 jsonResourceLibrary = loadJsonResourceSection("world.json")
 
-resources = ResourceBuilderLibrary()
+resourcesToBuild = ResourceBuilderLibrary()
 
 for resourceLoader in loaders:
-    resources = resourceLoader.apply(resources, jsonResourceLibrary)
+    resourcesToBuild = resourceLoader.apply(resourcesToBuild, jsonResourceLibrary)
+
+resources = resourcesToBuild.build()
 ```
 
 ## External Resource Loader `.jar` Files
@@ -156,27 +212,15 @@ addons to write custom resources (e.g. resources with more customized
 behavior or that modify territory `customProperites`).
 
 
-## Resource + Territory Calculation Order:
-1.  Load `ResourceLoader`s classes from addon `.jar` files in 
-    `nodes/addons/resources`.
-2.  Load `world.json` into json resources and territories objects.
-3.  For each resource loader
-    and add its attributes based on json keys.
-4.  For each resource loader, load resource attribute definitions from
-    json and compile resources.
-5.  Load territories from json with blank resource properties.
-6.  For each territory: sort territory resources, run resource attribute
-    modifiers. Then insert territories into World.
-7.  Apply territory neighbor modifiers onto adjacent territories.
-    **Neighbor order is arbitrary so neighbor behaviors must not have any order dependence.**
-
-
 ## Reloading Resources/Territories
 -   Reloading resources requires repeating resource loader steps and all
     territory re-calculations. **This is expensive (full map re-calculation).**
 -   Reloading territories requires re-calculating a territory, then
     recalculating all neighbors (to propagate neighbor bonuses).
-    This is relatively cheap.
+    **This requires recalculating Territory resources for reloaded territories,
+    neighbors, AND neighbors' neighbors (two edges away).** This is to make
+    sure neighbors' neighbors modifiers are all calculated. But only direct
+    neighbors would be updated in this process.
 
 
 ## Why No `TerritoryAttribute`?

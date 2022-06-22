@@ -352,17 +352,14 @@ data class Territory(
     val crops: EnumMap<Material, Double>,
     val animals: EnumMap<EntityType, Double>,
     val customProperties: HashMap<String, Any> = HashMap(0),
+    // mutable properties: TODO find way to get rid?
+    var town: Town? = null, // town owner
+    var occupier: Town? = null, // town occupier (after being captured in war)
 ) {
     val containsIncome: Boolean
     val containsOre: Boolean
     val cropsCanGrow: Boolean
     val animalsCanBreed: Boolean
-
-    // town owner
-    var town: Town? = null
-    
-    // town occupier (after being captured in war)
-    var occupier: Town? = null
 
     init {
         this.containsIncome = income.size > 0

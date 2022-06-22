@@ -382,10 +382,13 @@ public object Nodes {
                 customProperties = resources.customProperties,
             )
             
-            // if previous territory existed, first do cleanup
+            // if previous territory existed, first do cleanup and copy mutable ingame properties
             Nodes.territories[t.id]?.let { oldTerritory ->
                 // remove old territory chunks
                 oldTerritory.chunks.forEach { c -> Nodes.territoryChunks.remove(c) }
+                // copy town and occupier
+                territory.town = oldTerritory.town
+                territory.occupier = oldTerritory.occupier
             }
             
             // set territory
@@ -3258,11 +3261,13 @@ public object Nodes {
 
         // save op color
         try {
+            println(essentials.getSettings())
             val colorName = essentials.getSettings().getOperatorColor()
             Chat.colorPlayerOp = ChatColor.valueOf(colorName)
         }
         catch ( err: Exception ) {
-            System.err.println("Nodes.hookEssentials(): failed to match op color")
+            err.printStackTrace()
+            Nodes.logger?.warning("Nodes.hookEssentials(): failed to match op color: ${err}")
         }
     }
 
