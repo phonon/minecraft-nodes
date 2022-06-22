@@ -29,7 +29,7 @@ public object Chat {
     var colorAlly = ChatColor.GREEN
 
     var colorPlayerTownless = ChatColor.GRAY
-    var colorPlayerOp = ChatColor.RED
+    var colorPlayerOp = ChatColor.DARK_RED
     var colorPlayerTownOfficer = ChatColor.WHITE
     var colorPlayerTownLeader = ChatColor.BOLD
     var colorPlayerNationLeader = "${ChatColor.GOLD}${ChatColor.BOLD}"

@@ -33,7 +33,6 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.DoubleChestInventory
 import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.configuration.file.YamlConfiguration
-import com.earth2me.essentials.Essentials
 import phonon.nodes.constants.*
 import phonon.nodes.objects.*
 import phonon.nodes.serdes.*
@@ -92,7 +91,6 @@ public object Nodes {
     internal val hiddenOreInvalidBlocks: OreBlockCache = OreBlockCache(2000)
 
     // hooks to other plugins
-    internal var essentials: Essentials? = null
     internal var protocolLib: Boolean = false // flag that protocolLib is loaded
     internal var dynmap: Boolean = false // simple flag
     internal val DYNMAP_DIR: Path = Paths.get("plugins/dynmap/web/nodes")
@@ -3252,25 +3250,9 @@ public object Nodes {
         
     }
 
-
     // ==============================================
     // Hooks to external functions
     // ==============================================
-    internal fun hookEssentials(essentials: Essentials) {
-        Nodes.essentials = essentials
-
-        // save op color
-        try {
-            println(essentials.getSettings())
-            val colorName = essentials.getSettings().getOperatorColor()
-            Chat.colorPlayerOp = ChatColor.valueOf(colorName)
-        }
-        catch ( err: Exception ) {
-            err.printStackTrace()
-            Nodes.logger?.warning("Nodes.hookEssentials(): failed to match op color: ${err}")
-        }
-    }
-
     // mark that protocol lib exists
     internal fun hookProtocolLib() {
         Nodes.protocolLib = true

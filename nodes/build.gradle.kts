@@ -40,9 +40,6 @@ repositories {
     maven { // paper
         url = uri("https://papermc.io/repo/repository/maven-public/")
     }
-    maven { // essentialsX
-        url = uri("https://ci.ender.zone/plugin/repository/everything")
-    }
     maven { // protocol lib
         url = uri("https://repo.dmulloy2.net/nexus/repository/public/")
     }
@@ -77,9 +74,6 @@ dependencies {
     
     // put spigot/paper on path otherwise kotlin vs code plugin screeches
     api("com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT")
-    
-    // essentials
-    compileOnly("net.ess3:EssentialsX:2.18.2")
 
     // protocol lib (nametag packets)
     compileOnly("com.comphenix.protocol:ProtocolLib:4.5.0")

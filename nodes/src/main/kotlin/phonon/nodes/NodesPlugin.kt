@@ -4,7 +4,6 @@
 
 package phonon.nodes
 
-import com.earth2me.essentials.Essentials
 import org.bukkit.command.TabCompleter
 import org.bukkit.plugin.java.JavaPlugin
 import phonon.nodes.commands.*
@@ -30,13 +29,6 @@ public class NodesPlugin : JavaPlugin() {
         // ===================================
         // save hooks to external plugins
         // ===================================
-        // essentials
-        val essentials = pluginManager.getPlugin("Essentials")
-        if ( essentials !== null ) {
-            Nodes.hookEssentials(essentials as Essentials)
-            logger.info("Using Essentials v${essentials.getDescription().getVersion()}")
-        }
-        
         // dynmap hook, just flag that dynmap exists
         val dynmap = pluginManager.getPlugin("dynmap")
         if ( dynmap !== null ) {
