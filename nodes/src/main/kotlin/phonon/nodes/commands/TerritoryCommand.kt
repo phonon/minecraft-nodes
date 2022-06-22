@@ -25,7 +25,7 @@ public class TerritoryCommand : CommandExecutor, TabCompleter {
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
         
         // if command sender was player, print territory info of current location
-        val territory = if ( args.size < 2 ) {
+        val territory = if ( args.size < 1 ) {
             val player = if ( sender is Player ) sender else null
             if ( player != null ) {
                 val loc = player.getLocation()
@@ -45,15 +45,15 @@ public class TerritoryCommand : CommandExecutor, TabCompleter {
             else {
                 Message.print(sender, "Territories: ${Nodes.getTerritoryCount()}")
                 Message.print(sender, "Usage: \"/territory [id]\"")
+                Message.print(sender, "(This is intended to only be used ingame)")
                 return true
             }
         }
         else {
             // parse input as id
-            val id = TerritoryId(args[1].toInt())
-            val getTerritory = Nodes.territories[id]
+            val getTerritory = args[0].toIntOrNull()?.let { id -> Nodes.territories[TerritoryId(id)] }
             if ( getTerritory == null ) {
-                Message.error(sender, "Invalid territory id \"${id}\"")
+                Message.error(sender, "Invalid territory id \"${args[0]}\"")
                 return true
             }
 

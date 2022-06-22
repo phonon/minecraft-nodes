@@ -536,7 +536,7 @@ public class NationCommand : CommandExecutor, TabCompleter {
             Message.print(player, "Nation color set: ${ChatColor.WHITE}${r} ${g} ${b}")
         }
         catch (e: NumberFormatException) {
-            Message.error(player, "Invalid color")
+            Message.error(player, "Invalid color (must be [r] [g] [b] in range 0-255)")
         }
     }
 

@@ -186,11 +186,10 @@ public class NodesCommand : CommandExecutor, TabCompleter {
             }
         }
         else {
-            // parse input as id
-            val id = TerritoryId(args[1].toInt())
-            val getTerritory = Nodes.territories[id]
+            // try parse input as id, then try to get territory with that id
+            val getTerritory = args[1].toIntOrNull()?.let { id -> Nodes.territories[TerritoryId(id)] }
             if ( getTerritory == null ) {
-                Message.error(sender, "Invalid territory id \"${id}\"")
+                Message.error(sender, "Invalid territory id \"${args[1]}\"")
                 return
             }
 

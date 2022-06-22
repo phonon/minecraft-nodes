@@ -1284,7 +1284,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             Message.print(player, "Town color set: ${ChatColor.WHITE}${r} ${g} ${b}")
         }
         catch (e: NumberFormatException) {
-            Message.error(player, "Invalid color")
+            Message.error(player, "Invalid color (must be [r] [g] [b] in range 0-255)")
         }
         
     }
@@ -1668,7 +1668,12 @@ public class TownCommand : CommandExecutor, TabCompleter {
         // if size input, create new minimap of that size
         // note: minimap creation internally handles removing old minimaps
         if ( args.size >= 2 ) {
-            val size = Math.min(5, Math.max(3, args[1].toInt()))
+            val size = try {
+                Math.min(5, Math.max(3, args[1].toInt()))
+            } catch (e: NumberFormatException) {
+                Message.error(player, "Invalid minimap size: ${args[1]}, must be number in range 3-5. Using default 5")
+                5
+            }
             resident.createMinimap(player, size)
             Message.print(player, "Minimap enabled (size = ${size})")
         }
