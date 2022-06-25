@@ -184,13 +184,19 @@ public class NodesWorldListener: Listener {
                                     ErrorChunkNotEdge -> Message.error(player, "[War] Must attack from territory edge or from captured chunk")
                                     ErrorFlagTooHigh -> Message.error(player, "[War] Flag placement too high, cannot create flag")
                                     ErrorSkyBlocked -> Message.error(player, "[War] Flag must see the sky")
-                                    ErrorTooManyAttacks -> Message.error(player, "[War] You cannot attack any more chunks at the same time.")
+                                    ErrorTooManyAttacks -> Message.error(player, "[War] You cannot attack any more chunks at the same time")
                                 }
                     
                                 // cancel event
                                 event.setCancelled(true)
                             }
                         }
+                        else {
+                            Message.error(player, "[War] Cannot claim unless you are part of a town")
+                            event.setCancelled(true)
+                        }
+                    } else {
+                        event.setCancelled(true)
                     }
                 }
             }
