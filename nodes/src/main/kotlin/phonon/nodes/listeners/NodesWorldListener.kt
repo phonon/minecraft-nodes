@@ -92,6 +92,12 @@ public class NodesWorldListener: Listener {
                 return
             }
 
+            // territory occupier permissions
+            val occupier: Town? = territory.occupier
+            if ( occupier !== null && hasOccupierPermissions(TownPermissions.DESTROY, town, occupier, resident) ) {
+                return
+            }
+
             // war permissions
             if ( hasWarPermissions(resident, territory, territoryChunk!!) ) {
                 return
@@ -228,7 +234,13 @@ public class NodesWorldListener: Listener {
             if ( hasTownPermissions(TownPermissions.BUILD, town, resident) ) {
                 return
             }
-            
+
+            // territory occupier permissions
+            val occupier: Town? = territory.occupier
+            if ( occupier !== null && hasOccupierPermissions(TownPermissions.BUILD, town, occupier, resident) ) {
+                return
+            }
+
             // war permissions
             if ( hasWarPermissions(resident, territory, territoryChunk!!) ) {
                 return
@@ -289,7 +301,13 @@ public class NodesWorldListener: Listener {
             if ( hasTownPermissions(TownPermissions.BUILD, town, resident) ) {
                 return
             }
-            
+
+            // territory occupier permissions
+            val occupier: Town? = territory.occupier
+            if ( occupier !== null && hasOccupierPermissions(TownPermissions.BUILD, town, occupier, resident) ) {
+                return
+            }
+
             // war permissions
             if ( hasWarPermissions(resident, territory, territoryChunk!!) ) {
                 return
@@ -432,6 +450,12 @@ public class NodesWorldListener: Listener {
                 return
             }
 
+            // territory occupier permissions
+            val occupier: Town? = territory.occupier
+            if ( occupier !== null && hasOccupierPermissions(TownPermissions.INTERACT, town, occupier, resident) ) {
+                return
+            }
+
             // war permissions
             if ( hasWarPermissions(resident, territory, territoryChunk!!) ) {
                 return
@@ -493,6 +517,13 @@ public class NodesWorldListener: Listener {
                 if ( hasTownPermissions(TownPermissions.INTERACT, town, resident) ) {
                     return
                 }
+
+                // territory occupier permissions
+                val occupier: Town? = territory.occupier
+                if ( occupier !== null && hasOccupierPermissions(TownPermissions.INTERACT, town, occupier, resident) ) {
+                    return
+                }
+
                 // war permissions
                 if ( hasWarPermissions(resident, territory, territoryChunk!!) ) {
                     return
@@ -661,6 +692,21 @@ private fun hasTownPermissions(perms: TownPermissions, town: Town, player: Resid
 }
 
 /**
+ * Permissions check for a town's territory occupied by another town:
+ * perms: town permissions type
+ * town: town that owns the territory
+ * occupier: town that is occupier of the territory
+ * player: player interacting in the territory
+ */
+private fun hasOccupierPermissions(perms: TownPermissions, town: Town, occupier: Town, player: Resident): Boolean {
+    if ( Config.allowControlInOccupiedTownList.contains(town.uuid)  ) {
+        return hasTownPermissions(perms, occupier, player)
+    } else {
+        return false
+    }
+}
+
+/**
  * Permissions for town protected chests
  * Currently just returns if player.trusted flag if player in town
  */
@@ -754,7 +800,7 @@ private fun handleCropHarvest(block: Block) {
             block.setType(Material.AIR)
         }
         // handle town over max claims penalty
-        else if ( territory?.town?.isOverClaimsMax == true ) {
+        else if ( territory.town?.isOverClaimsMax == true ) {
             if ( random.nextDouble() < Config.overClaimsMaxPenalty ) {
                 block.setType(Material.AIR)
             }
