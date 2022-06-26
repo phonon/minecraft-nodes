@@ -194,6 +194,8 @@ export const Editor = (props) => {
                         setRenderTerritoryOpaque={props.setRenderTerritoryOpaque}
                         renderTerritoryNoBorders={props.renderTerritoryNoBorders}
                         setRenderTerritoryNoBorders={props.setRenderTerritoryNoBorders}
+                        renderTerritoryCapitals={props.renderTerritoryCapitals}
+                        setRenderTerritoryCapitals={props.setRenderTerritoryCapitals}
                         renderTownNames={props.renderTownNames}
                         setRenderTownNames={props.setRenderTownNames}
                         resourceIcons={props.resourceIcons}

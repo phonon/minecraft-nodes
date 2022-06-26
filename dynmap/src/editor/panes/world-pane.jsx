@@ -20,6 +20,7 @@ import IconOptionOpaque from "assets/icon/icon-option-opaque.svg";
 import IconOptionNoBorder from "assets/icon/icon-option-noborder.svg";
 import IconOptionTownName from "assets/icon/icon-option-town-name.svg";
 import IconOptionNationName from "assets/icon/icon-option-nation-name.svg";
+import IconOptionCapitals from "assets/icon/icon-map-capital.svg";
 
 import IconPlayerLeader from "assets/icon/icon-player-leader.svg";
 import IconPlayerOfficer from "assets/icon/icon-player-officer.svg";
@@ -373,6 +374,13 @@ export const WorldPane = (props) => {
                 icon={IconOptionNationName}
                 pressed={props.renderTownNames === RENDER_TOWN_NAMETAG_NATION}
                 tooltip={"Nation names"}
+            />
+            <UI.Button
+                className="nodes-editor-option-btn"
+                onClick={() => props.setRenderTerritoryCapitals(!props.renderTerritoryCapitals)}
+                icon={IconOptionCapitals}
+                pressed={props.renderTerritoryCapitals}
+                tooltip={"Town Capitals"}
             />
         </div>
 

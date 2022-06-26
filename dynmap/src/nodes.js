@@ -16,6 +16,7 @@ import {
 	RESIDENT_RANK_NONE, RESIDENT_RANK_OFFICER, RESIDENT_RANK_LEADER,
 	RENDER_TOWN_NAMETAG_NONE, RENDER_TOWN_NAMETAG_TOWN, RENDER_TOWN_NAMETAG_NATION,
 } from "./constants.js";
+import IconMapCapital from "assets/icon/icon-map-capital.svg";
 import { StripePattern } from "ui/stripe-pattern.jsx";
 import { Editor } from "editor/editor.jsx";
 import { WorldRenderer } from "world/world.jsx";
@@ -294,6 +295,9 @@ const Nodes = {
 	ports: new Map(),
 	portsJsx: [], // port rendered jsx, never changes
 
+	// town capital icon rendered jsx elements
+	townCapitalElementsJsx: [],
+
 	// town names rendered jsx elements
 	townNameElementsJsx: [],
 
@@ -408,12 +412,13 @@ const Nodes = {
 	renderTerritoryIcons: true,      // render resource icons
 	renderTerritoryId: false,        // render territory ids
 	renderTerritoryCost: false,      // render cost number
-	renderTerritoryOpaque: true,    // render ~opaque solid town/nation colors
-	renderTerritoryNoBorders: true, // don't render territory borders
+	renderTerritoryOpaque: false,    // render ~opaque solid town/nation colors
+	renderTerritoryNoBorders: false, // don't render territory borders
+	renderTerritoryCapitals: false,  // render capital markers
 	renderTerritoryColors: false,    // for debugging, render territory assigned colors
 	
 	// render town names (enum value, set to constant RENDER_TOWN_NAMETAG_*)
-	renderTownNames: 1,               // render town names
+	renderTownNames: 0,               // render town names
 
 
 	initialize: (options, callback) => {
@@ -771,6 +776,9 @@ const Nodes = {
 				// update territories
 				Nodes._updateAllTerritoryElements();
 
+				// update town capital elements
+				Nodes._updateAllTownCapitalsJsx();
+
 				// update town name tags
 				Nodes._updateAllTownNameTagJsx();
 			}
@@ -837,6 +845,9 @@ const Nodes = {
 
 			// update territories
 			Nodes._updateAllTerritoryElements();
+
+			// update town capital elements
+			Nodes._updateAllTownCapitalsJsx();
 
 			// update town name tags
 			Nodes._updateAllTownNameTagJsx();
@@ -996,12 +1007,21 @@ const Nodes = {
 		Nodes.renderEditor();
 	},
 
+	setRenderTerritoryCapitals: (val) => {
+		Nodes.renderTerritoryCapitals = val;
+		Nodes._updateAllTownCapitalsJsx();
+		Nodes._updateAllTownNameTagJsx(); // update this because nametag offsets if capital icons are rendered
+		Nodes.renderWorld();
+		Nodes.renderEditor();
+	},
+
 	setRenderTownNames: (val) => {
 		Nodes.renderTownNames = val;
 		Nodes._updateAllTownNameTagJsx();
 		Nodes.renderWorld();
 		Nodes.renderEditor();
 	},
+
 
 	// ============================================
 	// Render React functions
@@ -1028,6 +1048,7 @@ const Nodes = {
 			svgPatterns: Nodes.stripePatterns,
 			territoryElements: Nodes.territoryElements,
 			portElements: Nodes.portsJsx,
+			townCapitalElements: Nodes.townCapitalElementsJsx,
 			townNameElements: Nodes.townNameElementsJsx,
 			enabledPainting: Nodes.enabledPainting,
 			isErasing: Nodes.ctrlKey,
@@ -1071,6 +1092,8 @@ const Nodes = {
 			setRenderTerritoryOpaque: Nodes.setRenderTerritoryOpaque,
 			renderTerritoryNoBorders: Nodes.renderTerritoryNoBorders,
 			setRenderTerritoryNoBorders: Nodes.setRenderTerritoryNoBorders,
+			renderTerritoryCapitals: Nodes.renderTerritoryCapitals,
+			setRenderTerritoryCapitals: Nodes.setRenderTerritoryCapitals,
 			renderTownNames: Nodes.renderTownNames,
 			setRenderTownNames: Nodes.setRenderTownNames,
 
@@ -1199,6 +1222,7 @@ const Nodes = {
 		if ( Nodes.mapZoom !== zoom ) {
 			Nodes.mapZoom = zoom;
 			Nodes._updateAllTerritoryElements();
+			Nodes._updateAllTownCapitalsJsx();
 			Nodes._updateAllTownNameTagJsx();
 			Nodes._updateAllPortJsx();
 		}
@@ -2326,6 +2350,11 @@ const Nodes = {
 		let textOriginX = core.x;
 		let textOriginY = core.y;
 
+		// offset if rendering capital icons
+		if ( Nodes.renderTerritoryCapitals ) {
+			textOriginY -= 8;
+		}
+
 		// tag name: either town or nation name
 		let tagName;
 		if ( Nodes.renderTownNames === RENDER_TOWN_NAMETAG_TOWN ) {
@@ -2371,6 +2400,42 @@ const Nodes = {
 		}
 
 		Nodes.townNameElementsJsx = elements;
+	},
+
+	/**
+	 * Create svg elements for town capitals.
+	 */
+	 _createTownCapitalJsx: (town) => {
+		let territory = Nodes.territories.get(town.home);
+		if ( territory === null ) {
+			console.error(`Town ${town.name} has no home territory?`);
+			return null;
+		}
+
+		// core coordinate
+		const core = Nodes._getLatLngFromCoord(territory.core.x, territory.core.y);
+
+		return <g key={town.home}>
+			<image x={core.x - 9} y={core.y - 9} width={18} height={18} href={IconMapCapital}/>
+		</g>;
+	},
+
+	/**
+	 * Re-create all svg element for town names. This creates
+	 * a town name text tag centered on a town's home territory
+	 * for each town.
+	 */
+	 _updateAllTownCapitalsJsx: () => {
+		let elements = [];
+
+		if ( Nodes.renderTerritoryCapitals === true ) {
+			for ( const town of Nodes.towns.values() ) {
+				const jsx = Nodes._createTownCapitalJsx(town);
+				elements.push(jsx);
+			}
+		}
+
+		Nodes.townCapitalElementsJsx = elements;
 	},
 
 	/**

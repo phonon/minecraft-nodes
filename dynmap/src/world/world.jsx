@@ -93,6 +93,8 @@ export const WorldRenderer = (props) => {
 
             {props.territoryElements}
             
+            {props.townCapitalElements}
+
             {props.portElements}
 
             {props.townNameElements}
