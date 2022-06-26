@@ -94,6 +94,8 @@ export const WorldRenderer = (props) => {
             {props.territoryElements}
             
             {props.portElements}
+
+            {props.townNameElements}
             
             {cursorCircle}
 

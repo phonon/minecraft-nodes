@@ -12,6 +12,10 @@ import { createRoot } from "react-dom/client";
 
 import { saveAs } from "file-saver";
 
+import {
+	RESIDENT_RANK_NONE, RESIDENT_RANK_OFFICER, RESIDENT_RANK_LEADER,
+	RENDER_TOWN_NAMETAG_NONE, RENDER_TOWN_NAMETAG_TOWN, RENDER_TOWN_NAMETAG_NATION,
+} from "./constants.js";
 import { StripePattern } from "ui/stripe-pattern.jsx";
 import { Editor } from "editor/editor.jsx";
 import { WorldRenderer } from "world/world.jsx";
@@ -290,6 +294,9 @@ const Nodes = {
 	ports: new Map(),
 	portsJsx: [], // port rendered jsx, never changes
 
+	// town names rendered jsx elements
+	townNameElementsJsx: [],
+
 	// resource icon name => icon url
 	resourceIcons: new Map(),
 	defaultResourceIconFiles: [      // default .json files to load resource icon map from,
@@ -340,12 +347,7 @@ const Nodes = {
 	// port tooltip container:
 	portTooltipContainer: undefined, // dom element
 	portTooltipContainerRoot: undefined, // react root
-	
-	// constants
-	RESIDENT_RANK_NONE: 0,    // resident ranks
-	RESIDENT_RANK_OFFICER: 1,
-	RESIDENT_RANK_LEADER: 2, 
-	
+
 	// GLOBAL STATE
 	// user cursor in editor
 	screenX: 0.0, // x in dom screen
@@ -403,11 +405,16 @@ const Nodes = {
 	backgroundImageHeight: 0,
 
 	// territory render options:
-	renderTerritoryIcons: true,   // render resource icons
-	renderTerritoryId: false,     // render territory ids
-	renderTerritoryCost: false,   // render cost number
-	renderTerritoryOpaque: false, // render ~opaque solid town/nation colors
-	renderTerritoryColors: false, // for debugging, render territory assigned colors
+	renderTerritoryIcons: true,      // render resource icons
+	renderTerritoryId: false,        // render territory ids
+	renderTerritoryCost: false,      // render cost number
+	renderTerritoryOpaque: true,    // render ~opaque solid town/nation colors
+	renderTerritoryNoBorders: true, // don't render territory borders
+	renderTerritoryColors: false,    // for debugging, render territory assigned colors
+	
+	// render town names (enum value, set to constant RENDER_TOWN_NAMETAG_*)
+	renderTownNames: 1,               // render town names
+
 
 	initialize: (options, callback) => {
 		Nodes.editorContainer = options.container;
@@ -763,6 +770,9 @@ const Nodes = {
 
 				// update territories
 				Nodes._updateAllTerritoryElements();
+
+				// update town name tags
+				Nodes._updateAllTownNameTagJsx();
 			}
 
 			if ( render ) {
@@ -827,6 +837,9 @@ const Nodes = {
 
 			// update territories
 			Nodes._updateAllTerritoryElements();
+
+			// update town name tags
+			Nodes._updateAllTownNameTagJsx();
 
 			if ( render ) {
 				Nodes.renderEditor();
@@ -945,6 +958,7 @@ const Nodes = {
 
 	// ============================================
 	// Set render options
+	// TODO: collapse these into a single function?
 	// ============================================
 	
 	setRenderTerritoryIcons: (val) => {
@@ -975,6 +989,20 @@ const Nodes = {
 		Nodes.renderEditor();
 	},
 
+	setRenderTerritoryNoBorders: (val) => {
+		Nodes.renderTerritoryNoBorders = val;
+		Nodes._updateAllTerritoryElements();
+		Nodes.renderWorld();
+		Nodes.renderEditor();
+	},
+
+	setRenderTownNames: (val) => {
+		Nodes.renderTownNames = val;
+		Nodes._updateAllTownNameTagJsx();
+		Nodes.renderWorld();
+		Nodes.renderEditor();
+	},
+
 	// ============================================
 	// Render React functions
 	// ============================================
@@ -1000,6 +1028,7 @@ const Nodes = {
 			svgPatterns: Nodes.stripePatterns,
 			territoryElements: Nodes.territoryElements,
 			portElements: Nodes.portsJsx,
+			townNameElements: Nodes.townNameElementsJsx,
 			enabledPainting: Nodes.enabledPainting,
 			isErasing: Nodes.ctrlKey,
 			paintRadius: Nodes.paintRadius,
@@ -1040,6 +1069,10 @@ const Nodes = {
 			setRenderTerritoryCost: Nodes.setRenderTerritoryCost,
 			renderTerritoryOpaque: Nodes.renderTerritoryOpaque,
 			setRenderTerritoryOpaque: Nodes.setRenderTerritoryOpaque,
+			renderTerritoryNoBorders: Nodes.renderTerritoryNoBorders,
+			setRenderTerritoryNoBorders: Nodes.setRenderTerritoryNoBorders,
+			renderTownNames: Nodes.renderTownNames,
+			setRenderTownNames: Nodes.setRenderTownNames,
 
 			// nodes data
 			nodes: Nodes.nodes,
@@ -1166,6 +1199,7 @@ const Nodes = {
 		if ( Nodes.mapZoom !== zoom ) {
 			Nodes.mapZoom = zoom;
 			Nodes._updateAllTerritoryElements();
+			Nodes._updateAllTownNameTagJsx();
 			Nodes._updateAllPortJsx();
 		}
 
@@ -1281,7 +1315,6 @@ const Nodes = {
 			const officers = [];
 
 			for ( const r of town.residents ) {
-				let residentRank = Nodes.RESIDENT_RANK_NONE;
 				if ( r === town.leader ) {
 					// skip leader, will handle at end
 					continue;
@@ -1290,14 +1323,14 @@ const Nodes = {
 					officers.push(createNewResident(
 						r,
 						Nodes.residents.get(r)?.name,
-						Nodes.RESIDENT_RANK_OFFICER
+						RESIDENT_RANK_OFFICER
 					));
 				}
 				else {
 					peasants.push(createNewResident(
 						r,
 						Nodes.residents.get(r)?.name,
-						Nodes.RESIDENT_RANK_NONE,
+						RESIDENT_RANK_NONE,
 					));
 				}
 			}
@@ -1308,7 +1341,7 @@ const Nodes = {
 					createNewResident(
 						town.leader,
 						Nodes.residents.get(town.leader)?.name,
-						Nodes.RESIDENT_RANK_LEADER,
+						RESIDENT_RANK_LEADER,
 					));
 			}
 			residentsSorted.push(...officers);
@@ -2113,6 +2146,7 @@ const Nodes = {
 			renderTerritoryCost={Nodes.renderTerritoryCost}
 			renderTerritoryOpaque={Nodes.renderTerritoryOpaque}
 			renderTerritoryColors={Nodes.renderTerritoryColors}
+			renderTerritoryNoBorders={Nodes.renderTerritoryNoBorders}
 
 			selected={terr.selected}
 			isMainSelected={isMainSelected}
@@ -2273,6 +2307,70 @@ const Nodes = {
 			
 		});
 		Nodes.stripePatterns = stripePatterns
+	},
+
+	/**
+	 * Create svg element for town names. These are centered
+	 * on the "home" territory of each town.
+	 */
+	 _createTownNameTagJsx: (town) => {
+		let territory = Nodes.territories.get(town.home);
+		if ( territory === null ) {
+			console.error(`Town ${town.name} has no home territory?`);
+			return null;
+		}
+
+		// core coordinate
+		const core = Nodes._getLatLngFromCoord(territory.core.x, territory.core.y);
+
+		let textOriginX = core.x;
+		let textOriginY = core.y;
+
+		// tag name: either town or nation name
+		let tagName;
+		if ( Nodes.renderTownNames === RENDER_TOWN_NAMETAG_TOWN ) {
+			tagName = town.name;
+		} else if ( Nodes.renderTownNames === RENDER_TOWN_NAMETAG_NATION ) {
+			tagName = town.nation !== undefined ? town.nation : town.name;
+		} else {
+			console.error(`Invalid town name render mode: ${Nodes.renderTownNames}`);
+			return null;
+		}
+
+		// also replace "_" with " "
+		// since no spaces allowed in names, common for players to use "_" as a "space"
+		tagName = tagName.replaceAll("_", " ");
+
+		return <g key={town.home}>
+			<text
+				x={textOriginX}
+				y={textOriginY}
+				textRendering="optimizeSpeed"
+				fill={"#000"}
+				textAnchor={"middle"}
+				style={{ font: "bold 24px serif", stroke: "#fff", strokeWidth: "1pt", paintOrder: "stroke" }}
+			>
+				{tagName}
+			</text>
+		</g>;
+	},
+
+	/**
+	 * Re-create all svg element for town names. This creates
+	 * a town name text tag centered on a town's home territory
+	 * for each town.
+	 */
+	 _updateAllTownNameTagJsx: () => {
+		let elements = [];
+
+		if ( Nodes.renderTownNames !== RENDER_TOWN_NAMETAG_NONE ) {
+			for ( const town of Nodes.towns.values() ) {
+				const jsx = Nodes._createTownNameTagJsx(town);
+				elements.push(jsx);
+			}
+		}
+
+		Nodes.townNameElementsJsx = elements;
 	},
 
 	/**

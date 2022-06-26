@@ -8,11 +8,19 @@
 
 import { useState, useMemo } from "react";
 
+import {
+	RESIDENT_RANK_NONE, RESIDENT_RANK_OFFICER, RESIDENT_RANK_LEADER,
+	RENDER_TOWN_NAMETAG_NONE, RENDER_TOWN_NAMETAG_TOWN, RENDER_TOWN_NAMETAG_NATION,
+} from "constants.js";
 import * as UI from "ui/ui.jsx";
 import IconOptionIcons from "assets/icon/icon-option-icons.svg";
 import IconOptionId from "assets/icon/icon-option-id.svg";
 import IconOptionCost from "assets/icon/icon-option-cost.svg";
 import IconOptionOpaque from "assets/icon/icon-option-opaque.svg";
+import IconOptionNoBorder from "assets/icon/icon-option-noborder.svg";
+import IconOptionTownName from "assets/icon/icon-option-town-name.svg";
+import IconOptionNationName from "assets/icon/icon-option-nation-name.svg";
+
 import IconPlayerLeader from "assets/icon/icon-player-leader.svg";
 import IconPlayerOfficer from "assets/icon/icon-player-officer.svg";
 
@@ -77,7 +85,7 @@ const TownPlayersList = (props) => {
             let insignia = null;
             let name = p.name;
             // insignia
-            if ( p.rank === Nodes.RESIDENT_RANK_LEADER ) {
+            if ( p.rank === RESIDENT_RANK_LEADER ) {
                 insignia = <img
                     className="nodes-editor-town-player-item-rank"
                     src={IconPlayerLeader}
@@ -85,7 +93,7 @@ const TownPlayersList = (props) => {
                     title={"Leader"}
                 />
             }
-            else if ( p.rank === Nodes.RESIDENT_RANK_OFFICER ) {
+            else if ( p.rank === RESIDENT_RANK_OFFICER ) {
                 insignia = <img
                     className="nodes-editor-town-player-item-rank"
                     src={IconPlayerOfficer}
@@ -344,6 +352,27 @@ export const WorldPane = (props) => {
                 icon={IconOptionOpaque}
                 pressed={props.renderTerritoryOpaque}
                 tooltip={"Solid nation colors"}
+            />
+            <UI.Button
+                className="nodes-editor-option-btn"
+                onClick={() => props.setRenderTerritoryNoBorders(!props.renderTerritoryNoBorders)}
+                icon={IconOptionNoBorder}
+                pressed={props.renderTerritoryNoBorders}
+                tooltip={"No borders"}
+            />
+            <UI.Button
+                className="nodes-editor-option-btn"
+                onClick={() => props.setRenderTownNames(props.renderTownNames === RENDER_TOWN_NAMETAG_TOWN ? RENDER_TOWN_NAMETAG_NONE : RENDER_TOWN_NAMETAG_TOWN)}
+                icon={IconOptionTownName}
+                pressed={props.renderTownNames === RENDER_TOWN_NAMETAG_TOWN}
+                tooltip={"Town names"}
+            />
+            <UI.Button
+                className="nodes-editor-option-btn"
+                onClick={() => props.setRenderTownNames(props.renderTownNames === RENDER_TOWN_NAMETAG_NATION ? RENDER_TOWN_NAMETAG_NONE : RENDER_TOWN_NAMETAG_NATION)}
+                icon={IconOptionNationName}
+                pressed={props.renderTownNames === RENDER_TOWN_NAMETAG_NATION}
+                tooltip={"Nation names"}
             />
         </div>
 

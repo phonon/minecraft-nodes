@@ -105,7 +105,7 @@ export const Territory = (props) => {
     let color = '#000';
     let fillOpacity = 0;
     let strokeColor = '#000';
-    let strokeWidth = "2";
+    let strokeWidth = 2;
 
     // override, rendering territory built-in color
     if ( props.renderTerritoryColors && territory.color !== undefined ) {
@@ -170,7 +170,7 @@ export const Territory = (props) => {
 
         // if this territory is town home, use thicker stroke
         if ( territory.town.home === territory.id ) {
-            strokeWidth = "4"
+            strokeWidth = 4;
         }
     }
     // arbitrary territory
@@ -181,6 +181,11 @@ export const Territory = (props) => {
         if ( props.isMainSelected === true ) {
             fillOpacity += 0.15;
         }
+    }
+
+    // no borders mode
+    if ( props.renderTerritoryNoBorders === true ) {
+        strokeWidth = 0;
     }
     
     // =======================
@@ -229,6 +234,7 @@ export const Territory = (props) => {
                         d={p}
                     />
                 )}
+                <text x="0" y="0">TOPKEK</text>
             </g>
             
             {props.renderTerritoryIcons ?
@@ -268,7 +274,6 @@ export const Territory = (props) => {
                 </g>
             : (null)
             }
-            
         </g>
     )
 };
