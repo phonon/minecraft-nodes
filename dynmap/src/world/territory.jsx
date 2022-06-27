@@ -234,7 +234,6 @@ export const Territory = (props) => {
                         d={p}
                     />
                 )}
-                <text x="0" y="0">TOPKEK</text>
             </g>
             
             {props.renderTerritoryIcons ?
