@@ -871,22 +871,26 @@ public object Ports {
             // load ports
             val portsSection = config.getConfigurationSection("ports")
             if ( portsSection !== null ) {
-                for ( portName in portsSection.getKeys(false) ) {
-                    val portConfig = portsSection.getConfigurationSection(portName)
+                for ( portNameRaw in portsSection.getKeys(false) ) {
+                    val portConfig = portsSection.getConfigurationSection(portNameRaw)
                     if ( portConfig === null ) {
                         continue
                     }
+
+                    // convert raw key to lowercase
+                    val portName = portNameRaw.lowercase()
 
                     if ( !portConfig.isInt("x") || !portConfig.isInt("z") ) {
                         continue
                     }
                     val locX = portConfig.getInt("x")
                     val locZ = portConfig.getInt("z")
-
+                    
+                    // convert group names to lowercase
                     val groupNames: List<String> = if ( portConfig.isList("group") ) {
-                        portConfig.getStringList("group")
+                        portConfig.getStringList("group").map{ s -> s.lowercase() }
                     } else if ( portConfig.isString("group") ) {
-                        listOf(portConfig.getString("group")!!)
+                        listOf(portConfig.getString("group")!!.lowercase())
                     } else {
                         listOf()
                     }
@@ -898,6 +902,8 @@ public object Ports {
                         if ( index !== null ) {
                             groups.add(index)
                             portGroupsList.getOrNull(index)?.add(portName)
+                        } else {
+                            plugin.getLogger().warning("Port group '${name}' not found")
                         }
                     }
 
