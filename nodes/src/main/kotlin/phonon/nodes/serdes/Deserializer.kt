@@ -8,6 +8,7 @@ package phonon.nodes.serdes
 import java.io.FileReader
 import java.nio.file.Path
 import com.google.gson.JsonParser
+import com.google.gson.JsonObject
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
@@ -25,211 +26,28 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 
-object Deserializer {
+/**
+ * Utility class to hold resources and territories json
+ * object sections.
+ */
+public data class WorldJsonState(
+    val resources: JsonObject?,
+    val territories: JsonObject?,
+)
+
+public object Deserializer {
 
     // parse the world.json definition file:
     // contains resource nodes and territories
-    fun worldFromJson(path: Path) {
+    public fun worldFromJson(path: Path): WorldJsonState {
         val json = JsonParser.parseReader(FileReader(path.toString())) // newer gson
         // val json = JsonParser().parse(FileReader(path.toString()))        // gson bundled in mineman
         val jsonObj = json.asJsonObject
 
-        // parse resource nodes
-        val jsonNodes = jsonObj.get("nodes")?.asJsonObject
-        if ( jsonNodes !== null ) {
-            jsonNodes.keySet().forEach { name -> 
-                val node = jsonNodes[name].asJsonObject
-                
-                // icon
-                val icon = node.get("icon")?.asString
-
-                // cost
-                val costJson = node.get("cost")?.asJsonObject
-                val costConstantJson = costJson?.get("constant")
-                val costScaleJson = costJson?.get("scale")
-
-                val costConstant: Int = if ( costConstantJson !== null ) {
-                    costConstantJson.asInt
-                } else {
-                    0
-                }
-
-                val costScale: Double = if ( costScaleJson !== null ) {
-                    costScaleJson.asDouble
-                } else {
-                    1.0
-                }
-
-                // income
-                val income: EnumMap<Material, Double> = EnumMap<Material, Double>(Material::class.java)
-                val incomeSpawnEgg: EnumMap<EntityType, Double> = EnumMap<EntityType, Double>(EntityType::class.java)
-                val nodeIncomeJson = node.get("income")?.asJsonObject
-                if ( nodeIncomeJson !== null ) {
-                    nodeIncomeJson.keySet().forEach { type ->
-                        val itemName = type.uppercase(Locale.getDefault())
-
-                        // spawn egg
-                        if ( itemName.startsWith("SPAWN_EGG_")) {
-                            val entityType = EntityType.valueOf(itemName.replace("SPAWN_EGG_", ""))
-                            incomeSpawnEgg.put(entityType, nodeIncomeJson.get(type).asDouble)
-                        }
-                        // regular material
-                        else {
-                            val material = Material.matchMaterial(type)
-                            if ( material !== null ) {
-                                income.put(material, nodeIncomeJson.get(type).asDouble)
-                            }
-                        }
-                    }
-                }
-
-                // ore
-                val ores: EnumMap<Material, OreDeposit> = EnumMap<Material, OreDeposit>(Material::class.java)
-                val nodeOreJson = node.get("ore")?.asJsonObject
-                if ( nodeOreJson !== null ) {
-                    nodeOreJson.keySet().forEach { type ->
-                        val material = Material.matchMaterial(type)
-                        if ( material !== null ) {
-                            val oreData = nodeOreJson.get(type)
-
-                            // parse array format: [rate, minDrop, maxDrop]
-                            if (oreData?.isJsonArray == true) {
-                                val oreDataAsArray = oreData.asJsonArray
-                                if ( oreDataAsArray.size() == 3 ) {
-                                    ores.put(material, OreDeposit(
-                                        material,
-                                        oreDataAsArray[0].asDouble,
-                                        oreDataAsArray[1].asInt,
-                                        oreDataAsArray[2].asInt
-                                    ))
-                                }
-                            }
-                            // parse number format: rate (default minDrop = maxDrop = 1)
-                            else if (oreData?.isJsonPrimitive == true) {
-                                val oreDataRate = oreData.asDouble
-                                ores.put(material, OreDeposit(
-                                    material,
-                                    oreDataRate,
-                                    1,
-                                    1
-                                ))
-                            }
-                        }
-                    }
-                }
-
-                // crops
-                val crops: EnumMap<Material, Double> = EnumMap<Material, Double>(Material::class.java)
-                val nodeCropsJson = node.get("crops")?.asJsonObject
-                if ( nodeCropsJson !== null ) {
-                    nodeCropsJson.keySet().forEach { type ->
-                        val material = Material.matchMaterial(type)
-                        if ( material !== null ) {
-                            crops.put(material, nodeCropsJson.get(type).asDouble)
-                        }
-                    }
-                }
-
-                // animals
-                val animals = EnumMap<EntityType, Double>(EntityType::class.java)
-                val nodeAnimalsJson = node.get("animals")?.asJsonObject
-                if ( nodeAnimalsJson !== null ) {
-                    nodeAnimalsJson.keySet().forEach { type ->
-                        try {
-                            val entityType = EntityType.valueOf(type.uppercase(Locale.getDefault()))
-                            animals.put(entityType, nodeAnimalsJson.get(type).asDouble)
-                        }
-                        catch ( err: Exception ) {
-                            err.printStackTrace()
-                        }
-                    }
-                }
-
-                //TODO: MAKE "ore" AN OREDEPOSIT
-                Nodes.createResourceNode(name, icon, income, incomeSpawnEgg, ores, crops, animals, costConstant, costScale)
-            }
-        }
+        val jsonNodes = jsonObj.get("nodes")?.getAsJsonObject()
+        val jsonTerritories = jsonObj.get("territories")?.getAsJsonObject()
         
-        // parse territories
-        val jsonTerritories = jsonObj.get("territories")?.asJsonObject
-        if ( jsonTerritories !== null ) {
-
-            // temp struct to store map of territory id -> [ neighbor ids ]
-            val neighborGraph: HashMap<Int, List<Int>> = hashMapOf()
-
-            jsonTerritories.keySet().forEach { idString -> 
-                val territory = jsonTerritories[idString].asJsonObject
-
-                // territory id
-                val id: Int = idString.toInt()
-
-                // territory name
-                val name: String = territory.get("name")?.asString ?: ""
-
-                // territory color, 6 possible colors -> integer in range [0, 5]
-                // if null (editor error?), assign 5, the least likely color
-                val color: Int = territory.get("color")?.asInt ?: 5
-
-                // core chunk
-                val coreChunkArray = territory.get("coreChunk")?.asJsonArray
-                val coreChunk = if ( coreChunkArray?.size() == 2 ) {
-                    Coord(coreChunkArray[0].asInt, coreChunkArray[1].asInt)
-                } else {
-                    // TODO: console warn
-                    return@forEach // ignore territory, invalid core
-                }
-
-                // chunks:
-                // parse interleaved coordinate buffer
-                // [x1, y1, x2, y2, ... , xN, yN]
-                val chunks: MutableList<Coord> = mutableListOf()
-                val jsonChunkArray = territory.get("chunks")?.asJsonArray
-                if ( jsonChunkArray !== null ) {
-                    for ( i in 0 until jsonChunkArray.size() step 2 ) {
-                        val c = Coord(jsonChunkArray[i].asInt, jsonChunkArray[i+1].asInt)
-                        chunks.add(c)
-                    }
-                }
-
-                // resource nodes
-                val resourceNodes: MutableList<String> = mutableListOf()
-                val jsonNodesArray = territory.get("nodes")?.asJsonArray
-                if ( jsonNodesArray !== null ) {
-                    jsonNodesArray.forEach { nodeJson ->
-                        val s = nodeJson.asString
-                        resourceNodes.add(s)
-                    }
-                }
-                
-                // neighbor territory ids
-                val neighbors: MutableList<Int> = mutableListOf()
-                val jsonNeighborsArray = territory.get("neighbors")?.asJsonArray
-                if ( jsonNeighborsArray !== null ) {
-                    jsonNeighborsArray.forEach { neighborId ->
-                        neighbors.add(neighborId.asInt)
-                    }
-                }
-
-                // flag that territory borders wilderness (regions without any territories)
-                val bordersWilderness: Boolean = territory.get("isEdge")?.asBoolean ?: false
-
-                Nodes.createTerritory(
-                    id,
-                    name,
-                    color,
-                    coreChunk,
-                    chunks as ArrayList<Coord>,
-                    bordersWilderness,
-                    resourceNodes as ArrayList<String>
-                )
-
-                neighborGraph.put(id, neighbors as List<Int>)
-            }
-
-            // final initialization
-            // establish territory links
-            Nodes.setTerritoryNeighbors(neighborGraph)
-        }
+        return WorldJsonState(jsonNodes, jsonTerritories)
 
     }
 

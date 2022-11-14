@@ -64,7 +64,7 @@ class NationCommand : CommandExecutor, TabCompleter {
         }
 
         // parse subcommand
-        when (args[0].lowercase(Locale.getDefault())) {
+        when ( args[0].lowercase() ) {
             "help" -> printHelp(sender)
             "create" -> createNation(player, args)
             "new" -> createNation(player, args)
@@ -102,7 +102,7 @@ class NationCommand : CommandExecutor, TabCompleter {
         // match each subcommand format
         else if ( args.size > 1 ) {
             // handle specific subcommands
-            when (args[0].lowercase(Locale.getDefault())) {
+            when ( args[0].lowercase() ) {
 
                 // /nation invite town
                 "invite" -> {
@@ -538,7 +538,7 @@ class NationCommand : CommandExecutor, TabCompleter {
             Message.print(player, "Nation color set: ${ChatColor.WHITE}${r} ${g} ${b}")
         }
         catch (e: NumberFormatException) {
-            Message.error(player, "Invalid color")
+            Message.error(player, "Invalid color (must be [r] [g] [b] in range 0-255)")
         }
     }
 
@@ -578,7 +578,7 @@ class NationCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        if ( nation.name.lowercase(Locale.getDefault()) == args[1].lowercase(Locale.getDefault())) {
+        if ( nation.name.lowercase() == args[1].lowercase() ) {
             Message.error(player, "Your nation is already named ${nation.name}")
             return
         }

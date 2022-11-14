@@ -15,13 +15,12 @@
 
 import { useState, useMemo, useRef } from "react";
 
-import "ace-builds"
+import ace from "ace-builds/src-noconflict/ace";
 import "ace-builds/src-min-noconflict/mode-javascript";
 import "ace-builds/src-min-noconflict/ext-language_tools";
 import "ace-builds/src-min-noconflict/ext-spellcheck";
-const ace = require("ace-builds/src-min-noconflict/ace");
-ace.config.setModuleUrl("ace/mode/javascript_worker", "./ace-worker-javascript.js");
-
+import aceJavascriptWorkerUrl from "file-loader!ace-builds/src-noconflict/worker-javascript";
+ace.config.setModuleUrl("ace/mode/javascript_worker", aceJavascriptWorkerUrl)
 import AceEditor from "react-ace";
 
 import "ui/css/ace-editor-nodes-dark.js";

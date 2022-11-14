@@ -8,7 +8,7 @@ The overall architecture:
 -   Internal nodes map world written in rust compiled to wasm
     to accelerate internal nodes map structure calculations.
 
-Current dynmap plugin target version: `Dynmap-3.1-beta5-spigot.jar`.
+Current dynmap plugin target version: `Dynmap-3.3.2-spigot.jar`.
 The dynmap plugin version must match because dynmap's api/internals
 can change which can screw up the nodes map injection.
 

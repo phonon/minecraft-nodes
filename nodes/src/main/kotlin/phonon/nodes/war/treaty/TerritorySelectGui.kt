@@ -12,8 +12,10 @@ import org.bukkit.ChatColor
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.entity.Player
+import phonon.nodes.Nodes
 import phonon.nodes.gui.*
 import phonon.nodes.objects.Territory
+import phonon.nodes.objects.TerritoryId
 import phonon.nodes.objects.Town
 
 // constant icons
@@ -35,9 +37,10 @@ fun TerritoryButton(
     x: Int,
     y: Int,
     terr: Territory,
+    terrId: TerritoryId,
     title: String,
     icon: ItemStack,
-    callback: (Territory) -> Unit
+    callback: (TerritoryId) -> Unit
 ) {
     val propertiesList: List<String> = listOf(
         "${ChatColor.AQUA}Size: ${ChatColor.WHITE}${terr.chunks.size}",
@@ -54,7 +57,7 @@ fun TerritoryButton(
         icon,
         title,
         propertiesList + resourcesList,
-        { callback(terr) }
+        { callback(terrId) },
     ).render(screen)
 }
 
@@ -63,7 +66,7 @@ class TerritorySelectGui(
     val treaty: Treaty,
     val town: Town,
     val ignored: HashSet<Int>,
-    val callback: (Territory) -> Unit
+    val callback: (TerritoryId) -> Unit
 ): GuiElement {
     
     override fun render(screen: GuiWindow) {
@@ -79,10 +82,11 @@ class TerritorySelectGui(
         // render town territories
         val terrIter = this.town.territories.iterator()
         while ( terrIter.hasNext() && index < GUI_SLOTS.size-2 ) {
-            val terr = terrIter.next()
-
+            val terrId = terrIter.next()
+            val terr = Nodes.getTerritoryFromId(terrId)
+            
             // if occupied, skip (cannot give away occupied territories)
-            if ( terr.occupier !== null ) {
+            if ( terr === null || terr.occupier !== null ) {
                 continue
             }
             
@@ -102,9 +106,10 @@ class TerritorySelectGui(
                 x,
                 y,
                 terr,
+                terr.id,
                 title,
                 ICON_TERRITORY,
-                { callback(terr) }
+                callback,
             )
 
             // track render index
@@ -114,10 +119,11 @@ class TerritorySelectGui(
         // render occupied territories
         val occupiedIter = this.town.captured.iterator()
         while ( occupiedIter.hasNext() && index < GUI_SLOTS.size-2 ) {
-            val terr = occupiedIter.next()
+            val terrId = occupiedIter.next()
+            val terr = Nodes.getTerritoryFromId(terrId)
 
             // should never occur
-            if ( terr.occupier !== this.town ) {
+            if ( terr === null || terr.occupier !== this.town ) {
                 continue
             }
             
@@ -137,9 +143,10 @@ class TerritorySelectGui(
                 x,
                 y,
                 terr,
+                terr.id,
                 title,
                 ICON_OCCUPIED,
-                { callback(terr) }
+                callback,
             )
 
             // track render index

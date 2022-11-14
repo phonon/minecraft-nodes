@@ -9,6 +9,10 @@
 # engine settings
 # only adjust if know what doing
 # ===================================
+# disable world when nodes world.json or towns.json fails due to errors
+# (e.g. stops block place/destroy and other world interactions)
+disableWorldWhenLoadFails: true
+
 # save period in ticks
 savePeriod: 600
 
@@ -252,6 +256,15 @@ onlyWhitelistCanClaim: true
 
 # multiplier for warping home when occupied
 occupiedHomeTeleportMultiplier: 12.0
+
+### List of town UUIDs to allow building in occupied territory.
+### War whitelist often used to create AI towns that can be attacked
+### by anyone. People want to build in occupied territory from these
+### towns during non-war time. This list allows building/interacting
+### in these occupied towns.
+# allowControlInOccupiedTownList:
+# - caffd0a0-042e-4022-910f-608be7fd277e
+
 # ===========================================
 # Truce Settings
 # ===========================================

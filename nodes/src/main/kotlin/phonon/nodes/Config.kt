@@ -12,7 +12,7 @@ import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.Material
 import org.bukkit.entity.EntityType
-import phonon.nodes.objects.ResourceNode
+import phonon.nodes.objects.TerritoryResources
 import phonon.nodes.objects.OreDeposit
 import java.util.*
 import kotlin.collections.HashSet
@@ -36,6 +36,9 @@ object Config {
     var pathLastBackupTime = Paths.get(pathPlugin, "lastBackupTime.txt").normalize()
     var pathLastIncomeTime = Paths.get(pathPlugin, "lastIncomeTime.txt").normalize()
     
+    // disable world when nodes world.json or towns.json fails due to errors
+    public var disableWorldWhenLoadFails = true
+
     // period for running world save
     var savePeriod: Long = 600L
     
@@ -69,17 +72,7 @@ object Config {
     var incomePeriod: Long = 3600000L
 
     // global resource node in all territories
-    var globalResources = ResourceNode(
-        "",
-        "",
-        EnumMap<Material, Double>(Material::class.java),
-        EnumMap<EntityType, Double>(EntityType::class.java),
-        EnumMap<Material, OreDeposit>(Material::class.java),
-        EnumMap<Material, Double>(Material::class.java),
-        EnumMap<EntityType, Double>(EntityType::class.java),
-        0,
-        1.0
-    )
+    public var globalResources = TerritoryResources()
 
     // hidden ore blocks, stone only
     var oreBlocks = EnumSet.of(
@@ -344,6 +337,13 @@ object Config {
     // multiplier for warping home when occupied
     var occupiedHomeTeleportMultiplier: Double = 12.0
 
+    // List of town UUIDs to allow building in occupied territory.
+    // War whitelist often used to create AI towns that can be attacked
+    // by anyone. People want to build in occupied territory from these
+    // towns during non-war time. This list allows building/interacting
+    // in these occupied towns.
+    public var allowControlInOccupiedTownList: HashSet<UUID> = hashSetOf()
+
     // ===================================
     // truce configs
     // ===================================
@@ -362,13 +362,14 @@ object Config {
     fun load(config: FileConfiguration) {
 
         // engine settings
-        savePeriod = config.getLong("savePeriod", savePeriod)
-        backupPeriod = config.getLong("backupPeriod", backupPeriod)
-        mainPeriodicTick = config.getLong("mainPeriodicTick", mainPeriodicTick)
-        overMaxClaimsReminderPeriod = config.getLong("overMaxClaimsReminderPeriod", overMaxClaimsReminderPeriod)
-        nametagUpdatePeriod = config.getLong("nametagUpdatePeriod", nametagUpdatePeriod)
-        nametagPipelineTicks = config.getInt("nametagPipelineTicks", nametagPipelineTicks)
-        dynmapCopyTowns = config.getBoolean("dynmapCopyTowns", dynmapCopyTowns)
+        Config.disableWorldWhenLoadFails = config.getBoolean("disableWorldWhenLoadFails", Config.disableWorldWhenLoadFails)
+        Config.savePeriod = config.getLong("savePeriod", Config.savePeriod)
+        Config.backupPeriod = config.getLong("backupPeriod", Config.backupPeriod)
+        Config.mainPeriodicTick = config.getLong("mainPeriodicTick", Config.mainPeriodicTick)
+        Config.overMaxClaimsReminderPeriod = config.getLong("overMaxClaimsReminderPeriod", Config.overMaxClaimsReminderPeriod)
+        Config.nametagUpdatePeriod = config.getLong("nametagUpdatePeriod", Config.nametagUpdatePeriod)
+        Config.nametagPipelineTicks = config.getInt("nametagPipelineTicks", Config.nametagPipelineTicks)
+        Config.dynmapCopyTowns = config.getBoolean("dynmapCopyTowns", Config.dynmapCopyTowns)
 
         // use internal nametag system
         useNametags = config.getBoolean("useNametags", useNametags)
@@ -470,17 +471,19 @@ object Config {
         canLeaveNationDuringWar = config.getBoolean("canLeaveNationDuringWar", canLeaveNationDuringWar)
         annexDisabled = config.getBoolean("annexDisabled", annexDisabled)
 
-        warWhitelist = parseUUIDSet(config, "warWhitelist")
-        warUseWhitelist = warWhitelist.size > 0
-        warBlacklist = parseUUIDSet(config, "warBlacklist")
-        warUseBlacklist = warBlacklist.size > 0
-        annexBlacklist = parseUUIDSet(config, "annexBlacklist")
-        useAnnexBlacklist = annexBlacklist.size > 0
+        Config.warWhitelist = parseUUIDSet(config, "warWhitelist")
+        Config.warUseWhitelist = Config.warWhitelist.size > 0
+        Config.warBlacklist = parseUUIDSet(config, "warBlacklist")
+        Config.warUseBlacklist = Config.warBlacklist.size > 0
+        Config.annexBlacklist = parseUUIDSet(config, "annexBlacklist")
+        Config.useAnnexBlacklist = Config.annexBlacklist.size > 0
+        
+        Config.onlyWhitelistCanAnnex = config.getBoolean("onlyWhitelistCanAnnex", Config.onlyWhitelistCanAnnex)
+        Config.onlyWhitelistCanClaim = config.getBoolean("onlyWhitelistCanClaim", Config.onlyWhitelistCanClaim)
+        
+        Config.occupiedHomeTeleportMultiplier = config.getDouble("occupiedHomeTeleportMultiplier", Config.occupiedHomeTeleportMultiplier)
 
-        onlyWhitelistCanAnnex = config.getBoolean("onlyWhitelistCanAnnex", onlyWhitelistCanAnnex)
-        onlyWhitelistCanClaim = config.getBoolean("onlyWhitelistCanClaim", onlyWhitelistCanClaim)
-
-        occupiedHomeTeleportMultiplier = config.getDouble("occupiedHomeTeleportMultiplier", occupiedHomeTeleportMultiplier)
+        Config.allowControlInOccupiedTownList = parseUUIDSet(config, "allowControlInOccupiedTownList")
         // ======================
 
         // truce
@@ -489,7 +492,7 @@ object Config {
 }
 
 // parse global resources section in config.yml
-private fun parseGlobalResources(globalResourcesSection: ConfigurationSection): ResourceNode {
+private fun parseGlobalResources(globalResourcesSection: ConfigurationSection): TerritoryResources {
     val income: EnumMap<Material, Double> = EnumMap<Material, Double>(Material::class.java)
     val incomeSpawnEgg: EnumMap<EntityType, Double> = EnumMap<EntityType, Double>(EntityType::class.java)
     val ores: EnumMap<Material, OreDeposit> = EnumMap<Material, OreDeposit>(Material::class.java)
@@ -498,7 +501,7 @@ private fun parseGlobalResources(globalResourcesSection: ConfigurationSection): 
 
     globalResourcesSection.getConfigurationSection("income")?.let { section ->
         for ( item in section.getKeys(false) ) {
-            val itemName = item.uppercase(Locale.getDefault())
+            val itemName = item.uppercase()
             // spawn egg
             if ( itemName.startsWith("SPAWN_EGG_")) {
                 val entityType = EntityType.valueOf(itemName.replace("SPAWN_EGG_", ""))
@@ -549,7 +552,7 @@ private fun parseGlobalResources(globalResourcesSection: ConfigurationSection): 
     globalResourcesSection.getConfigurationSection("animals")?.let { section -> 
         for ( item in section.getKeys(false) ) {
             try {
-                val entityType = EntityType.valueOf(item.uppercase(Locale.getDefault()))
+                val entityType = EntityType.valueOf(item.uppercase())
                 animals.put(entityType, section.getDouble(item))
             }
             catch ( err: Exception ) {
@@ -558,16 +561,12 @@ private fun parseGlobalResources(globalResourcesSection: ConfigurationSection): 
         }
     }
 
-    return ResourceNode(
-        "",
-        "",
-        income,
-        incomeSpawnEgg,
-        ores,
-        crops,
-        animals,
-        0,
-        1.0
+    return TerritoryResources(
+        income = income,
+        incomeSpawnEgg = incomeSpawnEgg,
+        ores = ores,
+        crops = crops,
+        animals = animals,
     )
 }
 

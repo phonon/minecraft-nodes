@@ -92,6 +92,12 @@ class NodesWorldListener: Listener {
                 return
             }
 
+            // territory occupier permissions
+            val occupier: Town? = territory.occupier
+            if ( occupier !== null && hasOccupierPermissions(TownPermissions.DESTROY, town, occupier, resident) ) {
+                return
+            }
+
             // war permissions
             if ( hasWarPermissions(resident, territory, territoryChunk!!) ) {
                 return
@@ -184,13 +190,19 @@ class NodesWorldListener: Listener {
                                     ErrorChunkNotEdge -> Message.error(player, "[War] Must attack from territory edge or from captured chunk")
                                     ErrorFlagTooHigh -> Message.error(player, "[War] Flag placement too high, cannot create flag")
                                     ErrorSkyBlocked -> Message.error(player, "[War] Flag must see the sky")
-                                    ErrorTooManyAttacks -> Message.error(player, "[War] You cannot attack any more chunks at the same time.")
+                                    ErrorTooManyAttacks -> Message.error(player, "[War] You cannot attack any more chunks at the same time")
                                 }
                     
                                 // cancel event
                                 event.isCancelled = true
                             }
                         }
+                        else {
+                            Message.error(player, "[War] Cannot claim unless you are part of a town")
+                            event.setCancelled(true)
+                        }
+                    } else {
+                        event.setCancelled(true)
                     }
                 }
             }
@@ -222,7 +234,13 @@ class NodesWorldListener: Listener {
             if ( hasTownPermissions(TownPermissions.BUILD, town, resident) ) {
                 return
             }
-            
+
+            // territory occupier permissions
+            val occupier: Town? = territory.occupier
+            if ( occupier !== null && hasOccupierPermissions(TownPermissions.BUILD, town, occupier, resident) ) {
+                return
+            }
+
             // war permissions
             if ( hasWarPermissions(resident, territory, territoryChunk!!) ) {
                 return
@@ -283,7 +301,13 @@ class NodesWorldListener: Listener {
             if ( hasTownPermissions(TownPermissions.BUILD, town, resident) ) {
                 return
             }
-            
+
+            // territory occupier permissions
+            val occupier: Town? = territory.occupier
+            if ( occupier !== null && hasOccupierPermissions(TownPermissions.BUILD, town, occupier, resident) ) {
+                return
+            }
+
             // war permissions
             if ( hasWarPermissions(resident, territory, territoryChunk!!) ) {
                 return
@@ -426,6 +450,12 @@ class NodesWorldListener: Listener {
                 return
             }
 
+            // territory occupier permissions
+            val occupier: Town? = territory.occupier
+            if ( occupier !== null && hasOccupierPermissions(TownPermissions.INTERACT, town, occupier, resident) ) {
+                return
+            }
+
             // war permissions
             if ( hasWarPermissions(resident, territory, territoryChunk!!) ) {
                 return
@@ -487,6 +517,13 @@ class NodesWorldListener: Listener {
                 if ( hasTownPermissions(TownPermissions.INTERACT, town, resident) ) {
                     return
                 }
+
+                // territory occupier permissions
+                val occupier: Town? = territory.occupier
+                if ( occupier !== null && hasOccupierPermissions(TownPermissions.INTERACT, town, occupier, resident) ) {
+                    return
+                }
+
                 // war permissions
                 if ( hasWarPermissions(resident, territory, territoryChunk!!) ) {
                     return
@@ -635,23 +672,38 @@ private fun hasWildernessPermissions(territory: Territory?): Boolean {
  * player: player interacting in town
  */
 private fun hasTownPermissions(perms: TownPermissions, town: Town, player: Resident): Boolean {
-    if ( town.permissions.get(perms)!!.contains(PermissionsGroup.TOWN) && player.town === town ) {
+    if ( town.permissions[perms].contains(PermissionsGroup.TOWN) && player.town === town ) {
         return true
     }
-    else if ( town.permissions.get(perms)!!.contains(PermissionsGroup.TRUSTED) && player.town === town && player.trusted ) {
+    else if ( town.permissions[perms].contains(PermissionsGroup.TRUSTED) && player.town === town && player.trusted ) {
         return true
     }
-    else if ( town.permissions.get(perms)!!.contains(PermissionsGroup.NATION) && town.nation !== null && player.nation === town.nation ) {
+    else if ( town.permissions[perms].contains(PermissionsGroup.NATION) && town.nation !== null && player.nation === town.nation ) {
         return true
     }
-    else if ( town.permissions.get(perms)!!.contains(PermissionsGroup.ALLY) && (town.allies.contains(player.town) == true) ) {
+    else if ( town.permissions[perms].contains(PermissionsGroup.ALLY) && (town.allies.contains(player.town) == true) ) {
         return true
     }
-    else if ( town.permissions.get(perms)!!.contains(PermissionsGroup.OUTSIDER) ) {
+    else if ( town.permissions[perms].contains(PermissionsGroup.OUTSIDER) ) {
         return true
     }
 
     return false
+}
+
+/**
+ * Permissions check for a town's territory occupied by another town:
+ * perms: town permissions type
+ * town: town that owns the territory
+ * occupier: town that is occupier of the territory
+ * player: player interacting in the territory
+ */
+private fun hasOccupierPermissions(perms: TownPermissions, town: Town, occupier: Town, player: Resident): Boolean {
+    if ( Config.allowControlInOccupiedTownList.contains(town.uuid)  ) {
+        return hasTownPermissions(perms, occupier, player)
+    } else {
+        return false
+    }
 }
 
 /**

@@ -13,3 +13,7 @@
    - [Resource Nodes](./5-3-resources.md)
    - [Editor](./5-4-editor.md)
    - [Nametags](./5-5-nametags.md)
+- [Design Documentation](./6-design.md)
+   - [Territory and Resources](./6-territory-resources.md)
+   - [Prefer Handles over References](./6-prefer-handles.md)
+   - [Misc](./6-misc-design-decisions.md)

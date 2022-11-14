@@ -13,6 +13,7 @@ import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 import phonon.nodes.Message
 import phonon.nodes.Nodes
+import phonon.nodes.objects.TerritoryId
 import phonon.nodes.utils.string.filterByStart
 import phonon.nodes.utils.string.filterNation
 import phonon.nodes.utils.string.filterResident
@@ -52,7 +53,7 @@ class NodesCommand : CommandExecutor, TabCompleter {
         }
 
         // parse subcommand
-        when (args[0].lowercase(Locale.getDefault())) {
+        when ( args[0].lowercase() ) {
             "help" -> printHelp(sender)
             "resource" -> printResourceNodeInfo(sender, args)
             "territory" -> printTerritoryInfo(sender, args)
@@ -77,7 +78,7 @@ class NodesCommand : CommandExecutor, TabCompleter {
         // match each subcommand format
         else if ( args.size > 1 ) {
             // handle specific subcommands
-            when (args[0].lowercase(Locale.getDefault())) {
+            when ( args[0].lowercase() ) {
 
                 // /nodes town name
                 "town",
@@ -186,11 +187,10 @@ class NodesCommand : CommandExecutor, TabCompleter {
             }
         }
         else {
-            // parse input as id
-            val id = args[1].toInt()
-            val getTerritory = Nodes.territories.get(id)
+            // try parse input as id, then try to get territory with that id
+            val getTerritory = args[1].toIntOrNull()?.let { id -> Nodes.territories[TerritoryId(id)] }
             if ( getTerritory == null ) {
-                Message.error(sender, "Invalid territory id \"${id}\"")
+                Message.error(sender, "Invalid territory id \"${args[1]}\"")
                 return
             }
 

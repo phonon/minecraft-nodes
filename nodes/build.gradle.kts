@@ -11,7 +11,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 version = ""
 
 // custom versioning flag
-val VERSION = "0.0.9"
+val VERSION = "0.0.10"
 
 // jvm target
 val JVM = 17 // 1.8 for 8, 11 for 11
@@ -39,9 +39,6 @@ repositories {
     
     maven { // paper
         url = uri("https://papermc.io/repo/repository/maven-public/")
-    }
-    maven { // essentialsX
-        url = uri("https://ci.ender.zone/plugin/repository/everything")
     }
     maven { // protocol lib
         url = uri("https://repo.dmulloy2.net/nexus/repository/public/")

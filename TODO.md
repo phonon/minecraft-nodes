@@ -14,26 +14,18 @@
 
 
 # Nodes
--   Add node tiers with configurable resource boost.
 -   Fix moving stuff back into town nodes income inventory
 -   Consider attaching node income into income chests/inventories on
     territories instead of global town income storage. Force players
     to build supply networks to gather resources from their territories.
     Adds rp/territory management, potentially cancer to manage tho.
     So configurable setting.
--   Overhaul node resources to be an "Attributes"-style system.
-    Resources are just "attribute" modifiers on a territory. This can be
-    both resources (ore, farm rate, etc.), multipliers (e.g. Tiers, 1.2x resource),
-    and markers (modifier with no effect). These must be sorted by a priority
-    parameter so map designers have control over multiplier modifiers.
-    This makes resources system more flexible to allow other modifiers
-    like "Tiers" (resource multipliers) or "Refinery" marker resources,
-    without hard-coding behavior into the Territory itself.
--   Don't store direct object references. Use IDs/handles. This allows
-    pointer stability and reduces chance of memory leaks.
-    This brings cost of additional reference indirection, but likely does
-    not matter since these lookups should not be really frequent
-    in hot paths...will need to benchmark.
+-   Add guard to disable world interactions if nodes fails to load
+    world. If nodes fails to load territories or towns, then
+    the system world protections will be disabled, giving window
+    for players to modifier protected areas. Add guard event listener
+    that disables world interaction if any error occurs during
+    nodes world loading.
 
 # Minimap
 -   Port indicator on chunk. Would require a minimap api though since ports

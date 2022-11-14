@@ -56,60 +56,59 @@ inline fun <K,V> stringMapFromMap(iter: Map<K,V>, keyString: (K) -> String, valS
 
 // matches any string in a list of strings that 
 // begins with start
-fun filterByStart(list: List<String>, start: String): List<String> {
-    val startLowerCase = start.lowercase(Locale.getDefault())
-    return list.filter { s -> s.lowercase(Locale.getDefault()).startsWith(startLowerCase) }
+public fun filterByStart(list: List<String>, start: String): List<String> {
+    val startLowerCase = start.lowercase()
+    return list.filter { s -> s.lowercase().startsWith(startLowerCase) }
 }
 
 // match player name from online players
-fun filterPlayer(start: String): List<String> {
-    val startLowerCase = start.lowercase(Locale.getDefault())
+public fun filterPlayer(start: String): List<String> {
+    val startLowerCase = start.lowercase()
     val players = Bukkit.getOnlinePlayers()
     val filtered = players
         .asSequence()
         .map{ p -> p.name }
-        .filter{ s -> s.lowercase(Locale.getDefault()).startsWith(startLowerCase) }
+        .filter{ s -> s.lowercase().startsWith(startLowerCase) }
         .toList()
     
     return filtered
 }
 
-fun filterResident(start: String): List<String> {
-    val startLowerCase = start.lowercase(Locale.getDefault())
+public fun filterResident(start: String): List<String> {
+    val startLowerCase = start.lowercase()
     val filtered = Nodes.residents.values
         .asSequence()
         .map{ v -> v.name }
-        .filter{ s -> s.lowercase(Locale.getDefault()).startsWith(startLowerCase) }
+        .filter{ s -> s.lowercase().startsWith(startLowerCase) }
         .toList()
     
     return filtered
 }
 
-fun filterTown(start: String): List<String> {
-    val startLowerCase = start.lowercase(Locale.getDefault())
+public fun filterTown(start: String): List<String> {
+    val startLowerCase = start.lowercase()
     val filtered = Nodes.towns.values
         .asSequence()
         .map{ v -> v.name }
-        .filter{ s -> s.lowercase(Locale.getDefault()).startsWith(startLowerCase) }
+        .filter{ s -> s.lowercase().startsWith(startLowerCase) }
         .toList()
     
     return filtered
 }
 
-fun filterNation(start: String): List<String> {
-    val startLowerCase = start.lowercase(Locale.getDefault())
+public fun filterNation(start: String): List<String> {
+    val startLowerCase = start.lowercase()
     val filtered = Nodes.nations.values
         .asSequence()
         .map{ v -> v.name }
-        .filter{ s -> s.lowercase(Locale.getDefault()).startsWith(startLowerCase) }
+        .filter{ s -> s.lowercase().startsWith(startLowerCase) }
         .toList()
     
     return filtered
 }
 
 // filter both Towns and Nations by starting phrase
-fun filterTownOrNation(start: String): List<String> {
-    val startLowerCase = start.lowercase(Locale.getDefault())
+public fun filterTownOrNation(start: String): List<String> {
     val filteredTowns = filterTown(start)
     val filteredNations = filterNation(start)
     
@@ -117,36 +116,36 @@ fun filterTownOrNation(start: String): List<String> {
 }
 
 // filter town residents names
-fun filterTownResident(town: Town, start: String): List<String> {
-    val startLowerCase = start.lowercase(Locale.getDefault())
+public fun filterTownResident(town: Town, start: String): List<String> {
+    val startLowerCase = start.lowercase()
     val filtered = town.residents
         .asSequence()
         .map{ v -> v.name }
-        .filter{ s -> s.lowercase(Locale.getDefault()).startsWith(startLowerCase) }
+        .filter{ s -> s.lowercase().startsWith(startLowerCase) }
         .toList()
     
     return filtered
 }
 
 // filter nation residents names
-fun filterNationResident(nation: Nation, start: String): List<String> {
-    val startLowerCase = start.lowercase(Locale.getDefault())
+public fun filterNationResident(nation: Nation, start: String): List<String> {
+    val startLowerCase = start.lowercase()
     val filtered = nation.residents
         .asSequence()
         .map{ v -> v.name }
-        .filter{ s -> s.lowercase(Locale.getDefault()).startsWith(startLowerCase) }
+        .filter{ s -> s.lowercase().startsWith(startLowerCase) }
         .toList()
     
     return filtered
 }
 
 // filter nation town names
-fun filterNationTown(nation: Nation, start: String): List<String> {
-    val startLowerCase = start.lowercase(Locale.getDefault())
+public fun filterNationTown(nation: Nation, start: String): List<String> {
+    val startLowerCase = start.lowercase()
     val filtered = nation.towns
         .asSequence()
         .map{ v -> v.name }
-        .filter{ s -> s.lowercase(Locale.getDefault()).startsWith(startLowerCase) }
+        .filter{ s -> s.lowercase().startsWith(startLowerCase) }
         .toList()
     
     return filtered

@@ -5,6 +5,10 @@
 
 package phonon.nodes.objects
 
+import java.util.UUID
+import java.util.concurrent.ThreadLocalRandom
+import java.util.EnumMap
+import java.util.EnumSet
 import org.bukkit.ChatColor
 import org.bukkit.Location
 import org.bukkit.Material
@@ -16,22 +20,31 @@ import org.bukkit.scheduler.BukkitTask
 import phonon.nodes.Message
 import phonon.nodes.constants.PermissionsGroup
 import phonon.nodes.constants.TownPermissions
+import phonon.nodes.utils.EnumArrayMap
+import phonon.nodes.utils.createEnumArrayMap
 import phonon.nodes.utils.Color
 import phonon.nodes.utils.string.stringArrayFromSet
 import phonon.nodes.utils.string.stringMapFromMap
 import phonon.nodes.serdes.JsonSaveState
-import java.util.*
+
+
+/**
+ * Wrapper type for town uuid.
+ */
+@JvmInline
+value class TownId(private val id: UUID) {
+    override fun toString(): String = id.toString()
+    fun toUUID(): UUID = id
+}
 
 // internal town id counter
 private var townNametagIdCounter: Int = 0
 
-// random number generator
-private val random = Random()
 
 class Town(
     val uuid: UUID,
     var name: String,
-    var home: Territory, // main territory owned by town
+    var home: TerritoryId, // main territory owned by town
     var leader: Resident?,
     var spawnpoint: Location
 ) {
@@ -47,14 +60,14 @@ class Town(
     
     // territories owned by town
     // this includes annexed territories
-    val territories: HashSet<Territory> = hashSetOf(home)
+    val territories: HashSet<TerritoryId> = hashSetOf(home)
 
     // separate set of all annexed territories
     // config: for these to count towards total claims
-    val annexed: HashSet<Territory> = hashSetOf()
+    val annexed: HashSet<TerritoryId> = hashSetOf()
 
     // territories captured by town (but not annexed)
-    val captured: HashSet<Territory> = hashSetOf()
+    val captured: HashSet<TerritoryId> = hashSetOf()
 
     // outposts in town, players can /t spawn [output]
     // map name -> town outpost
@@ -89,7 +102,8 @@ class Town(
 
     // permission flags, map of
     // town permissions category -> set of allowed groups in (town, ally, nation, outsider)
-    val permissions: EnumMap<TownPermissions, EnumSet<PermissionsGroup>>
+    // TODO: replace with EnumArrayMap custom data structure
+    val permissions: EnumArrayMap<TownPermissions, EnumSet<PermissionsGroup>>
 
     // protected chest blocks in town (for leader, officers, + trusted players)
     val protectedBlocks: HashSet<Block> = hashSetOf()
@@ -122,10 +136,7 @@ class Town(
         townNametagIdCounter += 1
         
         // create permissions object
-        this.permissions = enumValues<TownPermissions>().toList().associateWithTo(
-            EnumMap<TownPermissions, EnumSet<PermissionsGroup>>(TownPermissions::class.java),
-            {_ -> EnumSet.of(PermissionsGroup.TOWN)}
-        )
+        this.permissions = createEnumArrayMap<TownPermissions, EnumSet<PermissionsGroup>>({_ -> EnumSet.of(PermissionsGroup.TOWN)})
 
         if ( leader != null ) {
             // add creator to residents list
@@ -137,10 +148,8 @@ class Town(
             }
         }
 
-        // set home territory town to this
-        home.town = this
-
         // assign town random color
+        val random = ThreadLocalRandom.current()
         this.color = Color(
             random.nextInt(256),
             random.nextInt(256),
@@ -211,7 +220,7 @@ class Town(
         }
 
         Message.print(sender, "${ChatColor.BOLD}Town ${this.name}:")
-        Message.print(sender, "- Home${ChatColor.WHITE}: Territory (id = ${this.home.id})")
+        Message.print(sender, "- Home${ChatColor.WHITE}: Territory (id = ${this.home})")
         Message.print(sender, "- Territories${ChatColor.WHITE}: ${this.territories.size}")
         Message.print(sender, "- Claim Power${ChatColor.WHITE}: ${claimsUsedColor}${this.claimsUsed}/${claimsMaxColor}${this.claimsMax}")
         Message.print(sender, "- Nation${ChatColor.WHITE}: ${nation}")
@@ -226,30 +235,30 @@ class Town(
      * Immutable save snapshot, must be composed of immutable primitives.
      * Used to generate json string serialization.
      */
-    class TownSaveState(t: Town): JsonSaveState {
-        val uuid = t.uuid
-        val leader = t.leader?.uuid
-        val home = t.home.id
-        val spawnpoint = doubleArrayOf(t.spawnpoint.x, t.spawnpoint.y, t.spawnpoint.z)
-        val color = intArrayOf(t.color.r, t.color.g, t.color.b)
-        val permissions = t.permissions.clone()
-        val residents = t.residents.map{ x -> x.uuid }
-        val officers =  t.officers.map{ x -> x.uuid }
-        val claimsBonus = t.claimsBonus
-        val claimsAnnexed = t.claimsAnnexed
-        val claimsPenalty = t.claimsPenalty
-        val claimsPenaltyTime = t.claimsPenaltyTime
-        val territories = t.territories.map{ x -> x.id }
-        val annexed = t.annexed.map{ x -> x.id }
-        val captured = t.captured.map{ x -> x.id }
-        val outposts: HashMap<String, TownOutpost> = HashMap(t.outposts)
-        val allies = t.allies.map{ x -> x.name }
-        val enemies = t.enemies.map{ x -> x.name }
-        val income = t.income.storage.clone()
-        val incomeEgg = t.income.storageSpawnEgg.clone()
-        val isOpen = t.isOpen
-        val protectedBlocks: HashSet<Block> = HashSet(t.protectedBlocks)
-        val moveHomeCooldown = t.moveHomeCooldown
+    public class TownSaveState(t: Town): JsonSaveState {
+        public val uuid = t.uuid
+        public val leader = t.leader?.uuid
+        public val home = t.home
+        public val spawnpoint = doubleArrayOf(t.spawnpoint.x, t.spawnpoint.y, t.spawnpoint.z)
+        public val color = intArrayOf(t.color.r, t.color.g, t.color.b)
+        public val permissions = t.permissions.copyOf()
+        public val residents = t.residents.map{ x -> x.uuid }
+        public val officers =  t.officers.map{ x -> x.uuid }
+        public val claimsBonus = t.claimsBonus
+        public val claimsAnnexed = t.claimsAnnexed
+        public val claimsPenalty = t.claimsPenalty
+        public val claimsPenaltyTime = t.claimsPenaltyTime
+        public val territories = t.territories.toList()
+        public val annexed = t.annexed.toList()
+        public val captured = t.captured.toList()
+        public val outposts: HashMap<String, TownOutpost> = HashMap(t.outposts)
+        public val allies = t.allies.map{ x -> x.name }
+        public val enemies = t.enemies.map{ x -> x.name }
+        public val income = t.income.storage.clone()
+        public val incomeEgg = t.income.storageSpawnEgg.clone()
+        public val isOpen = t.isOpen
+        public val protectedBlocks: HashSet<Block> = HashSet(t.protectedBlocks)
+        public val moveHomeCooldown = t.moveHomeCooldown
 
         override var jsonString: String? = null
 
@@ -325,13 +334,14 @@ class Town(
 }
 
 // string format for town permissions
-private fun permissionsToJsonString(permissions: EnumMap<TownPermissions, EnumSet<PermissionsGroup>>): String {
+private fun permissionsToJsonString(permissions: EnumArrayMap<TownPermissions, EnumSet<PermissionsGroup>>): String {
     val str = StringBuilder()
 
     str.append("{")
 
     var index: Int = 0
-    for ( (type, groups) in permissions ) {
+    for ( type in enumValues<TownPermissions>() ) {
+        val groups = permissions[type]
         str.append("\"${type}\":")
         str.append(stringArrayFromSet<PermissionsGroup>(groups, {g -> "${g.ordinal}"}))
         if ( index < permissions.size - 1 ) {

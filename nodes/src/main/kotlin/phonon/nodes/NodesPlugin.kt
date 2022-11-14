@@ -4,7 +4,6 @@
 
 package phonon.nodes
 
-import com.earth2me.essentials.Essentials
 import org.bukkit.command.TabCompleter
 import org.bukkit.plugin.java.JavaPlugin
 import phonon.nodes.commands.*
@@ -28,13 +27,6 @@ class NodesPlugin : JavaPlugin() {
         // ===================================
         // save hooks to external plugins
         // ===================================
-        // essentials
-        val essentials = pluginManager.getPlugin("Essentials")
-        if ( essentials !== null ) {
-            Nodes.hookEssentials(essentials as Essentials)
-            logger.info("Using Essentials v${essentials.getDescription().version}")
-        }
-        
         // dynmap hook, just flag that dynmap exists
         val dynmap = pluginManager.getPlugin("dynmap")
         if ( dynmap !== null ) {
@@ -55,6 +47,35 @@ class NodesPlugin : JavaPlugin() {
         Nodes.reloadConfig()
 
         Nodes.war.initialize(Config.flagMaterials)
+
+        // try load world
+        val pluginPath = Config.pathPlugin
+        logger.info("Loading world from: ${pluginPath}")
+        try {
+            if ( Nodes.loadWorld() == true ) { // successful load
+                // print number of resource nodes and territories loaded
+                logger.info("- Resource Nodes: ${Nodes.getResourceNodeCount()}")
+                logger.info("- Territories: ${Nodes.getTerritoryCount()}")
+                logger.info("- Residents: ${Nodes.getResidentCount()}")
+                logger.info("- Towns: ${Nodes.getTownCount()}")
+                logger.info("- Nations: ${Nodes.getNationCount()}")
+            } else {
+                logger.severe("Error loading world: Invalid world file at ${pluginPath}/${Config.pathWorld}")
+                if ( Config.disableWorldWhenLoadFails ) {
+                    logger.severe("Disabling world interactions due to world load error")
+                    pluginManager.registerEvents(DisabledWorldListener(), this)
+                    return
+                }
+            }
+        } catch (err: Exception) {
+            err.printStackTrace()
+            logger.severe("Error loading world: ${err}")
+            if ( Config.disableWorldWhenLoadFails ) {
+                logger.severe("Disabling world interactions due to world load error")
+                pluginManager.registerEvents(DisabledWorldListener(), this)
+                return
+            }
+        }
 
         // register listeners
         pluginManager.registerEvents(NodesBlockGrowListener(), this)

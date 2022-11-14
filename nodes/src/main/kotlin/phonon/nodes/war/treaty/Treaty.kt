@@ -20,7 +20,6 @@ import phonon.nodes.Nodes
 import phonon.nodes.Message
 import phonon.nodes.gui.Gui
 import phonon.nodes.objects.Resident
-import phonon.nodes.objects.Territory
 import phonon.nodes.objects.Town
 import phonon.nodes.objects.TownPair
 

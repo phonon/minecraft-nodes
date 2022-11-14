@@ -158,7 +158,7 @@ class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // parse subcommand
-        when (args[0].lowercase(Locale.getDefault())) {
+        when ( args[0].lowercase() ) {
             "help" -> printHelp(sender)
             "create" -> createTown(player, args)
             "new" -> createTown(player, args)
@@ -218,7 +218,7 @@ class TownCommand : CommandExecutor, TabCompleter {
         // match each subcommand format
         else if ( args.size > 1 ) {
             // handle specific subcommands
-            when (args[0].lowercase(Locale.getDefault())) {
+            when ( args[0].lowercase() ) {
 
                 // /town [subcommand] [resident]
                 "officer",
@@ -806,7 +806,7 @@ class TownCommand : CommandExecutor, TabCompleter {
                 town.applications.forEach { (k, _) ->
                     applicant = k
                 }
-                if ( args.size > 1 && args[1].lowercase(Locale.getDefault()) != applicant.name.lowercase(Locale.getDefault())) {
+                if ( args.size > 1 && args[1].lowercase() != applicant.name.lowercase()) {
                     Message.error(player, "That player has not applied or their application has expired")
                     return
                 }
@@ -1072,7 +1072,7 @@ class TownCommand : CommandExecutor, TabCompleter {
         var teleportTimerTicks = Math.max(0.0, Config.townSpawnTime * 20.0)
 
         // multiplier during war and if home occupied
-        if ( Nodes.war.enabled && town.home.occupier !== null ) {
+        if ( Nodes.war.enabled && Nodes.getTerritoryFromId(town.home)?.occupier !== null ) {
             Message.error(player, "${ChatColor.BOLD}Your home is occupied, town spawn will take much longer...")
             teleportTimerTicks *= Config.occupiedHomeTeleportMultiplier
         }
@@ -1274,7 +1274,7 @@ class TownCommand : CommandExecutor, TabCompleter {
             Message.print(player, "Town color set: ${ChatColor.WHITE}${r} ${g} ${b}")
         }
         catch (e: NumberFormatException) {
-            Message.error(player, "Invalid color")
+            Message.error(player, "Invalid color (must be [r] [g] [b] in range 0-255)")
         }
         
     }
@@ -1386,10 +1386,15 @@ class TownCommand : CommandExecutor, TabCompleter {
         val hasPermissions = if ( resident === town.leader || town.officers.contains(resident) ) {
             true
         }
-        else if ( town.permissions.get(TownPermissions.INCOME)!!.contains(PermissionsGroup.TOWN) && resident.town === town ) {
+        else if ( town.permissions[TownPermissions.INCOME].contains(PermissionsGroup.TOWN) && resident.town === town ) {
             true
         }
-        else town.permissions.get(TownPermissions.INCOME)!!.contains(PermissionsGroup.TRUSTED) && resident.town === town && resident.trusted
+        else if ( town.permissions[TownPermissions.INCOME].contains(PermissionsGroup.TRUSTED) && resident.town === town && resident.trusted ) {
+            true
+        }
+        else {
+            false
+        }
 
         // open town inventory
         if ( hasPermissions ) {
@@ -1428,7 +1433,7 @@ class TownCommand : CommandExecutor, TabCompleter {
         // setting personal prefix
         else if ( args.size == 2 ) {
             val prefix = args[1]
-            if ( prefix.lowercase(Locale.getDefault()) == "remove" ) {
+            if ( prefix.lowercase() == "remove" ) {
                 Nodes.setResidentPrefix(resident, "")
                 Message.print(player, "Removed your prefix.")
             }
@@ -1466,7 +1471,7 @@ class TownCommand : CommandExecutor, TabCompleter {
             }
 
             val prefix = args[2]
-            if ( prefix.lowercase(Locale.getDefault()) == "remove" ) {
+            if ( prefix.lowercase() == "remove" ) {
                 Nodes.setResidentPrefix(target, "")
                 Message.print(player, "Removed ${target.name} prefix.")
             }
@@ -1505,7 +1510,7 @@ class TownCommand : CommandExecutor, TabCompleter {
         // setting personal prefix
         else if ( args.size == 2 ) {
             val prefix = args[1]
-            if ( prefix.lowercase(Locale.getDefault()) == "remove" ) {
+            if ( prefix.lowercase() == "remove" ) {
                 Nodes.setResidentSuffix(resident, "")
                 Message.print(player, "Removed your suffix.")
             }
@@ -1543,7 +1548,7 @@ class TownCommand : CommandExecutor, TabCompleter {
             }
 
             val prefix = args[2]
-            if ( prefix.lowercase(Locale.getDefault()) == "remove" ) {
+            if ( prefix.lowercase() == "remove" ) {
                 Nodes.setResidentSuffix(target, "")
                 Message.print(player, "Removed ${target.name} suffix.")
             }
@@ -1590,7 +1595,7 @@ class TownCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        if ( town.name.lowercase(Locale.getDefault()) == args[1].lowercase(Locale.getDefault())) {
+        if ( town.name.lowercase() == args[1].lowercase() ) {
             Message.error(player, "Your town is already named ${town.name}")
             return
         }
@@ -1650,7 +1655,12 @@ class TownCommand : CommandExecutor, TabCompleter {
         // if size input, create new minimap of that size
         // note: minimap creation internally handles removing old minimaps
         if ( args.size >= 2 ) {
-            val size = Math.min(5, Math.max(3, args[1].toInt()))
+            val size = try {
+                Math.min(5, Math.max(3, args[1].toInt()))
+            } catch (e: NumberFormatException) {
+                Message.error(player, "Invalid minimap size: ${args[1]}, must be number in range 3-5. Using default 5")
+                5
+            }
             resident.createMinimap(player, size)
             Message.print(player, "Minimap enabled (size = ${size})")
         }
@@ -1693,7 +1703,8 @@ class TownCommand : CommandExecutor, TabCompleter {
         if ( args.size < 4 ) {
             // print current town permissions
             Message.print(player, "Town Permissions:")
-            for ( (perm, groups) in town.permissions ) {
+            for ( perm in enumValues<TownPermissions>() ) {
+                val groups = town.permissions[perm]
                 Message.print(player, "- ${perm}${ChatColor.WHITE}: ${groups}")
             }
 
@@ -1714,7 +1725,7 @@ class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // match permissions and group
-        val permissions: TownPermissions = when (args[1].lowercase(Locale.getDefault())) {
+        val permissions: TownPermissions = when ( args[1].lowercase() ) {
             "build" -> TownPermissions.BUILD
             "destroy" -> TownPermissions.DESTROY
             "interact" -> TownPermissions.INTERACT
@@ -1727,7 +1738,7 @@ class TownCommand : CommandExecutor, TabCompleter {
             }
         }
 
-        val group: PermissionsGroup = when (args[2].lowercase(Locale.getDefault())) {
+        val group: PermissionsGroup = when ( args[2].lowercase() ) {
             "town" -> PermissionsGroup.TOWN
             "nation" -> PermissionsGroup.NATION
             "ally" -> PermissionsGroup.ALLY
@@ -1740,7 +1751,7 @@ class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // get flag state (allow/deny)
-        val flag = when (args[3].lowercase(Locale.getDefault())) {
+        val flag = when ( args[3].lowercase() ) {
             "allow",
             "true" -> { true }
             
@@ -1782,7 +1793,7 @@ class TownCommand : CommandExecutor, TabCompleter {
         }
         
         if ( args.size > 1 ) {
-            if ( args[1].lowercase(Locale.getDefault()) == "show" ) {
+            if ( args[1].lowercase() == "show" ) {
                 Message.print(player, "Protected chests:")
                 // print protected chests
                 for ( block in town.protectedBlocks ) {
@@ -1907,7 +1918,7 @@ class TownCommand : CommandExecutor, TabCompleter {
             Message.error(player, "This is not your territory")
             return
         }
-        if ( town.home === territory ) {
+        if ( town.home == territory.id ) {
             Message.error(player, "This is already your home territory")
             return
         }
@@ -2008,7 +2019,7 @@ class TownCommand : CommandExecutor, TabCompleter {
             Message.error(player, "You have not occupied this territory")
             return
         }
-        if ( territoryTown.home === territory && territoryTown.territories.size > 1 ) {
+        if ( territoryTown.home == territory.id && territoryTown.territories.size > 1 ) {
             Message.error(player, "You must annex all of this town's other territories before you can annex its home territory")
             return
         }
@@ -2044,7 +2055,7 @@ class TownCommand : CommandExecutor, TabCompleter {
         }
         else {
             // route subcommand function
-            when (args[1].lowercase(Locale.getDefault())) {
+            when ( args[1].lowercase() ) {
                 "list" -> outpostList(player, args)
                 "setspawn" -> outpostSetSpawn(player, args)
                 else -> { printOutpostHelp(sender) }
@@ -2076,7 +2087,7 @@ class TownCommand : CommandExecutor, TabCompleter {
             Message.print(player, "Town outposts:")
             for ( (name, outpost) in town.outposts ) {
                 val spawn = outpost.spawn
-                Message.print(player, "- ${name}${ChatColor.WHITE}: Territory (id=${outpost.territory.id}, Spawn = (${spawn.x}, ${spawn.y}, ${spawn.z})")
+                Message.print(player, "- ${name}${ChatColor.WHITE}: Territory (id=${outpost.territory}, Spawn = (${spawn.x}, ${spawn.y}, ${spawn.z})")
             }
         }
         else {
@@ -2120,7 +2131,7 @@ class TownCommand : CommandExecutor, TabCompleter {
         
         // match outpost to territory
         for ( outpost in town.outposts.values ) {
-            if ( outpost.territory === territory ) {
+            if ( outpost.territory == territory.id ) {
                 val result = Nodes.setOutpostSpawn(town, outpost, player.location)
                 if ( result == true ) {
                     Message.print(player, "Set outpost \"${outpost.name}\" spawn to current location")

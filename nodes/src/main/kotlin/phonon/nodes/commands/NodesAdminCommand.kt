@@ -54,7 +54,8 @@ private val SUBCOMMANDS: List<String> = listOf(
 private val RELOAD_SUBCOMMANDS: List<String> = listOf(
     "config",
     "managers",
-    "world"
+    "resources",
+    "territory",
 )
 
 // war subcommands
@@ -63,12 +64,12 @@ private val WAR_SUBCOMMANDS: List<String> = listOf(
     "skirmish",
     "disable",
     "whitelist",
-    "blacklist"
+    "blacklist",
 )
 
 // resident/player subcommands
 private val RESIDENT_SUBCOMMANDS: List<String> = listOf(
-    "towncooldown"
+    "towncooldown",
 )
 
 // town subcommands
@@ -95,7 +96,7 @@ private val TOWN_SUBCOMMANDS: List<String> = listOf(
     "sethome",
     "sethomecooldown",
     "addoutpost",
-    "removeoutpost"
+    "removeoutpost",
 )
 
 // nation subcommands
@@ -120,7 +121,7 @@ private val DEBUG_SUBCOMMANDS: List<String> = listOf(
 class NodesAdminCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
-    
+            
         // no args, print plugin info
         if ( args.size == 0 ) {
             Message.print(sender, "${ChatColor.BOLD}Nodes ${Nodes.version}")
@@ -129,7 +130,7 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
 
         // parse subcommand
-        when (args[0].lowercase(Locale.getDefault())) {
+        when ( args[0].lowercase() ) {
             "help" -> printHelp(sender)
             "reload" -> reload(sender, args)
             "war" -> war(sender, args)
@@ -162,7 +163,7 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         // match each subcommand format
         else if ( args.size > 1 ) {
             // handle specific subcommands
-            when (args[0].lowercase(Locale.getDefault())) {
+            when ( args[0].lowercase() ) {
                 "reload" -> {
                     if ( args.size == 2 ) {
                         return filterByStart(RELOAD_SUBCOMMANDS, args[1])
@@ -182,7 +183,7 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
                         return filterByStart(RESIDENT_SUBCOMMANDS, args[1])
                     }
                     else if ( args.size > 2 ) {
-                        when (args[1].lowercase(Locale.getDefault())) {
+                        when ( args[1].lowercase() ) {
                             // /nodesadmin resident [subcommand] [player]
                             "towncooldown" -> {
                                 if ( args.size == 3 ) {
@@ -200,7 +201,7 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
                     }
                     // handle subcommand
                     else if ( args.size > 2 ) {
-                        when (args[1].lowercase(Locale.getDefault())) {
+                        when ( args[1].lowercase() ) {
 
                             // /nodesadmin town [subcommand] [town] ...
                             "delete",
@@ -291,7 +292,7 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
                     }
                     // handle subcommand
                     else if ( args.size > 2 ) {
-                        when (args[1].lowercase(Locale.getDefault())) {
+                        when ( args[1].lowercase() ) {
                             
                             // /nodesadmin nation [subcommand] [nation] ...
                             "delete" -> {
@@ -358,7 +359,7 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
                     }
                     // handle subcommand
                     else if ( args.size > 2 ) {
-                        when (args[1].lowercase(Locale.getDefault())) {
+                        when ( args[1].lowercase() ) {
                             "resident" -> {
                                 if ( args.size == 3 ) {
                                     return filterResident(args[2])
@@ -388,6 +389,7 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
 
     private fun printHelp(sender: CommandSender) {
         Message.print(sender, "[Nodes] Admin commands:")
+        Message.print(sender, "/nodesadmin reload${ChatColor.WHITE}: Reloads modules of plugin")
         Message.print(sender, "/nodesadmin war${ChatColor.WHITE}: Enable/disable war")
         Message.print(sender, "/nodesadmin town${ChatColor.WHITE}: Manage towns (see \"/nodesadmin town help\")")
         Message.print(sender, "/nodesadmin nation${ChatColor.WHITE}: Manage nations (see \"/nodesadmin nation help\")")
@@ -405,17 +407,17 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
     }
 
     /**
-     * @command /nodesadmin reload [config|listeners|world]
+     * @command /nodesadmin reload [config|managers|territory]
      * Reload components of Nodes engine
      */
     private fun reload(sender: CommandSender, args: Array<String>) {
         // print general war state
         if ( args.size < 2 ) {
-            Message.print(sender, "Reload possibilities: \"/nodesadmin reload [config|managers|world]\"")
+            Message.print(sender, "Reload possibilities: \"/nodesadmin reload [config|managers|resources|territory]\"")
             return
         }
 
-        val subcommand = args[1].lowercase(Locale.getDefault())
+        val subcommand = args[1].lowercase()
         if ( subcommand == "config" ) {
             Nodes.reloadConfig()
             Message.print(sender, "[Nodes] reloaded configs")
@@ -424,11 +426,66 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
             Nodes.reloadManagers()
             Message.print(sender, "[Nodes] reloaded manager tasks")
         }
-        else if ( subcommand == "world" ) {
-            Message.error(sender, "Reload world is TODO")
+        else if ( subcommand == "resources" ) {
+            val success = Nodes.reloadWorldJson(
+                reloadResources = true,
+                reloadTerritories = false,
+            )
+            if ( success ) {
+                Message.print(sender, "[Nodes] reloaded resources and territories")
+            } else {
+                Message.error(sender, "[Nodes] failed to reload resources and territories")
+            }
+        }
+        else if ( subcommand == "territory" ) {
+            // parse territory ids
+            if ( args.size < 3 ) {
+                Message.print(sender, "Usage: \"/nodesadmin reload territory *\"${ChatColor.WHITE}: reloads ALL territories")
+                Message.print(sender, "Usage: \"/nodesadmin reload territory id1 id2 id3 ...\"${ChatColor.WHITE}: reloads specific ids")
+                return
+            }
+
+            val terrIds: List<TerritoryId>? = if ( args[2] == "*" ) { // reload ALL territories (don't specify ids)
+                null
+            } else { // load specific ids: parse from chat input
+                val ids = HashSet<TerritoryId>()
+                
+                // validate id exists in territories (don't allow reloading NEW territories,
+                // since this can cause issues and instability if ids/neighbors are changing)
+                for ( i in 2 until args.size ) {
+                    try {
+                        val id = TerritoryId(args[i].toInt())
+                        val terr = Nodes.getTerritoryFromId(id)
+                        if ( terr == null ) {
+                            Message.error(sender, "Territory id \"${id}\" does not exist. This can only reload existing territories.")
+                            return
+                        }
+                        ids.add(id)
+                    } catch ( err: Exception ) {
+                        Message.error(sender, "Invalid id: \"${args[i]}\"")
+                        return
+                    }
+                }
+
+                ids.toList()
+            }
+
+            val success = Nodes.reloadWorldJson(
+                reloadResources = false,
+                reloadTerritories = true,
+                territoryIds = terrIds,
+            )
+
+            val terrIdsString = terrIds?.let { ids -> "territories ${ids}" } ?: "all territories"
+
+            if ( success ) {
+                Message.print(sender, "[Nodes] reloaded ${terrIdsString}")
+            } else {
+                Message.error(sender, "[Nodes] failed to reload ${terrIdsString}")
+            }
         }
         else {
-            Message.print(sender, "Reload possibilities: \"/nodesadmin reload [config|managers|world]\"")
+            Message.print(sender, "Reload possibilities: \"/nodesadmin reload [config|managers|resources|territory]\"")
         }
     }
 
@@ -444,7 +501,7 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         // war subcommands
         else {
-            val function = args[1].lowercase(Locale.getDefault())
+            val function = args[1].lowercase()
             // full war: allow annex, can attack any territory
             when ( function ) {
                 "enable" -> {
@@ -527,7 +584,7 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         else {
             // route subcommand function
-            when (args[1].lowercase(Locale.getDefault())) {
+            when ( args[1].lowercase() ) {
                 "help" -> printResidentHelp(sender)
                 "towncooldown" -> setResidentTownCooldown(sender, args)
                 else -> { printResidentHelp(sender) }
@@ -573,7 +630,7 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         else {
             // route subcommand function
-            when (args[1].lowercase(Locale.getDefault())) {
+            when ( args[1].lowercase() ) {
                 "create" -> createTown(sender, args)
                 "delete" -> deleteTown(sender, args)
                 "addplayer" -> addPlayerToTown(sender, args)
@@ -648,8 +705,8 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         // map ids to territories
         val territories: MutableList<Territory> = mutableListOf()
         for ( i in 3 until args.size ) {
-            val id = args[i].toInt()
-            val terr = Nodes.territories.get(id)
+            val id = TerritoryId(args[i].toInt())
+            val terr = Nodes.territories[id]
             if ( terr == null || terr.town != null ) {
                 Message.error(sender, "Invalid territory id=${id}: either does not exist or already has town")
                 return
@@ -788,8 +845,8 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         // map ids to territories
         val territories: MutableList<Territory> = mutableListOf()
         for ( i in 3 until args.size ) {
-            val id = args[i].toInt()
-            val terr = Nodes.territories.get(id)
+            val id = TerritoryId(args[i].toInt())
+            val terr = Nodes.territories[id]
             if ( terr == null || terr.town != null ) {
                 Message.error(sender, "Invalid territory id=${id}: either does not exist or already has town")
                 return
@@ -828,13 +885,13 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         // map ids to territories
         val territories: MutableList<Territory> = mutableListOf()
         for ( i in 3 until args.size ) {
-            val id = args[i].toInt()
-            val terr = Nodes.territories.get(id)
-            if ( terr == null || terr.town != town ) {
+            val id = TerritoryId(args[i].toInt())
+            val terr = Nodes.territories[id]
+            if ( terr == null || terr?.town != town ) {
                 Message.error(sender, "Invalid territory id=${id}: does not belong to town")
                 return
             }
-            else if ( town.home == terr ) {
+            else if ( town.home == terr.id ) {
                 Message.error(sender, "Cannot remove town's home territory id=${id}")
                 return
             }
@@ -872,8 +929,8 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         // map ids to territories
         val territories: MutableList<Territory> = mutableListOf()
         for ( i in 3 until args.size ) {
-            val id = args[i].toInt()
-            val terr = Nodes.territories.get(id)
+            val id = TerritoryId(args[i].toInt())
+            val terr = Nodes.territories[id]
             if ( terr == null || terr.town == town ) {
                 Message.error(sender, "Invalid territory id=${id}: either does not exist or belongs to town")
                 return
@@ -905,8 +962,8 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         // map ids to territories
         val territories: MutableList<Territory> = mutableListOf()
         for ( i in 2 until args.size ) {
-            val id = args[i].toInt()
-            val terr = Nodes.territories.get(id)
+            val id = TerritoryId(args[i].toInt())
+            val terr = Nodes.territories[id]
             if ( terr == null ) {
                 Message.error(sender, "Invalid territory id=${id}: does not exist")
                 return
@@ -1286,8 +1343,8 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
 
         // get new home territory
-        val id = args[3].toInt()
-        val terr = Nodes.territories.get(id)
+        val id = TerritoryId(args[3].toInt())
+        val terr = Nodes.territories[id]
         if ( terr == null ) {
             Message.error(sender, "Invalid territory id=${id}: does not exist")
             return
@@ -1299,7 +1356,7 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        if ( town.home === terr ) {
+        if ( town.home == terr.id ) {
             Message.error(sender, "Invalid territory id=${id}: already is home territory")
             return
         }
@@ -1357,7 +1414,7 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         
         // get outpost territory
-        val id = args[4].toInt()
+        val id = TerritoryId(args[4].toInt())
         val terr = Nodes.territories.get(id)
         if ( terr == null ) {
             Message.error(sender, "Invalid territory id=${id}: does not exist")
@@ -1427,7 +1484,7 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         else {
             // route subcommand function
-            when (args[1].lowercase(Locale.getDefault())) {
+            when ( args[1].lowercase() ) {
                 "create" -> createNation(sender, args)
                 "delete" -> deleteNation(sender, args)
                 "addtown" -> addTownToNation(sender, args)
@@ -1975,13 +2032,13 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
                     }
                     
                     // get territory
-                    val territory = Nodes.getTerritoryFromId(args[6].toInt())
+                    val territory = Nodes.getTerritoryFromId(TerritoryId(args[6].toInt()))
                     if ( territory === null ) {
                         Message.error(sender, "Invalid territory id")
                         return
                     }
                     
-                    treaty.add(TreatyTermOccupation(provider, receiver, territory))
+                    treaty.add(TreatyTermOccupation(provider, receiver, territory.id))
 
                     Message.print(sender, "Added occupation term to treaty between ${town1.name} and ${town2.name}")
                 }
@@ -2063,10 +2120,10 @@ class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
 
         // get object instance
-        val instance: Any? = when (args[1].lowercase(Locale.getDefault())) {
+        val instance: Any? = when ( args[1].lowercase() ) {
             "resource" -> Nodes.resourceNodes.get(args[2])
             "chunk" -> Nodes.territoryChunks.get(Coord.fromString(args[2]))
-            "territory" -> Nodes.territories.get(args[2].toInt())
+            "territory" -> Nodes.territories.get(TerritoryId(args[2].toInt()))
             "resident" -> Nodes.getResidentFromName(args[2])
             "town" -> Nodes.towns.get(args[2])
             "nation" -> Nodes.nations.get(args[2])

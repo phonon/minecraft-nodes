@@ -27,7 +27,7 @@ This repository contains the following separate projects:
 1.  Nodes main server plugin (root directory)
 2.  Dynmap viewer/editor
 3.  Plugin documentation
-4.  Ports plugin (*TODO*)
+4.  Ports plugin
 
 
 

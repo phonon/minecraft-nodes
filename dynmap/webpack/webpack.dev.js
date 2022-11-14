@@ -7,11 +7,23 @@
  * - entry '@babel/polyfill' required for async/await
  */
 
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
-const merge = require('webpack-merge');
+const { merge } = require('webpack-merge');
 const common = require('./webpack.common.js');
 const path = require('path');
 const webpack = require('webpack');
+
+const BABEL_OPTIONS = {
+	presets: [
+		'@babel/preset-env',
+		'@babel/preset-react',
+	],
+	plugins: [
+		'@babel/plugin-syntax-dynamic-import',
+		'react-refresh/babel',
+	],
+};
 
 let mainConfig = merge(common, {
 	entry: [
@@ -20,9 +32,10 @@ let mainConfig = merge(common, {
 	mode: 'development',
 	devtool: 'inline-source-map',
 	devServer: {
-		publicPath: 'http://localhost/test/',
-		contentBase: path.resolve(__dirname, '..'),
-		contentBasePublicPath: '/',
+		static: {
+			publicPath: '/',
+			directory: path.resolve(__dirname, '..'),
+		},
 		compress: true,
 		port: 80,
 		hot: true
@@ -32,15 +45,23 @@ let mainConfig = merge(common, {
 	},
 	output: {
 		path: path.resolve(__dirname, '../build'),
-		publicPath: 'http://localhost/test/',
+		publicPath: 'http://localhost/test/', // keep as '/test' otherwise messes up file-loader public path
 		filename: 'js/nodes.js',
-		chunkFilename: 'js/nodes.[name].[id].[hash].js',
+		chunkFilename: 'js/nodes.[name].[id].[chunkhash].js',
 		library: 'Nodes',
 		libraryTarget: 'var',
 		libraryExport: 'default'
 	},
 	module: {
 		rules: [
+			{
+				test: /\.(js|jsx)$/,
+				exclude: /node_modules/,
+				use: {
+					loader: 'babel-loader',
+					options: BABEL_OPTIONS,
+				}
+			},
 			{
 				test: /\.(png|jpg|gif)$/,
 				loader: 'file-loader',
@@ -52,16 +73,13 @@ let mainConfig = merge(common, {
 			},
 		]
 	},
-	resolve: {
-		alias: {
-			'react-dom': '@hot-loader/react-dom'
-		}
-	},
 	plugins: [
-		new webpack.HotModuleReplacementPlugin(),
-		new CopyPlugin([
-			{ from: path.resolve(__dirname, '../lib') },
-		  ]),
+		new ReactRefreshWebpackPlugin(),
+		// new CopyPlugin({ // uncomment if external .js libraries are needed
+		// 	patterns: [
+		// 		{ from: path.resolve(__dirname, '../lib') },
+		// 	],
+		// }),
 	]
 
 });

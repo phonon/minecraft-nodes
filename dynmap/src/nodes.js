@@ -8,17 +8,22 @@
 
 // require polyfill
 import "@babel/polyfill";
-import ReactDOM, { createPortal } from "react-dom";
+import { createRoot } from "react-dom/client";
 
-import {saveAs} from "file-saver";
+import { saveAs } from "file-saver";
 
-import {StripePattern} from "ui/stripe-pattern.jsx";
-import {Editor} from "editor/editor.jsx";
-import {WorldRenderer} from "world/world.jsx";
-import {Territory} from "world/territory.jsx";
-import {Port, PortTooltip} from "world/port.jsx";
+import {
+	RESIDENT_RANK_NONE, RESIDENT_RANK_OFFICER, RESIDENT_RANK_LEADER,
+	RENDER_TOWN_NAMETAG_NONE, RENDER_TOWN_NAMETAG_TOWN, RENDER_TOWN_NAMETAG_NATION,
+} from "./constants.js";
+import IconMapCapital from "assets/icon/icon-map-capital.svg";
+import { StripePattern } from "ui/stripe-pattern.jsx";
+import { Editor } from "editor/editor.jsx";
+import { WorldRenderer } from "world/world.jsx";
+import { Territory } from "world/territory.jsx";
+import { Port, PortTooltip } from "world/port.jsx";
 
-import {World, IndexSampler} from "wasm_main";
+import { World, IndexSampler } from "wasm_main";
 
 /**
  * Constructor for required nodes data (needed by editor)
@@ -27,10 +32,11 @@ const createNewNode = (name) => {
 	return {
 		name: name,
 		icon: null,
-		cost:{
+		cost: {
 			scale: 1.0,
 			constant: 0,
 		},
+		priority: 0,
 	};
 };
 
@@ -94,7 +100,7 @@ const handleWindowMouseUp = (e) => {
 
 const handleMouseDown = (e) => {
 	e.preventDefault();
-	e.stopPropagation();
+	// e.stopPropagation(); // problem: nodes pane is overlaid on top, prevents dragging map
 	
 	if ( e.button === 2 ) { // right click only
 		Nodes._startPaint();
@@ -289,6 +295,12 @@ const Nodes = {
 	ports: new Map(),
 	portsJsx: [], // port rendered jsx, never changes
 
+	// town capital icon rendered jsx elements
+	townCapitalElementsJsx: [],
+
+	// town names rendered jsx elements
+	townNameElementsJsx: [],
+
 	// resource icon name => icon url
 	resourceIcons: new Map(),
 	defaultResourceIconFiles: [      // default .json files to load resource icon map from,
@@ -329,19 +341,17 @@ const Nodes = {
 	dynmap: undefined,
 
 	// hook to custom dynmap overlay pane svg container
-	dynmapSvgContainer: undefined,
+	dynmapSvgContainer: undefined, // dom element
+	dynmapSvgContainerRoot: undefined, // react root
 
 	// editor container
-	editorContainer: undefined,
+	editorContainer: undefined, // dom element
+	editorContainerRoot: undefined, // react root
 
 	// port tooltip container:
-	portTooltipContainer: undefined,
-	
-	// constants
-	RESIDENT_RANK_NONE: 0,    // resident ranks
-	RESIDENT_RANK_OFFICER: 1,
-	RESIDENT_RANK_LEADER: 2, 
-	
+	portTooltipContainer: undefined, // dom element
+	portTooltipContainerRoot: undefined, // react root
+
 	// GLOBAL STATE
 	// user cursor in editor
 	screenX: 0.0, // x in dom screen
@@ -399,15 +409,23 @@ const Nodes = {
 	backgroundImageHeight: 0,
 
 	// territory render options:
-	renderTerritoryIcons: true,   // render resource icons
-	renderTerritoryId: false,     // render territory ids
-	renderTerritoryCost: false,   // render cost number
-	renderTerritoryOpaque: false, // render ~opaque solid town/nation colors
-	renderTerritoryColors: false, // for debugging, render territory assigned colors
+	renderTerritoryIcons: true,      // render resource icons
+	renderTerritoryId: false,        // render territory ids
+	renderTerritoryCost: false,      // render cost number
+	renderTerritoryOpaque: false,    // render ~opaque solid town/nation colors
+	renderTerritoryNoBorders: false, // don't render territory borders
+	renderTerritoryCapitals: false,  // render capital markers
+	renderTerritoryColors: false,    // for debugging, render territory assigned colors
+	
+	// render town names (enum value, set to constant RENDER_TOWN_NAMETAG_*)
+	renderTownNames: 0,               // render town names
+
 
 	initialize: (options, callback) => {
 		Nodes.editorContainer = options.container;
+		Nodes.editorContainerRoot = createRoot(options.container);
 		Nodes.portTooltipContainer = options.portTooltipContainer;
+		Nodes.portTooltipContainerRoot = createRoot(options.portTooltipContainer);
 
 		// world background image config
 		if ( options.backgroundImage !== undefined ) {
@@ -461,8 +479,7 @@ const Nodes = {
 		let layerNodesRenderer = new NodesSvgRenderer(Nodes.setMapTransform, {});
 		layerNodesRenderer.addTo(dynmap.map);
 		Nodes.dynmapSvgContainer = customOverlayPane;
-
-		// dynmap.map.setNodesHook(Nodes.setInitialMapTransform, Nodes.setMapTransform);
+		Nodes.dynmapSvgContainerRoot = createRoot(customOverlayPane);
 
 		// key detect handler
 		// NOTE: does not work for iframe region
@@ -758,6 +775,12 @@ const Nodes = {
 
 				// update territories
 				Nodes._updateAllTerritoryElements();
+
+				// update town capital elements
+				Nodes._updateAllTownCapitalsJsx();
+
+				// update town name tags
+				Nodes._updateAllTownNameTagJsx();
 			}
 
 			if ( render ) {
@@ -822,6 +845,12 @@ const Nodes = {
 
 			// update territories
 			Nodes._updateAllTerritoryElements();
+
+			// update town capital elements
+			Nodes._updateAllTownCapitalsJsx();
+
+			// update town name tags
+			Nodes._updateAllTownNameTagJsx();
 
 			if ( render ) {
 				Nodes.renderEditor();
@@ -940,6 +969,7 @@ const Nodes = {
 
 	// ============================================
 	// Set render options
+	// TODO: collapse these into a single function?
 	// ============================================
 	
 	setRenderTerritoryIcons: (val) => {
@@ -970,6 +1000,29 @@ const Nodes = {
 		Nodes.renderEditor();
 	},
 
+	setRenderTerritoryNoBorders: (val) => {
+		Nodes.renderTerritoryNoBorders = val;
+		Nodes._updateAllTerritoryElements();
+		Nodes.renderWorld();
+		Nodes.renderEditor();
+	},
+
+	setRenderTerritoryCapitals: (val) => {
+		Nodes.renderTerritoryCapitals = val;
+		Nodes._updateAllTownCapitalsJsx();
+		Nodes._updateAllTownNameTagJsx(); // update this because nametag offsets if capital icons are rendered
+		Nodes.renderWorld();
+		Nodes.renderEditor();
+	},
+
+	setRenderTownNames: (val) => {
+		Nodes.renderTownNames = val;
+		Nodes._updateAllTownNameTagJsx();
+		Nodes.renderWorld();
+		Nodes.renderEditor();
+	},
+
+
 	// ============================================
 	// Render React functions
 	// ============================================
@@ -995,6 +1048,8 @@ const Nodes = {
 			svgPatterns: Nodes.stripePatterns,
 			territoryElements: Nodes.territoryElements,
 			portElements: Nodes.portsJsx,
+			townCapitalElements: Nodes.townCapitalElementsJsx,
+			townNameElements: Nodes.townNameElementsJsx,
 			enabledPainting: Nodes.enabledPainting,
 			isErasing: Nodes.ctrlKey,
 			paintRadius: Nodes.paintRadius,
@@ -1010,9 +1065,7 @@ const Nodes = {
 			backgroundImageEndY: Nodes.backgroundImageEndY,
 		};
 
-		if ( Nodes.dynmapSvgContainer !== undefined ) {
-			ReactDOM.render(<WorldRenderer {...props}/>, Nodes.dynmapSvgContainer);
-		}
+		Nodes.dynmapSvgContainerRoot?.render(<WorldRenderer {...props}/>);
 	},
 
 	/**
@@ -1037,6 +1090,12 @@ const Nodes = {
 			setRenderTerritoryCost: Nodes.setRenderTerritoryCost,
 			renderTerritoryOpaque: Nodes.renderTerritoryOpaque,
 			setRenderTerritoryOpaque: Nodes.setRenderTerritoryOpaque,
+			renderTerritoryNoBorders: Nodes.renderTerritoryNoBorders,
+			setRenderTerritoryNoBorders: Nodes.setRenderTerritoryNoBorders,
+			renderTerritoryCapitals: Nodes.renderTerritoryCapitals,
+			setRenderTerritoryCapitals: Nodes.setRenderTerritoryCapitals,
+			renderTownNames: Nodes.renderTownNames,
+			setRenderTownNames: Nodes.setRenderTownNames,
 
 			// nodes data
 			nodes: Nodes.nodes,
@@ -1073,7 +1132,7 @@ const Nodes = {
 			selectTown: Nodes._selectTown,
 		};
 
-		ReactDOM.render(<Editor {...props}/>, Nodes.editorContainer);
+		Nodes.editorContainerRoot?.render(<Editor {...props}/>);
 	},
 
 	// handler for mouse movement
@@ -1163,6 +1222,8 @@ const Nodes = {
 		if ( Nodes.mapZoom !== zoom ) {
 			Nodes.mapZoom = zoom;
 			Nodes._updateAllTerritoryElements();
+			Nodes._updateAllTownCapitalsJsx();
+			Nodes._updateAllTownNameTagJsx();
 			Nodes._updateAllPortJsx();
 		}
 
@@ -1278,7 +1339,6 @@ const Nodes = {
 			const officers = [];
 
 			for ( const r of town.residents ) {
-				let residentRank = Nodes.RESIDENT_RANK_NONE;
 				if ( r === town.leader ) {
 					// skip leader, will handle at end
 					continue;
@@ -1287,14 +1347,14 @@ const Nodes = {
 					officers.push(createNewResident(
 						r,
 						Nodes.residents.get(r)?.name,
-						Nodes.RESIDENT_RANK_OFFICER
+						RESIDENT_RANK_OFFICER
 					));
 				}
 				else {
 					peasants.push(createNewResident(
 						r,
 						Nodes.residents.get(r)?.name,
-						Nodes.RESIDENT_RANK_NONE,
+						RESIDENT_RANK_NONE,
 					));
 				}
 			}
@@ -1305,7 +1365,7 @@ const Nodes = {
 					createNewResident(
 						town.leader,
 						Nodes.residents.get(town.leader)?.name,
-						Nodes.RESIDENT_RANK_LEADER,
+						RESIDENT_RANK_LEADER,
 					));
 			}
 			residentsSorted.push(...officers);
@@ -1506,8 +1566,28 @@ const Nodes = {
 
 	_setNodeData: (name, data) => {
 		if ( Nodes.nodes.has(name) ) {
+			// save old and new resource node cost values, for checking if we need
+			// to re-calculate territory costs
+			const oldCost = Nodes.nodes.get(name).cost;
+			const newCost = data.cost;
+			
+			// update resource node data
 			Object.assign(Nodes.nodes.get(name), data);
 			Nodes.renderEditor();
+			
+			// check if cost changed, if so need to re-render territories with this node
+			if ( oldCost?.scale !== newCost?.scale || oldCost?.constant !== newCost?.constant ) {
+				// find territory ids that have this node, update cost and re-render
+				const ids = [];
+				Nodes.territories.forEach((territory, id) => {
+					if ( territory.nodes.indexOf(name) !== -1 ) {
+						ids.push(id);
+					}
+				});
+				ids.forEach(id => Nodes._calculateTerritoryCost(id));
+				Nodes._updateTerritoryElementIds(ids);
+				Nodes.renderWorld();
+			}
 		}
 	},
 
@@ -2090,6 +2170,7 @@ const Nodes = {
 			renderTerritoryCost={Nodes.renderTerritoryCost}
 			renderTerritoryOpaque={Nodes.renderTerritoryOpaque}
 			renderTerritoryColors={Nodes.renderTerritoryColors}
+			renderTerritoryNoBorders={Nodes.renderTerritoryNoBorders}
 
 			selected={terr.selected}
 			isMainSelected={isMainSelected}
@@ -2253,6 +2334,111 @@ const Nodes = {
 	},
 
 	/**
+	 * Create svg element for town names. These are centered
+	 * on the "home" territory of each town.
+	 */
+	 _createTownNameTagJsx: (town) => {
+		let territory = Nodes.territories.get(town.home);
+		if ( territory === null ) {
+			console.error(`Town ${town.name} has no home territory?`);
+			return null;
+		}
+
+		// core coordinate
+		const core = Nodes._getLatLngFromCoord(territory.core.x, territory.core.y);
+
+		let textOriginX = core.x;
+		let textOriginY = core.y;
+
+		// offset if rendering capital icons
+		if ( Nodes.renderTerritoryCapitals ) {
+			textOriginY -= 8;
+		}
+
+		// tag name: either town or nation name
+		let tagName;
+		if ( Nodes.renderTownNames === RENDER_TOWN_NAMETAG_TOWN ) {
+			tagName = town.name;
+		} else if ( Nodes.renderTownNames === RENDER_TOWN_NAMETAG_NATION ) {
+			tagName = town.nation !== undefined ? town.nation : town.name;
+		} else {
+			console.error(`Invalid town name render mode: ${Nodes.renderTownNames}`);
+			return null;
+		}
+
+		// also replace "_" with " "
+		// since no spaces allowed in names, common for players to use "_" as a "space"
+		tagName = tagName.replaceAll("_", " ");
+
+		return <g key={town.home}>
+			<text
+				x={textOriginX}
+				y={textOriginY}
+				textRendering="optimizeSpeed"
+				fill={"#000"}
+				textAnchor={"middle"}
+				style={{ font: "bold 24px serif", stroke: "#fff", strokeWidth: "1pt", paintOrder: "stroke" }}
+			>
+				{tagName}
+			</text>
+		</g>;
+	},
+
+	/**
+	 * Re-create all svg element for town names. This creates
+	 * a town name text tag centered on a town's home territory
+	 * for each town.
+	 */
+	 _updateAllTownNameTagJsx: () => {
+		let elements = [];
+
+		if ( Nodes.renderTownNames !== RENDER_TOWN_NAMETAG_NONE ) {
+			for ( const town of Nodes.towns.values() ) {
+				const jsx = Nodes._createTownNameTagJsx(town);
+				elements.push(jsx);
+			}
+		}
+
+		Nodes.townNameElementsJsx = elements;
+	},
+
+	/**
+	 * Create svg elements for town capitals.
+	 */
+	 _createTownCapitalJsx: (town) => {
+		let territory = Nodes.territories.get(town.home);
+		if ( territory === null ) {
+			console.error(`Town ${town.name} has no home territory?`);
+			return null;
+		}
+
+		// core coordinate
+		const core = Nodes._getLatLngFromCoord(territory.core.x, territory.core.y);
+
+		return <g key={town.home}>
+			<image x={core.x - 9} y={core.y - 9} width={18} height={18} href={IconMapCapital}/>
+		</g>;
+	},
+
+	/**
+	 * Re-create all svg element for town names. This creates
+	 * a town name text tag centered on a town's home territory
+	 * for each town.
+	 */
+	 _updateAllTownCapitalsJsx: () => {
+		let elements = [];
+
+		if ( Nodes.renderTerritoryCapitals === true ) {
+			for ( const town of Nodes.towns.values() ) {
+				const jsx = Nodes._createTownCapitalJsx(town);
+				elements.push(jsx);
+			}
+		}
+
+		Nodes.townCapitalElementsJsx = elements;
+	},
+
+	/**
 	 * Create port element jsx
 	 */
 	_createPortJsx: (port) => {
@@ -2277,7 +2463,7 @@ const Nodes = {
 			clientY: cy,
 			port: port,
 		};
-		ReactDOM.render(<PortTooltip {...props}/>, Nodes.portTooltipContainer);
+		Nodes.portTooltipContainerRoot?.render(<PortTooltip {...props}/>);
 	},
 
 	/**

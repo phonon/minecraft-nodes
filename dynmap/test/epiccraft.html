@@ -51,19 +51,22 @@
 			DynMap.prototype.__original_initialize.call(self);
 			// call our own initialization
 			let dynmap = window.dynmap;
-            let container = document.getElementById("nodes-container");
+			let container = document.getElementById("nodes-container");
 			let portTooltipContainer = document.getElementById("port-tooltip-container");
-            let options = {
-                container: container,
+			let options = {
+				container: container,
 				portTooltipContainer: portTooltipContainer,
-                dynmap: dynmap,
-                config: "./nodes/config.json",
-                world: "./nodes/world.json",
-                towns: "./nodes/towns.json",
-				ports: "./nodes/ports.json",
-                editor: true,
-            };
-            Nodes.initialize(options, function() {});
+				dynmap: dynmap,
+				config: undefined,
+				world: "nodes/world_epiccraft.json",
+				towns: "nodes/towns_epiccraft.json",
+				editor: true,
+				maxPaintRadius: 100.0,
+				backgroundImage: "nodes/epiccraft_map.jpg",
+				backgroundImageWidth: 8192,
+				backgroundImageHeight: 4480,
+			};
+			Nodes.initialize(options, function() {});
 		};
 		// FOR TESTING MODE
 		// disable default update function
