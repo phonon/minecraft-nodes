@@ -15,18 +15,18 @@ import phonon.nodes.objects.Resident
 import phonon.nodes.objects.Territory
 import phonon.nodes.objects.Town
 
-public class NodesPlayerMoveListener: Listener {
+class NodesPlayerMoveListener: Listener {
     
     @EventHandler
-    public fun onPlayerMove(event: PlayerMoveEvent) {
+    fun onPlayerMove(event: PlayerMoveEvent) {
         
         // abort if did not change blocks
-        val fromX = event.getFrom().getBlockX()
-        val fromY = event.getFrom().getBlockY()
-        val fromZ = event.getFrom().getBlockZ()
-        val toX = event.getTo().getBlockX()
-        val toY = event.getTo().getBlockY()
-        val toZ = event.getTo().getBlockZ()
+        val fromX = event.from.blockX
+        val fromY = event.from.blockY
+        val fromZ = event.from.blockZ
+        val toX = event.to!!.blockX
+        val toY = event.to!!.blockY
+        val toZ = event.to!!.blockZ
 		if ( fromX == toX && fromZ == toZ && fromY == toY ) {
 			return
         }
@@ -39,7 +39,7 @@ public class NodesPlayerMoveListener: Listener {
         }
 
         // player moved -> cancel any home teleport
-        if ( resident?.teleportThread != null ) {
+        if ( resident.teleportThread != null ) {
             resident.teleportThread!!.cancel()
             resident.teleportThread = null // remove reference
             Message.error(event.player, "You moved, teleport cancelled")
@@ -50,7 +50,7 @@ public class NodesPlayerMoveListener: Listener {
 
                 val world = player.world
                 val location = player.location
-                val inventory = player.getInventory()
+                val inventory = player.inventory
 
                 for ( (material, amount) in Config.outpostTeleportCost ) {
                     val items = ItemStack(material, amount)
@@ -71,7 +71,7 @@ public class NodesPlayerMoveListener: Listener {
 
                 val world = player.world
                 val location = player.location
-                val inventory = player.getInventory()
+                val inventory = player.inventory
 
                 for ( (material, amount) in Config.nationTownTeleportCost ) {
                     val items = ItemStack(material, amount)
@@ -99,15 +99,15 @@ public class NodesPlayerMoveListener: Listener {
 
     // handle player teleport (e.g. /t spawn)
     @EventHandler
-    public fun onPlayerTeleport(event: PlayerTeleportEvent) {
+    fun onPlayerTeleport(event: PlayerTeleportEvent) {
 
         // abort if did not change blocks
-        val fromX = event.getFrom().getBlockX()
-        val fromY = event.getFrom().getBlockY()
-        val fromZ = event.getFrom().getBlockZ()
-        val toX = event.getTo().getBlockX()
-        val toY = event.getTo().getBlockY()
-        val toZ = event.getTo().getBlockZ()
+        val fromX = event.from.blockX
+        val fromY = event.from.blockY
+        val fromZ = event.from.blockZ
+        val toX = event.to!!.blockX
+        val toY = event.to!!.blockY
+        val toZ = event.to!!.blockZ
 		if ( fromX == toX && fromZ == toZ && fromY == toY ) {
 			return
         }
@@ -129,7 +129,7 @@ public class NodesPlayerMoveListener: Listener {
     }
 
     // handle player changing to new chunk
-    public fun onPlayerMoveChunk(player: Player, resident: Resident, fromCoord: Coord, toCoord: Coord) {
+    fun onPlayerMoveChunk(player: Player, resident: Resident, fromCoord: Coord, toCoord: Coord) {
         val fromTerritory = Nodes.getTerritoryFromCoord(fromCoord)
         val toTerritory = Nodes.getTerritoryFromCoord(toCoord)
 

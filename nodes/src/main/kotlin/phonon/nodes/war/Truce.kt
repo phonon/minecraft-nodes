@@ -26,69 +26,69 @@ import phonon.nodes.objects.Resident
 import phonon.nodes.objects.Town
 import phonon.nodes.objects.TownPair
 
-public object Truce {
+object Truce {
     // truce map of (town1, town2) -> time ticked in current truce
-    public val truces: HashMap<TownPair, Long> = hashMapOf()
+    val truces: HashMap<TownPair, Long> = hashMapOf()
 
     // all truces for a given town, map Town -> TownPair that contains it
-    public val trucesByTown: HashMap<Town, HashSet<TownPair>> = hashMapOf()
+    val trucesByTown: HashMap<Town, HashSet<TownPair>> = hashMapOf()
 
     // indicator that truces changed and requires save
-    public var needsUpdate: Boolean = false
+    var needsUpdate: Boolean = false
 
     // creates new truce between two towns
-    public fun create(town1: Town, town2: Town, startTime: Long) {
+    fun create(town1: Town, town2: Town, startTime: Long) {
         
         val towns = TownPair(town1, town2)
-        Truce.truces.put(towns, startTime)
+        truces.put(towns, startTime)
 
         // put references from each town -> TownPair
-        val town1Truces = Truce.trucesByTown.get(town1)
+        val town1Truces = trucesByTown.get(town1)
         if ( town1Truces !== null ) {
             town1Truces.add(towns)
         } else {
-            Truce.trucesByTown.put(town1, hashSetOf(towns))
+            trucesByTown.put(town1, hashSetOf(towns))
         }
 
-        val town2Truces = Truce.trucesByTown.get(town2)
+        val town2Truces = trucesByTown.get(town2)
         if ( town2Truces !== null ) {
             town2Truces.add(towns)
         } else {
-            Truce.trucesByTown.put(town2, hashSetOf(towns))
+            trucesByTown.put(town2, hashSetOf(towns))
         }
 
         // mark save update needed
-        Truce.needsUpdate = true
+        needsUpdate = true
     }
 
     // removes truce between two towns
-    public fun remove(town1: Town, town2: Town) {
+    fun remove(town1: Town, town2: Town) {
         val towns = TownPair(town1, town2)
-        Truce.truces.remove(towns)
+        truces.remove(towns)
 
         // remove references from each town -> TownPair
-        val town1Truces = Truce.trucesByTown.get(town1)
+        val town1Truces = trucesByTown.get(town1)
         if ( town1Truces !== null ) {
             town1Truces.remove(towns)
         }
 
-        val town2Truces = Truce.trucesByTown.get(town2)
+        val town2Truces = trucesByTown.get(town2)
         if ( town2Truces !== null ) {
             town2Truces.remove(towns)
         }
 
         // mark save update needed
-        Truce.needsUpdate = true
+        needsUpdate = true
     }
 
     // returns true if truce exists between (town1, town2)
-    public fun contains(town1: Town, town2: Town): Boolean {
-        return Truce.truces.contains(TownPair(town1, town2))
+    fun contains(town1: Town, town2: Town): Boolean {
+        return truces.contains(TownPair(town1, town2))
     }
 
     // get list of truces involving input town
-    public fun get(town: Town): List<TownPair> {
-        val townTruces = Truce.trucesByTown.get(town)
+    fun get(town: Town): List<TownPair> {
+        val townTruces = trucesByTown.get(town)
         if ( townTruces !== null ) {
             return townTruces.toList()
         }
@@ -97,13 +97,13 @@ public object Truce {
     }
 
     // convert truces into string
-    public fun toJsonString(): String {
+    fun toJsonString(): String {
         val size = truces.size
         var i = 0
         
         val s = StringBuilder()
         s.append("{\"truce\":[")
-        for ( (towns, count) in Truce.truces ) {
+        for ( (towns, count) in truces ) {
             s.append("[\"${towns.town1.name}\", \"${towns.town2.name}\", ${count}]")
 
             // add comma
@@ -118,20 +118,20 @@ public object Truce {
     }
 
     // parse truces from Json string
-    public fun fromJsonString(jsonString: String) {
+    fun fromJsonString(jsonString: String) {
         // clear current data
-        Truce.truces.clear()
-        Truce.trucesByTown.clear()
+        truces.clear()
+        trucesByTown.clear()
 
-        val json = JsonParser().parse(jsonString).getAsJsonObject()
+        val json = JsonParser.parseString(jsonString).asJsonObject
 
-        val truceList = json.get("truce")?.getAsJsonArray()
+        val truceList = json.get("truce")?.asJsonArray
         if ( truceList !== null ) {
             for ( truceJson in truceList ) {
-                val truce = truceJson.getAsJsonArray()
-                val town1Name: String = truce[0].getAsString()
-                val town2Name: String = truce[1].getAsString()
-                val startTime: Long = truce[2].getAsLong()
+                val truce = truceJson.asJsonArray
+                val town1Name: String = truce[0].asString
+                val town2Name: String = truce[1].asString
+                val startTime: Long = truce[2].asLong
 
                 // get towns
                 val town1 = Nodes.getTownFromName(town1Name)
@@ -145,7 +145,7 @@ public object Truce {
                 }
 
                 // set truce
-                Truce.create(town1, town2, startTime)
+                create(town1, town2, startTime)
             }
         }
     }

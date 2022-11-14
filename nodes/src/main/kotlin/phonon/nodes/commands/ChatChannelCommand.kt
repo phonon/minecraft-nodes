@@ -16,6 +16,7 @@ import phonon.nodes.Message
 import phonon.nodes.objects.Resident
 import phonon.nodes.chat.*
 import phonon.nodes.utils.string.*
+import java.util.*
 
 // toggle chat mode then print message
 private fun toggleChatMode(player: Player, resident: Resident, chatMode: ChatMode) {
@@ -49,7 +50,7 @@ private val globalChatSubcommands: List<String> = listOf(
  * @subcommand /globalchat unmute
  * Enable global chat
  */
-public class GlobalChatCommand : CommandExecutor, TabCompleter {
+class GlobalChatCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
         
@@ -69,7 +70,7 @@ public class GlobalChatCommand : CommandExecutor, TabCompleter {
         }
         else {
             // parse subcommand
-            when ( args[0].toLowerCase() ) {
+            when (args[0].lowercase(Locale.getDefault())) {
                 "join" -> enableChannel(sender)
                 "unmute" -> enableChannel(sender)
                 "leave" -> disableChannel(sender)
@@ -104,7 +105,7 @@ public class GlobalChatCommand : CommandExecutor, TabCompleter {
  * @command /townchat (or /tc)
  * Set chat to town members only
  */
-public class TownChatCommand : CommandExecutor, TabCompleter {
+class TownChatCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
         
@@ -124,7 +125,7 @@ public class TownChatCommand : CommandExecutor, TabCompleter {
         }
         else {
             // parse subcommand
-            when ( args[0].toLowerCase() ) {
+            when (args[0].lowercase(Locale.getDefault())) {
                 "leave" -> leaveChannel(sender)
                 else -> { Message.error(player, "Invalid command") }
             }
@@ -138,7 +139,7 @@ public class TownChatCommand : CommandExecutor, TabCompleter {
     }
 
     private fun leaveChannel(player: Player) {
-        // TODO
+        TODO()
     }
 }
 
@@ -146,7 +147,7 @@ public class TownChatCommand : CommandExecutor, TabCompleter {
  * @command /nationchat (or /nc)
  * Set chat to all members of nation.
  */
-public class NationChatCommand : CommandExecutor, TabCompleter {
+class NationChatCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
         
@@ -166,7 +167,7 @@ public class NationChatCommand : CommandExecutor, TabCompleter {
         }
         else {
             // parse subcommand
-            when ( args[0].toLowerCase() ) {
+            when (args[0].lowercase(Locale.getDefault())) {
                 "leave" -> leaveChannel(sender)
                 else -> { Message.error(player, "Invalid command") }
             }
@@ -180,7 +181,7 @@ public class NationChatCommand : CommandExecutor, TabCompleter {
     }
 
     private fun leaveChannel(player: Player) {
-        // TODO
+        TODO()
     }
 }
 
@@ -188,7 +189,7 @@ public class NationChatCommand : CommandExecutor, TabCompleter {
  * @command /allychat (or /ac)
  * Set chat to town and all allied towns.
  */
-public class AllyChatCommand : CommandExecutor, TabCompleter {
+class AllyChatCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
         
@@ -208,7 +209,7 @@ public class AllyChatCommand : CommandExecutor, TabCompleter {
         }
         else {
             // parse subcommand
-            when ( args[0].toLowerCase() ) {
+            when (args[0].lowercase(Locale.getDefault())) {
                 "leave" -> leaveChannel(sender)
                 else -> { Message.error(player, "Invalid command") }
             }
@@ -222,6 +223,6 @@ public class AllyChatCommand : CommandExecutor, TabCompleter {
     }
 
     private fun leaveChannel(player: Player) {
-        // TODO
+        TODO()
     }
 }

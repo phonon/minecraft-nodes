@@ -12,14 +12,14 @@ import org.bukkit.entity.Player
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.TextComponent
 
-public object Message {
+object Message {
 
-    public val PREFIX = "[Nodes]"
-    public val COL_MSG = ChatColor.AQUA
-    public val COL_ERROR = ChatColor.RED
+    val PREFIX = "[Nodes]"
+    val COL_MSG = ChatColor.AQUA
+    val COL_ERROR = ChatColor.RED
 
     // print generic message to chat
-    public fun print(sender: Any?, s: String) {
+    fun print(sender: Any?, s: String) {
 		if ( sender === null ) {
             System.out.println("${PREFIX} Message called with null sender: ${s}")
             return
@@ -27,7 +27,7 @@ public object Message {
 
         val msg = "${COL_MSG}${s}"
         if ( sender is Player ) {
-            (sender as Player).sendMessage(msg)
+            sender.sendMessage(msg)
         }
         else {
             (sender as CommandSender).sendMessage(msg)
@@ -35,7 +35,7 @@ public object Message {
     }
 
     // print error message to chat
-    public fun error(sender: Any?, s: String) {
+    fun error(sender: Any?, s: String) {
 		if ( sender === null ) {
             System.out.println("${PREFIX} Message called with null sender: ${s}")
             return
@@ -43,7 +43,7 @@ public object Message {
 
         val msg = "${COL_ERROR}${s}"
         if ( sender is Player ) {
-            (sender as Player).sendMessage(msg)
+            sender.sendMessage(msg)
         }
         else {
             (sender as CommandSender).sendMessage(msg)
@@ -52,13 +52,13 @@ public object Message {
 
     // wrapper around Bukkit.broadcast to send
     // messages to all players
-    public fun broadcast(s: String) {
+    fun broadcast(s: String) {
         val msg = "${COL_MSG}${s}"
         Bukkit.broadcastMessage(msg)
     }
 
     // print text to the player action bar
-    public fun announcement(player: Player, s: String) {
-        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(s));
+    fun announcement(player: Player, s: String) {
+        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(s))
     }
 }

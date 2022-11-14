@@ -40,10 +40,10 @@ import phonon.nodes.objects.Town
 import phonon.nodes.war.FlagWar
 import phonon.nodes.war.Attack
 
-public class NodesWorldListener: Listener {
+class NodesWorldListener: Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
-    public fun onBlockBreak(event: BlockBreakEvent) {
+    fun onBlockBreak(event: BlockBreakEvent) {
         val player: Player = event.player
         val block: Block = event.block
         val territoryChunk = Nodes.getTerritoryChunkFromBlock(block.x, block.z)
@@ -58,7 +58,7 @@ public class NodesWorldListener: Listener {
             }
 
             if ( attack !== null ) {
-                event.setCancelled(true)
+                event.isCancelled = true
                 attack.cancel()
                 Message.broadcast("${ChatColor.GOLD}[War] Attack at (${block.x}, ${block.y}, ${block.z}) defeated by ${player.name}")
             }
@@ -81,7 +81,7 @@ public class NodesWorldListener: Listener {
                 return
             }
 
-            event.setCancelled(true)
+            event.isCancelled = true
             Message.error(player, "You cannot destroy here!")
             return
         }
@@ -98,19 +98,19 @@ public class NodesWorldListener: Listener {
             }
         }
 
-        event.setCancelled(true)
+        event.isCancelled = true
         Message.error(player, "You cannot destroy here!")
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public fun onBlockBreakSuccess(event: BlockBreakEvent) {
-        if ( event.isCancelled() ) {
+    fun onBlockBreakSuccess(event: BlockBreakEvent) {
+        if ( event.isCancelled) {
             return
         }
 
         val player = event.player
         val block = event.block
-        val blockMaterial = block.getType()
+        val blockMaterial = block.type
 
         // handle hidden ore mining
         if ( Config.oreBlocks.contains(blockMaterial) ) {
@@ -128,7 +128,7 @@ public class NodesWorldListener: Listener {
     }
     
     @EventHandler(priority = EventPriority.NORMAL)
-    public fun onBlockPlace(event: BlockPlaceEvent) {
+    fun onBlockPlace(event: BlockPlaceEvent) {
         val block: Block = event.block
         val player: Player = event.player
 
@@ -139,27 +139,27 @@ public class NodesWorldListener: Listener {
                 // disable block placement in flag no build distance
                 if ( territoryChunk.attacker !== null ) {
                     // op bypass
-                    if ( player.isOp() ) {
+                    if ( player.isOp) {
                         return
                     }
 
                     var attack = FlagWar.chunkToAttacker.get(territoryChunk.coord)
                     if ( attack !== null ) {
                         if ( blockInWarFlagNoBuildRegion(block, attack) ) {
-                            event.setCancelled(true)
+                            event.isCancelled = true
                             Message.error(player, "[War] Cannot build within ${Config.flagNoBuildDistance} blocks of war flags")
                             return
                         }
                     }
                 }
                 // check if this is flag placement
-                else if ( FlagWar.flagMaterials.contains(block.getType()) ) {
+                else if ( FlagWar.flagMaterials.contains(block.type) ) {
                     // get player and town
                     val resident = Nodes.getResident(player)
                     if ( resident !== null ) {
                         val town = resident.town
                         if ( town !== null ) {
-                            val result = FlagWar.beginAttack(player.getUniqueId(), town, territoryChunk, block)
+                            val result = FlagWar.beginAttack(player.uniqueId, town, territoryChunk, block)
                             if ( result.isSuccess ) {
                                 // get town being attacked
                                 val townAttacked = territoryChunk.territory.town!!
@@ -188,7 +188,7 @@ public class NodesWorldListener: Listener {
                                 }
                     
                                 // cancel event
-                                event.setCancelled(true)
+                                event.isCancelled = true
                             }
                         }
                     }
@@ -197,7 +197,7 @@ public class NodesWorldListener: Listener {
         }
 
         // op bypass
-        if ( player.isOp() ) {
+        if ( player.isOp) {
             return
         }
         
@@ -212,7 +212,7 @@ public class NodesWorldListener: Listener {
                 return
             }
 
-            event.setCancelled(true)
+            event.isCancelled = true
             Message.error(player, "You cannot build here!")
             return
         }
@@ -234,13 +234,13 @@ public class NodesWorldListener: Listener {
             }
         }
 
-        event.setCancelled(true)
+        event.isCancelled = true
         Message.error(player, "You cannot build here!")
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public fun onBlockPlaceSuccess(event: BlockPlaceEvent) {
-        if ( event.isCancelled() ) {
+    fun onBlockPlaceSuccess(event: BlockPlaceEvent) {
+        if ( event.isCancelled) {
             return
         }
 
@@ -254,8 +254,8 @@ public class NodesWorldListener: Listener {
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
-    public fun onPlayerBucketEmpty(event: PlayerBucketEmptyEvent) {
-        val block = event.getBlockClicked().getRelative(event.getBlockFace())
+    fun onPlayerBucketEmpty(event: PlayerBucketEmptyEvent) {
+        val block = event.blockClicked.getRelative(event.blockFace)
         val territory: Territory? = Nodes.getTerritoryFromChunk(block.chunk)
         val territoryChunk = Nodes.getTerritoryChunkFromBlock(block.x, block.z)
         val player: Player = event.player
@@ -263,7 +263,7 @@ public class NodesWorldListener: Listener {
         val town: Town? = territory?.town
 
         // op bypass
-        if ( player.isOp() ) {
+        if ( player.isOp) {
             return
         }
         
@@ -273,7 +273,7 @@ public class NodesWorldListener: Listener {
                 return
             }
 
-            event.setCancelled(true)
+            event.isCancelled = true
             Message.error(player, "You cannot use buckets here")
             return
         }
@@ -290,19 +290,19 @@ public class NodesWorldListener: Listener {
             }
         }
 
-        event.setCancelled(true)
+        event.isCancelled = true
         Message.error(player, "You cannot use buckets here")
     }
 
     // handle placing water/lava onto block (can be used to destroy harvest crops)
     @EventHandler(priority = EventPriority.MONITOR)
-    public fun onPlayerBucketEmptySuccess(event: PlayerBucketEmptyEvent) {
-        if ( event.isCancelled() ) {
+    fun onPlayerBucketEmptySuccess(event: PlayerBucketEmptyEvent) {
+        if ( event.isCancelled) {
             return
         }
 
         // gets block where water actually placed
-        val block = event.getBlockClicked().getRelative(event.getBlockFace())
+        val block = event.blockClicked.getRelative(event.blockFace)
         val blockMaterial = block.type
 
         // handle crop harvest
@@ -316,12 +316,12 @@ public class NodesWorldListener: Listener {
     // - when water falling vertically this is not triggered
     // just ignoring that because very limited use ingame of vertical water harvesting
     @EventHandler(priority = EventPriority.MONITOR)
-    public fun onBlockFromToSuccess(event: BlockFromToEvent) {
-        if ( event.isCancelled() ) {
+    fun onBlockFromToSuccess(event: BlockFromToEvent) {
+        if ( event.isCancelled) {
             return
         }
 
-        val block = event.getToBlock()
+        val block = event.toBlock
         val blockMaterial = block.type
 
         // handle crop harvest
@@ -335,12 +335,12 @@ public class NodesWorldListener: Listener {
     // this only hnadles objects directly moved by piston, not things like
     // dirt underneath a block
     @EventHandler(priority = EventPriority.MONITOR)
-    public fun onPistonExtendSuccess(event: BlockPistonExtendEvent) {
-        if ( event.isCancelled() ) {
+    fun onPistonExtendSuccess(event: BlockPistonExtendEvent) {
+        if ( event.isCancelled) {
             return
         }
 
-        val blockMovedList = event.getBlocks()
+        val blockMovedList = event.blocks
         for ( block in blockMovedList ) {
             val blockMaterial = block.type
 
@@ -352,7 +352,7 @@ public class NodesWorldListener: Listener {
     }
 
     @EventHandler
-    public fun onBlockInteract(event: PlayerInteractEvent) {
+    fun onBlockInteract(event: PlayerInteractEvent) {
         if ( event.clickedBlock === null) {
             return
         }
@@ -361,11 +361,11 @@ public class NodesWorldListener: Listener {
         val action = event.action
 
         // op bypass
-        if ( player.isOp() ) {
+        if ( player.isOp) {
             return
         }
 
-        val block = event.getClickedBlock()
+        val block = event.clickedBlock
         if ( block === null ) {
             return
         }
@@ -386,10 +386,10 @@ public class NodesWorldListener: Listener {
         
         if ( resident !== null ) {
             // ignore if war enabled and item in hand is a flag material
-            if ( Nodes.war.enabled && Config.flagMaterials.contains(event.getMaterial()) && action == Action.RIGHT_CLICK_BLOCK ) {
+            if ( Nodes.war.enabled && Config.flagMaterials.contains(event.material) && action == Action.RIGHT_CLICK_BLOCK ) {
                 // dont allow using block
-                val clickedBlock = event.getClickedBlock()
-                if ( clickedBlock !== null && INTERACTIVE_BLOCKS.contains(clickedBlock.getType()) ) {
+                val clickedBlock = event.clickedBlock
+                if ( clickedBlock !== null && INTERACTIVE_BLOCKS.contains(clickedBlock.type) ) {
                     Message.error(player, "You cannot interact here!")
                     event.setUseInteractedBlock(Result.DENY)
                 }
@@ -409,14 +409,14 @@ public class NodesWorldListener: Listener {
                     
                     // check if chest protected
                     if ( town.protectedBlocks.contains(block) && !hasTownProtectedChestPermissions(town, resident) ) {
-                        event.setCancelled(true)
+                        event.isCancelled = true
                         Message.error(player, "This chest is for trusted residents only")
                     }
 
                     return
                 }
-                
-                event.setCancelled(true)
+
+                event.isCancelled = true
                 Message.error(player, "You cannot use chests here!")
                 return
             }
@@ -434,7 +434,7 @@ public class NodesWorldListener: Listener {
 
         event.setUseInteractedBlock(Result.DENY)
 
-        if ( event.isBlockInHand() ) {
+        if ( event.isBlockInHand) {
             event.setUseItemInHand(Result.DENY)
         }
         else {
@@ -448,11 +448,11 @@ public class NodesWorldListener: Listener {
 
     // disable normal animal interactions (e.g. animal on pressure plate)
     @EventHandler
-    public fun onEntityInteract(event: EntityInteractEvent) {
-        val entity = event.getEntity()
+    fun onEntityInteract(event: EntityInteractEvent) {
+        val entity = event.entity
 
         // check if animal has passenger that is player
-        val passengers = entity.getPassengers()
+        val passengers = entity.passengers
         var player: Player? = null
         for ( p in passengers ) {
             if ( p is Player ) {
@@ -464,7 +464,7 @@ public class NodesWorldListener: Listener {
         // if player member of town in territory, allow access
         if ( player !== null ) {
             // op bypass
-            if ( player.isOp() ) {
+            if ( player.isOp) {
                 return
             }
             
@@ -494,7 +494,7 @@ public class NodesWorldListener: Listener {
             }
         }
 
-        event.setCancelled(true)
+        event.isCancelled = true
     }
     
     /**
@@ -502,31 +502,31 @@ public class NodesWorldListener: Listener {
      * destroying flag -> stop attack
      */
     @EventHandler(priority = EventPriority.LOW)
-    public fun onEntityExplode(event: EntityExplodeEvent) {
+    fun onEntityExplode(event: EntityExplodeEvent) {
         // check if explosion allowed
         if ( Config.restrictExplosions ) {
             if ( !Nodes.war.enabled ) {
                 if ( Config.onlyAllowExplosionsDuringWar ) {
-                    event.setCancelled(true)
+                    event.isCancelled = true
                     return
                 }
             }
             // war on, check town blacklist/whitelist
             else {
                 if ( Config.warUseWhitelist ) {
-                    val chunk = event.entity.getLocation().chunk
+                    val chunk = event.entity.location.chunk
                     val town = Nodes.getTownAtChunkCoord(chunk.x, chunk.z)
                     if ( town !== null && !Config.warWhitelist.contains(town.uuid) ) {
-                        event.setCancelled(true)
+                        event.isCancelled = true
                         return
                     }
                 }
 
                 if ( Config.warUseBlacklist ) {
-                    val chunk = event.entity.getLocation().chunk
+                    val chunk = event.entity.location.chunk
                     val town = Nodes.getTownAtChunkCoord(chunk.x, chunk.z)
                     if ( town !== null && Config.warBlacklist.contains(town.uuid) ) {
-                        event.setCancelled(true)
+                        event.isCancelled = true
                         return
                     }
                 }
@@ -560,12 +560,12 @@ public class NodesWorldListener: Listener {
      * destroying flag -> stop attack
      */
     @EventHandler(priority = EventPriority.LOW)
-    public fun onBlockExplode(event: BlockExplodeEvent) {
+    fun onBlockExplode(event: BlockExplodeEvent) {
         // check if explosion allowed
         if ( Config.restrictExplosions ) {
             if ( !Nodes.war.enabled ) {
                 if ( Config.onlyAllowExplosionsDuringWar ) {
-                    event.setCancelled(true)
+                    event.isCancelled = true
                     return
                 }
             }
@@ -575,7 +575,7 @@ public class NodesWorldListener: Listener {
                     val chunk = event.block.chunk
                     val town = Nodes.getTownAtChunkCoord(chunk.x, chunk.z)
                     if ( town !== null && !Config.warWhitelist.contains(town.uuid) ) {
-                        event.setCancelled(true)
+                        event.isCancelled = true
                         return
                     }
                 }
@@ -584,7 +584,7 @@ public class NodesWorldListener: Listener {
                     val chunk = event.block.chunk
                     val town = Nodes.getTownAtChunkCoord(chunk.x, chunk.z)
                     if ( town !== null && Config.warBlacklist.contains(town.uuid) ) {
-                        event.setCancelled(true)
+                        event.isCancelled = true
                         return
                     }
                 }
@@ -740,17 +740,17 @@ private fun handleCropHarvest(block: Block) {
         // do tax event check
         val territoryOccupier = territory.occupier
         if ( territoryOccupier !== null && random.nextDouble() <= Config.taxFarmRate ) {
-            val items = block.getDrops()
+            val items = block.drops
             for ( itemStack in items ) {
                 Nodes.addToIncome(territoryOccupier, itemStack.type, itemStack.amount)
             }
 
-            block.setType(Material.AIR)
+            block.type = Material.AIR
         }
         // handle town over max claims penalty
-        else if ( territory?.town?.isOverClaimsMax == true ) {
+        else if ( territory.town?.isOverClaimsMax == true ) {
             if ( random.nextDouble() < Config.overClaimsMaxPenalty ) {
-                block.setType(Material.AIR)
+                block.type = Material.AIR
             }
         }
     }
@@ -759,8 +759,8 @@ private fun handleCropHarvest(block: Block) {
 // handle hidden ore generation during mining
 private fun handleHiddenOre(player: Player, block: Block) {
     // ignore hidden ore for silk touch tools
-    val inMainHand: ItemStack? = player.inventory.itemInMainHand
-    if ( inMainHand?.hasItemMeta() == true && inMainHand.enchantments?.containsKey(Enchantment.SILK_TOUCH) == true ) {
+    val inMainHand: ItemStack = player.inventory.itemInMainHand
+    if ( inMainHand?.hasItemMeta() == true && inMainHand.enchantments.containsKey(Enchantment.SILK_TOUCH) == true ) {
         return
     }
 

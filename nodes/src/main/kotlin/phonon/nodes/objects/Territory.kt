@@ -51,12 +51,12 @@ data class Territory(
     }
     
     // id is forced to be unique by system
-    override public fun hashCode(): Int {
+    override fun hashCode(): Int {
         return this.id
     }
 
     // print territory info
-    public fun printInfo(sender: CommandSender) {
+    fun printInfo(sender: CommandSender) {
         val town: String = this.town?.name ?: "${ChatColor.GRAY}None"
         val occupier: String = if ( this.occupier != null ) {
             "${ChatColor.RED}${this.occupier!!.name}"
@@ -82,7 +82,7 @@ data class Territory(
     }
 
     // print territory net resources
-    public fun printResources(sender: CommandSender) {
+    fun printResources(sender: CommandSender) {
 
         // print income
         Message.print(sender, "- Income:")

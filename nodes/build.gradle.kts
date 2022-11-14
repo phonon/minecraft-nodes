@@ -14,13 +14,13 @@ version = ""
 val VERSION = "0.0.9"
 
 // jvm target
-val JVM = 16 // 1.8 for 8, 11 for 11
+val JVM = 17 // 1.8 for 8, 11 for 11
 
 // base of output jar name
 val OUTPUT_JAR_NAME = "nodes"
 
 // target will be set to minecraft version by cli input parameter
-var target = ""
+var target = "1.19"
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
@@ -45,6 +45,9 @@ repositories {
     }
     maven { // protocol lib
         url = uri("https://repo.dmulloy2.net/nexus/repository/public/")
+    }
+    maven {
+        url = uri("https://repo.essentialsx.net/releases/")
     }
 }
 
@@ -75,11 +78,11 @@ dependencies {
     compileOnly("com.google.code.gson:gson:2.8.6")
     configurations["resolvableImplementation"]("com.google.code.gson:gson:2.8.6")
     
-    // put spigot/paper on path otherwise kotlin vs code plugin screeches
-    api("com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT")
+//    // put spigot/paper on path otherwise kotlin vs code plugin screeches
+//    api("com.destroystokyo.paper:paper-api:1.19.2-R0.1-SNAPSHOT")
     
     // essentials
-    compileOnly("net.ess3:EssentialsX:2.18.2")
+    compileOnly("net.essentialsx:EssentialsX:2.19.7")
 
     // protocol lib (nametag packets)
     compileOnly("com.comphenix.protocol:ProtocolLib:4.5.0")
@@ -101,16 +104,14 @@ dependencies {
         target = "1.16"
         // spigot/paper api
         compileOnly("com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT")
-        // fast block edit internal lib
-        compileOnly(files("./lib/block_edit/build/libs/block-edit-lib-1.16.jar"))
-        configurations["resolvableImplementation"](files("./lib/block_edit/build/libs/block-edit-lib-1.16.jar"))
     } else if ( project.hasProperty("1.18") == true ) {
         target = "1.18"
         // spigot/paper api
         compileOnly("io.papermc.paper:paper-api:1.18.1-R0.1-SNAPSHOT")
-        // fast block edit internal lib
-        compileOnly(files("./lib/block_edit/build/libs/block-edit-lib-1.18.jar"))
-        configurations["resolvableImplementation"](files("./lib/block_edit/build/libs/block-edit-lib-1.18.jar"))
+    } else if ( project.hasProperty("1.19") == true ) {
+        target = "1.19"
+        compileOnly("io.papermc.paper:paper-api:1.19.2-R0.1-SNAPSHOT")
+        api("io.papermc.paper:paper-api:1.19.2-R0.1-SNAPSHOT")
     }
 }
 
@@ -127,9 +128,10 @@ tasks {
     named<ShadowJar>("shadowJar") {
         // verify valid target minecraft version
         doFirst {
-            val supportedMinecraftVersions = setOf("1.12", "1.16", "1.18")
+            val supportedMinecraftVersions = setOf("1.12", "1.16", "1.18", "1.19")
+            System.out.println("target: ${target}")
             if ( !supportedMinecraftVersions.contains(target) ) {
-                throw Exception("Invalid Minecraft version! Supported versions are: 1.12, 1.16, 1.18")
+                throw Exception("Invalid Minecraft version! Supported versions are: 1.12, 1.16, 1.18, 1.19")
             }
         }
 

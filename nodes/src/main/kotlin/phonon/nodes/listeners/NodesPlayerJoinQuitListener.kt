@@ -16,13 +16,13 @@ import phonon.nodes.Nodes
 import phonon.nodes.chat.Chat
 import phonon.nodes.objects.Resident
 
-public class NodesPlayerJoinQuitListener: Listener {
+class NodesPlayerJoinQuitListener: Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
-	public fun onPlayerJoin(event: PlayerJoinEvent) {
+    fun onPlayerJoin(event: PlayerJoinEvent) {
         // create resident wrapper for player
         // createResident checks if resident already exists
-        val player: Player = event.getPlayer()
+        val player: Player = event.player
         Nodes.createResident(player)
         
         val resident: Resident = Nodes.getResident(player)!!
@@ -35,8 +35,8 @@ public class NodesPlayerJoinQuitListener: Listener {
     }
     
     @EventHandler
-    public fun onPlayerQuit(event: PlayerQuitEvent) {
-        val player: Player = event.getPlayer()
+    fun onPlayerQuit(event: PlayerQuitEvent) {
+        val player: Player = event.player
         val resident = Nodes.getResident(player)
         if ( resident != null ) {
             resident.destroyMinimap()
@@ -48,7 +48,7 @@ public class NodesPlayerJoinQuitListener: Listener {
 
         // if playing attacking a chunk, stop it
         if ( Nodes.war.enabled ) {
-            val attacks = Nodes.war.attackers.get(player.getUniqueId())
+            val attacks = Nodes.war.attackers.get(player.uniqueId)
             if ( attacks !== null ) {
                 for ( a in attacks ) {
                     a.cancel()

@@ -19,7 +19,7 @@ import phonon.nodes.Nodes
  * @subcommand /territory [id]
  * View info about territory from id
  */
-public class TerritoryCommand : CommandExecutor, TabCompleter {
+class TerritoryCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
         
@@ -27,7 +27,7 @@ public class TerritoryCommand : CommandExecutor, TabCompleter {
         val territory = if ( args.size < 2 ) {
             val player = if ( sender is Player ) sender else null
             if ( player != null ) {
-                val loc = player.getLocation()
+                val loc = player.location
                 val getTerritory = Nodes.getTerritoryFromBlock(loc.x.toInt(), loc.z.toInt())
 
                 Message.print(sender, "Territory at current location:")

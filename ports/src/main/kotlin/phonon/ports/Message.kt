@@ -10,14 +10,14 @@ import org.bukkit.command.CommandSender
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.TextComponent
 
-public object Message {
+object Message {
 
-    public val PREFIX = "[Ports]"
-    public val COL_MSG = ChatColor.DARK_GREEN
-    public val COL_ERROR = ChatColor.RED
+    val PREFIX = "[Ports]"
+    val COL_MSG = ChatColor.DARK_GREEN
+    val COL_ERROR = ChatColor.RED
 
     // print generic message to chat
-    public fun print(sender: Any?, s: String) {
+    fun print(sender: Any?, s: String) {
         if ( sender === null ) {
             System.out.println("${PREFIX} Message called with null sender: ${s}")
             return
@@ -32,7 +32,7 @@ public object Message {
     }
 
     // print error message to chat
-    public fun error(sender: Any?, s: String) {
+    fun error(sender: Any?, s: String) {
         if ( sender === null ) {
             System.out.println("${PREFIX} Message called with null sender: ${s}")
             return
@@ -48,7 +48,7 @@ public object Message {
     }
 
     // print text to the player action bar
-    public fun announcement(player: Player, s: String) {
-        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(s));
+    fun announcement(player: Player, s: String) {
+        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(s))
     }
 }

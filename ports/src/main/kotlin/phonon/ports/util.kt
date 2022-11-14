@@ -12,7 +12,7 @@ import org.bukkit.entity.Entity
 
 // matches any string in a list of strings that 
 // begins with start
-public fun filterByStart(list: List<String>, start: String): List<String> {
+fun filterByStart(list: List<String>, start: String): List<String> {
     val startLowerCase = start.lowercase()
     return list.filter { s -> s.lowercase().startsWith(startLowerCase) }
 }
@@ -21,7 +21,7 @@ public fun filterByStart(list: List<String>, start: String): List<String> {
  * Create progress bar string. Input should be double
  * in range [0.0, 1.0] marking progress.
  */
-public fun progressBar(progress: Double): String {
+fun progressBar(progress: Double): String {
     // available shades
     // https://en.wikipedia.org/wiki/Box-drawing_character
     // val SOLID = 2588     // full solid block
@@ -44,7 +44,7 @@ public fun progressBar(progress: Double): String {
     }
 }
 
-public fun saveStringToFile(str: String, path: Path) {
+fun saveStringToFile(str: String, path: Path) {
     val buffer = ByteBuffer.wrap(str.toByteArray())
     val fileChannel: AsynchronousFileChannel = AsynchronousFileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
     val operation: Future<Int> = fileChannel.write(buffer, 0)

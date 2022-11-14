@@ -20,24 +20,24 @@ import phonon.nodes.objects.Coord
 import phonon.nodes.objects.Town
 import phonon.nodes.objects.Nation
 
-public object WarDeserializer {
+object WarDeserializer {
 
     // parse war.json data file
-    public fun fromJson(path: Path) {
+    fun fromJson(path: Path) {
         // val json = JsonParser.parseReader(FileReader(path.toString())) // newer gson
-        val json = JsonParser().parse(FileReader(path.toString()))        // gson bundled in bukkit/spigot
-        val jsonObj = json.getAsJsonObject()
+        val json = JsonParser.parseReader(FileReader(path.toString()))        // gson bundled in bukkit/spigot
+        val jsonObj = json.asJsonObject
 
         // parse war state and flags
-        val warStatus = jsonObj.get("war")?.getAsBoolean() ?: false
-        if ( warStatus == null || warStatus == false ) {
+        val warStatus = jsonObj.get("war")?.asBoolean ?: false
+        if (!warStatus) {
             return
         }
         
         // parse war flags
-        val canAnnexTerritories = jsonObj.get("flagAnnex")?.getAsBoolean() ?: true
-        val canOnlyAttackBorders = jsonObj.get("flagBordersOnly")?.getAsBoolean() ?: false
-        val destructionEnabled = jsonObj.get("flagDestruction")?.getAsBoolean() ?: true
+        val canAnnexTerritories = jsonObj.get("flagAnnex")?.asBoolean ?: true
+        val canOnlyAttackBorders = jsonObj.get("flagBordersOnly")?.asBoolean ?: false
+        val destructionEnabled = jsonObj.get("flagDestruction")?.asBoolean ?: true
 
         // war enabled, parse full state
         Nodes.enableWar(canAnnexTerritories, canOnlyAttackBorders, destructionEnabled)
@@ -45,14 +45,14 @@ public object WarDeserializer {
         // ===============================
         // Occupied chunks
         // ===============================
-        val jsonOccupiedChunks = jsonObj.get("occupied")?.getAsJsonObject()
+        val jsonOccupiedChunks = jsonObj.get("occupied")?.asJsonObject
         if ( jsonOccupiedChunks !== null ) {
             for ( townName in jsonOccupiedChunks.keySet() ) {
 
-                val chunkList = jsonOccupiedChunks[townName].getAsJsonArray()
+                val chunkList = jsonOccupiedChunks[townName].asJsonArray
                 for ( i in 0 until chunkList.size() step 2) {
-                    val cx = chunkList[i].getAsInt()
-                    val cz = chunkList[i+1].getAsInt()
+                    val cx = chunkList[i].asInt
+                    val cz = chunkList[i+1].asInt
                     val coord = Coord(cx, cz)
 
                     FlagWar.loadOccupiedChunk(townName, coord)
@@ -64,39 +64,39 @@ public object WarDeserializer {
         // ===============================
         // Attacks
         // ===============================
-        val jsonAttackList = jsonObj.get("attacks")?.getAsJsonArray()
+        val jsonAttackList = jsonObj.get("attacks")?.asJsonArray
         if ( jsonAttackList !== null ) {
             for ( jsonAttack in jsonAttackList ) {
-                val attack = jsonAttack.getAsJsonObject()
+                val attack = jsonAttack.asJsonObject
 
                 // parse attacker player uuid
                 val uuidJson = attack.get("id")
                 if ( uuidJson == null ) {
                     break
                 }
-                val uuid: UUID = UUID.fromString(uuidJson.getAsString())
+                val uuid: UUID = UUID.fromString(uuidJson.asString)
 
                 // parse attack coord
-                val coordJson = attack.get("c")?.getAsJsonArray()
+                val coordJson = attack.get("c")?.asJsonArray
                 if ( coordJson == null ) {
                     break
                 }
-                val coord: Coord = Coord(coordJson[0].getAsInt(), coordJson[1].getAsInt())
+                val coord: Coord = Coord(coordJson[0].asInt, coordJson[1].asInt)
 
                 // parse attack flagBase block
-                val blockJson = attack.get("b")?.getAsJsonArray()
+                val blockJson = attack.get("b")?.asJsonArray
                 if ( blockJson == null ) {
                     break
                 }
                 val world = Bukkit.getWorlds().get(0)
                 val flagBase: Block = world.getBlockAt(
-                    blockJson[0].getAsInt(),
-                    blockJson[1].getAsInt(),
-                    blockJson[2].getAsInt()
+                    blockJson[0].asInt,
+                    blockJson[1].asInt,
+                    blockJson[2].asInt
                 )
                 
                 // parse progress
-                val progress = attack.get("p")?.getAsLong()
+                val progress = attack.get("p")?.asLong
                 if ( progress == null ) {
                     break
                 }

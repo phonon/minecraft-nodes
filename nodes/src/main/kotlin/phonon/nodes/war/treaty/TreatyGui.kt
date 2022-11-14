@@ -4,24 +4,19 @@
 
 package phonon.nodes.war
 
-import kotlin.system.measureNanoTime
-import org.bukkit.Bukkit
-import org.bukkit.Material
-import org.bukkit.ChatColor
-import org.bukkit.inventory.Inventory
-import org.bukkit.inventory.ItemStack
 import org.bukkit.entity.Player
 import phonon.nodes.gui.*
 import phonon.nodes.objects.Town
+import phonon.nodes.war.treaty.TreatyTermsGui
 
-public class TreatyGui(
+class TreatyGui(
     val view: TreatyGuiView,
     val player: Player,
     val treaty: Treaty,
     val town: Town
 ): GuiElement {
     
-    override public fun render(screen: GuiWindow) {
+    override fun render(screen: GuiWindow) {
 
         val receiver = if ( town === treaty.town1 ) {
             treaty.town2

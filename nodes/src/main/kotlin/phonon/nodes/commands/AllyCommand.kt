@@ -27,7 +27,7 @@ import phonon.nodes.war.*
  * @subcommand /ally [nation]
  * Offer alliance to a nation
  */
-public class AllyCommand : CommandExecutor, TabCompleter {
+class AllyCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
         
@@ -137,7 +137,7 @@ public class AllyCommand : CommandExecutor, TabCompleter {
 
                 // message that alliance is being requested
                 AllianceRequest.NEW -> {
-                    val thisSideMsg = "You are offering an alliance to ${otherSideName}"
+                    val thisSideMsg = "You are offering an alliance to $otherSideName"
                     for ( r in town.residents ) {
                         val player = r.player()
                         if ( player !== null ) {
@@ -145,7 +145,7 @@ public class AllyCommand : CommandExecutor, TabCompleter {
                         }
                     }
 
-                    val otherSideMsg = "${thisSideName} is offering an alliance, use \"/ally ${thisSideName}\" to accept"
+                    val otherSideMsg = "$thisSideName is offering an alliance, use \"/ally ${thisSideName}\" to accept"
                     for ( r in other.residents ) {
                         val player = r.player()
                         if ( player !== null ) {
@@ -156,8 +156,10 @@ public class AllyCommand : CommandExecutor, TabCompleter {
 
                 // broadcast that alliance was created
                 AllianceRequest.ACCEPTED -> {
-                    Message.broadcast("${thisSideName} has formed an alliance with ${otherSideName}")
+                    Message.broadcast("$thisSideName has formed an alliance with $otherSideName")
                 }
+
+                null -> TODO()
             }
         }
         else {

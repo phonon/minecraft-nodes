@@ -9,22 +9,22 @@ import phonon.nodes.Nodes
 import phonon.nodes.Config
 import phonon.nodes.objects.Territory
 
-public class NodesBlockGrowListener: Listener {
+class NodesBlockGrowListener: Listener {
 
     @EventHandler
-    public fun onBlockGrow(event: BlockGrowEvent) {
+    fun onBlockGrow(event: BlockGrowEvent) {
         val block = event.block
         val blockY = block.location.blockY
 
         // checks that crop meets sky light level requirements
         if ( block.lightFromSky < Config.cropsMinSkyLight ) {
-            event.setCancelled(true)
+            event.isCancelled = true
             return
         }
 
         // check block within height range allowed for farming
         if ( blockY < Config.cropsMinYHeight || blockY > Config.cropsMaxYHeight ) {
-            event.setCancelled(true)
+            event.isCancelled = true
             return
         }
 
@@ -33,7 +33,7 @@ public class NodesBlockGrowListener: Listener {
 
         // check if territory is wilderness (either no territory or unowned land)
         if ( !Config.allowCropsInWilderness && ( territory === null || territory.town === null ) ) {
-            event.setCancelled(true)
+            event.isCancelled = true
             return
         }
         
@@ -42,13 +42,13 @@ public class NodesBlockGrowListener: Listener {
             // get block state that plant will grow into
             // -> for plants that grow like sugarcane or vines,
             //    using event.block = AIR because block has not spread there
-            val blockState = event.getNewState()
+            val blockState = event.newState
             var plant: Material = blockState.type
 
             if ( !territory.crops.containsKey(plant) ) {
                 val altName = Config.cropAlternativeNames.get(plant)
                 if ( altName === null || !territory.crops.containsKey(altName) ) {
-                    event.setCancelled(true)
+                    event.isCancelled = true
                     return
                 }
                 
@@ -100,7 +100,7 @@ public class NodesBlockGrowListener: Listener {
         }
 
         // else, cancel event
-        event.setCancelled(true)
+        event.isCancelled = true
     }
 
 }

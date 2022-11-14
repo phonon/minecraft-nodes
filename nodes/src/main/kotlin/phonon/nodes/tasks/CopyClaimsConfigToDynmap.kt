@@ -16,9 +16,9 @@ import org.bukkit.plugin.java.JavaPlugin
 import phonon.nodes.Config
 import phonon.nodes.Nodes
 
-public object CopyClaimsConfigToDynmap {
+object CopyClaimsConfigToDynmap {
     
-    public fun run(plugin: JavaPlugin) {
+    fun run(plugin: JavaPlugin) {
         if ( Nodes.dynmap == false ) {
             return
         }

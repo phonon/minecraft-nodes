@@ -9,20 +9,18 @@ import org.bukkit.command.TabCompleter
 import org.bukkit.plugin.java.JavaPlugin
 import phonon.nodes.commands.*
 import phonon.nodes.listeners.*
-import phonon.nodes.objects.Nametag
 import phonon.nodes.tasks.*
 import phonon.nodes.utils.loadLongFromFile
-import java.io.File
 
-public class NodesPlugin : JavaPlugin() {
+class NodesPlugin : JavaPlugin() {
     
     override fun onEnable() {
         
         // measure load time
         val timeStart = System.currentTimeMillis()
 
-        val logger = this.getLogger()
-        val pluginManager = this.getServer().getPluginManager()
+        val logger = this.logger
+        val pluginManager = this.server.pluginManager
 
         // initialize nodes
         Nodes.initialize(this)
@@ -34,21 +32,21 @@ public class NodesPlugin : JavaPlugin() {
         val essentials = pluginManager.getPlugin("Essentials")
         if ( essentials !== null ) {
             Nodes.hookEssentials(essentials as Essentials)
-            logger.info("Using Essentials v${essentials.getDescription().getVersion()}")
+            logger.info("Using Essentials v${essentials.getDescription().version}")
         }
         
         // dynmap hook, just flag that dynmap exists
         val dynmap = pluginManager.getPlugin("dynmap")
         if ( dynmap !== null ) {
             Nodes.hookDynmap()
-            logger.info("Using Dynmap v${dynmap.getDescription().getVersion()}")
+            logger.info("Using Dynmap v${dynmap.description.version}")
         }
 
         // protocol lib, may be needed?
         val protocolLib = pluginManager.getPlugin("ProtocolLib")
         if ( protocolLib !== null && Config.useNametags ) {
             Nodes.hookProtocolLib()
-            logger.info("Using ProtocolLib v${protocolLib.getDescription().getVersion()}")
+            logger.info("Using ProtocolLib v${protocolLib.description.version}")
         }
 
         // ===================================
@@ -93,17 +91,17 @@ public class NodesPlugin : JavaPlugin() {
         this.getCommand("territory")?.setExecutor(TerritoryCommand())
         
         // override command aliases tab complete if they exist
-        this.getCommand("t")?.setTabCompleter(this.getCommand("town")?.getExecutor() as TabCompleter)
-        this.getCommand("n")?.setTabCompleter(this.getCommand("nation")?.getExecutor() as TabCompleter)
-        this.getCommand("nd")?.setTabCompleter(this.getCommand("nodes")?.getExecutor() as TabCompleter)
-        this.getCommand("nda")?.setTabCompleter(this.getCommand("nodesadmin")?.getExecutor() as TabCompleter)
-        this.getCommand("gc")?.setTabCompleter(this.getCommand("globalchat")?.getExecutor() as TabCompleter)
-        this.getCommand("p")?.setTabCompleter(this.getCommand("player")?.getExecutor() as TabCompleter)
+        this.getCommand("t")?.tabCompleter = this.getCommand("town")?.executor as TabCompleter
+        this.getCommand("n")?.tabCompleter = this.getCommand("nation")?.executor as TabCompleter
+        this.getCommand("nd")?.tabCompleter = this.getCommand("nodes")?.executor as TabCompleter
+        this.getCommand("nda")?.tabCompleter = this.getCommand("nodesadmin")?.executor as TabCompleter
+        this.getCommand("gc")?.tabCompleter = this.getCommand("globalchat")?.executor as TabCompleter
+        this.getCommand("p")?.tabCompleter = this.getCommand("player")?.executor as TabCompleter
         
         // load world
         val pluginPath = Config.pathPlugin
         logger.info("Loading world from: ${pluginPath}")
-        if ( Nodes.loadWorld(pluginPath) == true ) { // successful load
+        if ( Nodes.loadWorld() == true ) { // successful load
             // print number of resource nodes and territories loaded
             logger.info("- Resource Nodes: ${Nodes.getResourceNodeCount()}")
             logger.info("- Territories: ${Nodes.getTerritoryCount()}")

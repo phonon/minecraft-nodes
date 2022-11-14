@@ -22,7 +22,7 @@ import phonon.nodes.PlayerScoreboardManager
 /**
  * Get armor stand custom name as VIEWED by input player
  */
-public fun townNametagViewedByPlayer(town: Town, viewer: Player): String {
+fun townNametagViewedByPlayer(town: Town, viewer: Player): String {
     // get input player relation to this.player
     val otherTown = Nodes.getResident(viewer)?.town
     if ( otherTown !== null ) {
@@ -43,7 +43,7 @@ public fun townNametagViewedByPlayer(town: Town, viewer: Player): String {
     return town.nametagNeutral
 }
 
-public object Nametag {
+object Nametag {
 
     private var task: BukkitTask? = null
 
@@ -56,16 +56,16 @@ public object Nametag {
      * 2. set packet listener to override entity spawn events
      *    for nametag armor stands (so they don't teleport to random locations)
      */
-    public fun start(plugin: Plugin, period: Long) {
+    fun start(plugin: Plugin, period: Long) {
         if ( this.task !== null ) {
             return
         }
 
         // scheduler for refreshing nametag text
         val task = object: Runnable {
-            override public fun run() {
+            override fun run() {
                 // schedule pipelined update
-                Nametag.pipelinedUpdateAllText()
+                pipelinedUpdateAllText()
 
                 // synchronous update
                 // schedule main thread to run income tick
@@ -80,7 +80,7 @@ public object Nametag {
         this.task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task, period, period)
     }
 
-    public fun stop() {
+    fun stop() {
         val task = this.task
         if ( task === null ) {
             return
@@ -94,7 +94,7 @@ public object Nametag {
      * create new nametag for player
      * KEPT ONLY FOR 1.12 API COMPATIBILITY
      */
-    public fun create(player: Player): Nametag? {
+    fun create(player: Player): Nametag? {
         return null
     }
 
@@ -102,28 +102,28 @@ public object Nametag {
      * destroy player's nametag
      * KEPT ONLY FOR 1.12 API COMPATIBILITY
      */
-    public fun destroy(player: Player) {}
+    fun destroy(player: Player) {}
 
     /**
      * destroys all nametags
      * KEPT ONLY FOR 1.12 API COMPATIBILITY
      */
-    public fun clear() {}
+    fun clear() {}
 
     /**
      * hide player's nametag (e.g. sneaking)
      * KEPT ONLY FOR 1.12 API COMPATIBILITY
      */
-    public fun visibility(player: Player, visible: Boolean) {}
+    fun visibility(player: Player, visible: Boolean) {}
 
     /**
      * Update nametag text for player
      */
-    public fun updateTextForPlayer(player: Player) {
-        val scoreboard = PlayerScoreboardManager.getScoreboard(player.getUniqueId())
+    fun updateTextForPlayer(player: Player) {
+        val scoreboard = PlayerScoreboardManager.getScoreboard(player.uniqueId)
 
         // unregister towns
-        for ( team in scoreboard.getTeams() ) {
+        for ( team in scoreboard.teams) {
             if ( team.name === "player" ) {
                 continue
             }
@@ -136,7 +136,7 @@ public object Nametag {
         for ( town in Nodes.towns.values ) {
             val townNametagId = "t${town.townNametagId}"
             val teamTown = scoreboard.registerNewTeam(townNametagId)
-            teamTown.setPrefix(townNametagViewedByPlayer(town, player))
+            teamTown.prefix = townNametagViewedByPlayer(town, player)
             teamTown.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.ALWAYS)
         }
 
@@ -146,15 +146,15 @@ public object Nametag {
             if ( player === otherPlayer ) {
                 val team = scoreboard.getTeam("player") ?: scoreboard.registerNewTeam("player")
                 if ( town !== null ) {
-                    team.setPrefix(townNametagViewedByPlayer(town, player))
+                    team.prefix = townNametagViewedByPlayer(town, player)
                     team.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.ALWAYS)
                 }
                 else {
-                    team.setPrefix("")
+                    team.prefix = ""
                     team.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER)
                 }
-                if ( !team.hasEntry(player.getName()) ) {
-                    team.addEntry(player.getName())
+                if ( !team.hasEntry(player.name) ) {
+                    team.addEntry(player.name)
                 }
             }
             else { // another player
@@ -162,19 +162,19 @@ public object Nametag {
                     val townNametagId = "t${town.townNametagId}"
                     val team = scoreboard.getTeam(townNametagId)
                     if ( team !== null ) {
-                        team.addEntry(otherPlayer.getName())
+                        team.addEntry(otherPlayer.name)
                     }
                 }
             }
         }
 
-        player.setScoreboard(scoreboard)
+        player.scoreboard = scoreboard
     }
 
     /**
      * Synchronously update all nametag text for all players
      */
-    public fun updateAllText() {
+    fun updateAllText() {
         val onlinePlayers = Bukkit.getOnlinePlayers()
         for ( player in onlinePlayers ) {
             updateTextForPlayer(player)
@@ -185,8 +185,8 @@ public object Nametag {
      * Update all player nametags using a pipeline:
      * - only update subset of online players each time
      */
-    public fun pipelinedUpdateAllText() {
-        if ( Nametag.updateLock == true ) {
+    fun pipelinedUpdateAllText() {
+        if ( updateLock == true ) {
             return
         }
 
@@ -195,7 +195,7 @@ public object Nametag {
             return
         }
 
-        Nametag.updateLock = true
+        updateLock = true
 
         val updatesPerTick: Int = Math.max(1, Math.ceil(onlinePlayers.size.toDouble() / Config.nametagPipelineTicks.toDouble()).toInt())
         var index = 0
@@ -208,8 +208,8 @@ public object Nametag {
                 override fun run() {
                     for ( i in idxStart until idxEnd ) {
                         val player = onlinePlayers[i]
-                        if ( player.isOnline() ) {
-                            Nametag.updateTextForPlayer(player)
+                        if ( player.isOnline) {
+                            updateTextForPlayer(player)
                         }
                     }
                 }
@@ -222,7 +222,7 @@ public object Nametag {
         // finish after next tick
         Bukkit.getScheduler().runTaskLater(Nodes.plugin!!, object: Runnable {
             override fun run() {
-                Nametag.updateLock = false
+                updateLock = false
             }
         }, tickOffset)
     }

@@ -10,14 +10,14 @@ import org.bukkit.ChatColor
 import org.bukkit.entity.Player
 import org.bukkit.event.player.AsyncPlayerChatEvent
 
-public enum class ChatMode {
+enum class ChatMode {
     GLOBAL,
     TOWN,
     NATION,
     ALLY,
 }
 
-public object Chat {
+object Chat {
     
     val playersMuteGlobal: HashSet<Player> = hashSetOf()
 
@@ -34,15 +34,15 @@ public object Chat {
     var colorPlayerTownLeader = ChatColor.BOLD
     var colorPlayerNationLeader = "${ChatColor.GOLD}${ChatColor.BOLD}"
 
-    public fun process(event: AsyncPlayerChatEvent) {
+    fun process(event: AsyncPlayerChatEvent) {
         // FIRST MOST IMPORTANT: APPLY GREENTEXT
-        val msg = event.getMessage()
+        val msg = event.message
         if ( msg.get(0) == '>' ) {
-            event.setMessage("${colorGreen}${msg}")
+            event.message = "${colorGreen}${msg}"
         }
 
         // get player chat mode
-        val player = event.getPlayer()
+        val player = event.player
         val fetchResident = Nodes.getResident(player)
         val resident: Resident = if ( fetchResident != null ) {
             fetchResident
@@ -55,70 +55,70 @@ public object Chat {
         when ( chatMode ) {
             ChatMode.GLOBAL -> {
                 // remove players who muted global
-                val recipients = event.getRecipients()
-                for ( p in Chat.playersMuteGlobal ) {
+                val recipients = event.recipients
+                for ( p in playersMuteGlobal ) {
                     recipients.remove(p)
                 }
-                event.setFormat(formatMsgGlobal(resident))
+                event.format = formatMsgGlobal(resident)
             }
             ChatMode.TOWN -> {
                 val town = resident.town
                 if ( town == null ) {
-                    event.setCancelled(true)
+                    event.isCancelled = true
                     return
                 }
-                event.getRecipients().clear()
-                event.getRecipients().addAll(town.playersOnline)
-                event.setFormat(formatMsgTown(resident))
+                event.recipients.clear()
+                event.recipients.addAll(town.playersOnline)
+                event.format = formatMsgTown(resident)
             }
             ChatMode.NATION -> {
                 val nation = resident.nation
                 if ( nation == null ) {
-                    event.setCancelled(true)
+                    event.isCancelled = true
                     return
                 }
-                event.getRecipients().clear()
-                event.getRecipients().addAll(nation.playersOnline)
-                event.setFormat(formatMsgNation(resident))
+                event.recipients.clear()
+                event.recipients.addAll(nation.playersOnline)
+                event.format = formatMsgNation(resident)
             }
             ChatMode.ALLY -> {
                 val town = resident.town
                 if ( town == null ) {
-                    event.setCancelled(true)
+                    event.isCancelled = true
                     return
                 }
-                event.getRecipients().clear()
-                event.getRecipients().addAll(town.playersOnline)
+                event.recipients.clear()
+                event.recipients.addAll(town.playersOnline)
                 for ( allyTown in town.allies ) {
-                    event.getRecipients().addAll(allyTown.playersOnline)
+                    event.recipients.addAll(allyTown.playersOnline)
                 }
-                event.setFormat(formatMsgAlly(resident))
+                event.format = formatMsgAlly(resident)
             }
         }
     }
 
     // unmute global chat for player
-    public fun enableGlobalChat(player: Player) {
-        Chat.playersMuteGlobal.remove(player)
+    fun enableGlobalChat(player: Player) {
+        playersMuteGlobal.remove(player)
     }
 
     // mute global chat for player
-    public fun disableGlobalChat(player: Player) {
-        Chat.playersMuteGlobal.add(player)
+    fun disableGlobalChat(player: Player) {
+        playersMuteGlobal.add(player)
     }
 
-    public fun isMuted(player: Player): Boolean {
-        // TODO: hook into essentials, check muted player
-        return false
-    }
+//    fun isMuted(player: Player): Boolean {
+//        // TODO: hook into essentials, check muted player
+//        return false
+//    }
 
-    public fun formatResidentName(resident: Resident): String {
+    fun formatResidentName(resident: Resident): String {
         
         val town = resident.town
         val nation = resident.nation
 
         // get player name color
-        val color = if ( resident.player()?.isOp() == true ) {
+        val color = if ( resident.player()?.isOp == true ) {
             colorPlayerOp
         } else if ( town == null ) {
             colorPlayerTownless
@@ -149,7 +149,7 @@ public object Chat {
 
     }
 
-    public fun formatMsgGlobal(resident: Resident): String {
+    fun formatMsgGlobal(resident: Resident): String {
         // format player name
         val formattedResidentName = formatResidentName(resident)
 
@@ -165,21 +165,21 @@ public object Chat {
         return "${formattedResidentAllegience}${formattedResidentName}${colorDefault}: %2\$s"
     }
 
-    public fun formatMsgTown(resident: Resident): String {
+    fun formatMsgTown(resident: Resident): String {
         // format player name
         val formattedResidentName = formatResidentName(resident)
 
         return "${colorTown}[Town] ${formattedResidentName}${colorTown}: %2\$s"
     }
 
-    public fun formatMsgNation(resident: Resident): String {
+    fun formatMsgNation(resident: Resident): String {
         // format player name
         val formattedResidentName = formatResidentName(resident)
 
         return "${colorNation}[Nation] ${formattedResidentName}${colorNation}: %2\$s"
     }
     
-    public fun formatMsgAlly(resident: Resident): String {
+    fun formatMsgAlly(resident: Resident): String {
         // format player name
         val formattedResidentName = formatResidentName(resident)
 

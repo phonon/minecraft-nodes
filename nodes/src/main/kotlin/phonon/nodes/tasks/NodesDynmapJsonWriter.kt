@@ -10,7 +10,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
-public class NodesDynmapJsonWriter(
+class NodesDynmapJsonWriter(
     val pathTownsJson: Path,
     val pathDynmapDir: Path,
     val pathDynmapJson: Path
@@ -20,7 +20,7 @@ public class NodesDynmapJsonWriter(
         Files.createDirectories(pathDynmapDir)
     }
 
-    override public fun run() {
+    override fun run() {
         Files.copy(pathTownsJson, pathDynmapJson, StandardCopyOption.REPLACE_EXISTING) 
     }
 }

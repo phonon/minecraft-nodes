@@ -12,7 +12,7 @@ package phonon.nodes.constants
  * Neutral - neutral towns, or players with no town
  * Enemy - enemy towns
  */
-public enum class DiplomaticRelationship {
+enum class DiplomaticRelationship {
     TOWN,
     NATION,
     ALLY,
@@ -21,12 +21,12 @@ public enum class DiplomaticRelationship {
 }
 
 // constants for setting enemy
-public val ErrorWarAllyOrTruce = Exception("Cannot declare war against ally or truced")
-public val ErrorAlreadyEnemies = Exception("Already enemies")
-public val ErrorAlreadyAllies = Exception("Already allies")
+val ErrorWarAllyOrTruce = Exception("Cannot declare war against ally or truced")
+val ErrorAlreadyEnemies = Exception("Already enemies")
+val ErrorAlreadyAllies = Exception("Already allies")
 
 // constants for adding/removing ally
-public val ErrorNotAllies = Exception("Not allies")
+val ErrorNotAllies = Exception("Not allies")
 
 // constants for adding/remove truce
-public val ErrorAlreadyTruce = Exception("Already truce")
+val ErrorAlreadyTruce = Exception("Already truce")

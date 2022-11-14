@@ -13,17 +13,17 @@ import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent
 import phonon.nodes.gui.GuiWindow
 
-public class NodesGuiListener: Listener {
+class NodesGuiListener: Listener {
 
     // 
     @EventHandler
-    public fun onInventoryClick(event: InventoryClickEvent) {
+    fun onInventoryClick(event: InventoryClickEvent) {
         // println("GUI EVENT: ${event.action}")
 
-        val inventory = event.getClickedInventory()
+        val inventory = event.clickedInventory
         val holder = inventory?.holder
-        val view = event.getView()
-        val topHolder = view.getTopInventory().holder
+        val view = event.view
+        val topHolder = view.topInventory.holder
 
         // clicked inventory is the gui window
         if ( topHolder is GuiWindow ) {
@@ -40,7 +40,9 @@ public class NodesGuiListener: Listener {
                     }
 
                     // cancel unsafe actions
-                    InventoryAction.COLLECT_TO_CURSOR -> { event.setCancelled(true) }
+                    InventoryAction.COLLECT_TO_CURSOR -> {
+                        event.isCancelled = true
+                    }
                 }
             }
         }
@@ -48,11 +50,11 @@ public class NodesGuiListener: Listener {
     }
 
     @EventHandler
-    public fun onInventoryDrag(event: InventoryDragEvent) {
+    fun onInventoryDrag(event: InventoryDragEvent) {
         // println("GUI DRAG")
 
-        val inventory = event.getInventory()
-        val holder = inventory?.holder
+        val inventory = event.inventory
+        val holder = inventory.holder
 
         if ( holder != null && holder is GuiWindow ) {
             holder.runOnDrag(event)
@@ -60,9 +62,9 @@ public class NodesGuiListener: Listener {
     }
 
     @EventHandler
-    public fun onInventoryClose(event: InventoryCloseEvent) {
-        val inventory = event.getInventory()
-        val holder = inventory?.holder
+    fun onInventoryClose(event: InventoryCloseEvent) {
+        val inventory = event.inventory
+        val holder = inventory.holder
         if ( holder != null && holder is GuiWindow ) {
             holder.runOnClose(event)
         }

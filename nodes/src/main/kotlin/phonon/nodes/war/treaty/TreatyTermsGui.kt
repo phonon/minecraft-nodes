@@ -2,19 +2,18 @@
  * Main treaty GUI window, shows terms on both side
  */
 
-package phonon.nodes.war
+@file:Suppress("DEPRECATION")
 
-import kotlin.system.measureNanoTime
-import org.bukkit.Bukkit
+package phonon.nodes.war.treaty
+
 import org.bukkit.Material
 import org.bukkit.ChatColor
-import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 import phonon.nodes.gui.*
-import phonon.nodes.objects.Territory
 import phonon.nodes.objects.Town
+import phonon.nodes.war.*
 
 // constant array for (x,y) slots for your town's treaty side
 val TOWN_TERM_SLOTS: Array<GuiSlot> = arrayOf(
@@ -50,14 +49,14 @@ val ICON_OCCUPY = ItemIcon(
 )
 
 // icon for letting other party annex your territory
-val ICON_ANNEX = ItemIcon(
-    ItemStack(Material.GRASS, 1),
-    "${ChatColor.RED}${ChatColor.BOLD}Cede Territory",
-    listOf(
-        "${ChatColor.WHITE}Other town will annex this territory",
-        "${ChatColor.WHITE}${ChatColor.BOLD}Click to select territory."
-    )
-)
+//val ICON_ANNEX = ItemIcon(
+//    ItemStack(Material.GRASS, 1),
+//    "${ChatColor.RED}${ChatColor.BOLD}Cede Territory",
+//    listOf(
+//        "${ChatColor.WHITE}Other town will annex this territory",
+//        "${ChatColor.WHITE}${ChatColor.BOLD}Click to select territory."
+//    )
+//)
 
 // icon for rejecting deal
 val ICON_REJECT = ItemIcon(
@@ -99,7 +98,7 @@ val ICON_CONFIRM = ItemIcon(
 )
 
 // render a territory occupation treaty term
-public fun renderTreatyTermOccupation(screen: GuiWindow, x: Int, y: Int, treaty: Treaty, term: TreatyTermOccupation, cancellable: Boolean) {
+fun renderTreatyTermOccupation(screen: GuiWindow, x: Int, y: Int, treaty: Treaty, term: TreatyTermOccupation, cancellable: Boolean) {
     val terr = term.territory
 
     val title = if ( terr.name != "" ) {
@@ -113,19 +112,18 @@ public fun renderTreatyTermOccupation(screen: GuiWindow, x: Int, y: Int, treaty:
         "${ChatColor.AQUA}Core: ${ChatColor.WHITE}(${terr.core.x}, ${terr.core.z})",
         "${ChatColor.AQUA}Resources:"
     )
-    val resourcesList: List<String> = terr.resourceNodes.map({name ->
-        "${ChatColor.WHITE}- ${name}"
-    })
-    
+    val resourcesList: List<String> = terr.resourceNodes.map { name ->
+        "${ChatColor.WHITE}- $name"
+    }
+
     if ( cancellable ) {
         GuiButton(
             x,
             y,
             ItemStack(Material.DIRT, 1, 2.toShort()),
             title,
-            propertiesList + resourcesList,
-            { treaty.remove(term) }
-        ).render(screen)
+            propertiesList + resourcesList
+        ) { treaty.remove(term) }.render(screen)
     }
     else {
         GuiLabel(
@@ -140,7 +138,7 @@ public fun renderTreatyTermOccupation(screen: GuiWindow, x: Int, y: Int, treaty:
 }
 
 // render a territory release treaty term
-public fun renderTreatyTermRelease(screen: GuiWindow, x: Int, y: Int, treaty: Treaty, term: TreatyTermRelease, cancellable: Boolean) {
+fun renderTreatyTermRelease(screen: GuiWindow, x: Int, y: Int, treaty: Treaty, term: TreatyTermRelease, cancellable: Boolean) {
     val terr = term.territory
 
     val title = if ( terr.name != "" ) {
@@ -154,19 +152,18 @@ public fun renderTreatyTermRelease(screen: GuiWindow, x: Int, y: Int, treaty: Tr
         "${ChatColor.AQUA}Core: ${ChatColor.WHITE}(${terr.core.x}, ${terr.core.z})",
         "${ChatColor.AQUA}Resources:"
     )
-    val resourcesList: List<String> = terr.resourceNodes.map({name ->
-        "${ChatColor.WHITE}- ${name}"
-    })
-    
+    val resourcesList: List<String> = terr.resourceNodes.map { name ->
+        "${ChatColor.WHITE}- $name"
+    }
+
     if ( cancellable ) {
         GuiButton(
             x,
             y,
             ItemStack(Material.DIRT, 1, 2.toShort()),
             title,
-            propertiesList + resourcesList,
-            { treaty.remove(term) }
-        ).render(screen)
+            propertiesList + resourcesList
+        ) { treaty.remove(term) }.render(screen)
     }
     else {
         GuiLabel(
@@ -180,16 +177,15 @@ public fun renderTreatyTermRelease(screen: GuiWindow, x: Int, y: Int, treaty: Tr
 }
 
 // render treaty cede territory term
-public fun renderTreatyTermItems(screen: GuiWindow, x: Int, y: Int, treaty: Treaty, term: TreatyTermItems, cancellable: Boolean) {
+fun renderTreatyTermItems(screen: GuiWindow, x: Int, y: Int, treaty: Treaty, term: TreatyTermItems, cancellable: Boolean) {
     if ( cancellable ) {
         GuiButton(
             x,
             y,
             term.items.clone(), // make clone to not disturb internal items
             null,
-            null,
-            { treaty.remove(term) }
-        ).render(screen)
+            null
+        ) { treaty.remove(term) }.render(screen)
     }
     else {
         GuiLabel(
@@ -240,45 +236,41 @@ val otherSideFillBottomGreen = GuiElementList(listOf(
 // ==================================
 // Actual GUI
 // ==================================
-public class TreatyTermsGui(
+class TreatyTermsGui(
     val player: Player,
     val treaty: Treaty,
     val town: Town
 ): GuiElement {
     
-    val guiButtonOccupyTerritory = GuiButton(0, 5, ICON_OCCUPY, null, null, {
+    val guiButtonOccupyTerritory = GuiButton(0, 5, ICON_OCCUPY, null, null) {
         treaty.setPlayerGuiView(TreatyGuiView.SELECT_TERRITORY_OCCUPY, player, treaty, town)
-    })
-    
-    val guiButtonReject = GuiButton(2, 5, ICON_REJECT, null, null,
-        { treaty.reject(this.town) }
-    )
+    }
 
-    val guiButtonOffer = GuiButton(3, 5, ICON_OFFER, null, null,
-        { treaty.offer(this.town) }
-    )
+    val guiButtonReject = GuiButton(2, 5, ICON_REJECT, null, null
+    ) { treaty.reject(this.town) }
 
-    val guiButtonConfirm = GuiButton(4, 5, ICON_CONFIRM, null, null,
-        { treaty.confirm(this.town) }
-    )
+    val guiButtonOffer = GuiButton(3, 5, ICON_OFFER, null, null
+    ) { treaty.offer(this.town) }
 
-    val guiButtonRevise = GuiButton(3, 5, ICON_REVISE, null, null,
-        { treaty.revise(this.town) }
-    )
-    
+    val guiButtonConfirm = GuiButton(4, 5, ICON_CONFIRM, null, null
+    ) { treaty.confirm(this.town) }
+
+    val guiButtonRevise = GuiButton(3, 5, ICON_REVISE, null, null
+    ) { treaty.revise(this.town) }
+
     /**
      * Render terms screen
      * 
      * NOTE: as coded, it will not work if there are more than 20 terms,
-     * will cutoff and not show terms on other side
+     * will cut off and not show terms on other side
      * Ignoring for now but in future will need to restructure logic.
      * Should be unlikely to have >20 terms
      */
-    override public fun render(screen: GuiWindow) {
+    override fun render(screen: GuiWindow) {
         // render treaty options
-        var sideLocked = false
-        var sideConfirmed = false
-        var otherConfirmed = false
+        val sideLocked: Boolean
+        val sideConfirmed: Boolean
+        val otherConfirmed: Boolean
         val receiver: Town = if ( town === treaty.town1 ) {
             sideLocked = treaty.town1Locked
             sideConfirmed = treaty.town1Confirmed
@@ -294,16 +286,16 @@ public class TreatyTermsGui(
         }
 
         // handle depositing item
-        screen.onItemDeposit({ event: InventoryClickEvent -> 
-            if ( !sideLocked ) {
-                val items = event.getCurrentItem()
-                if ( items != null && items.type != Material.AIR ) {
+        screen.onItemDeposit { event: InventoryClickEvent ->
+            if (!sideLocked) {
+                val items = event.currentItem
+                if (items != null && items.type != Material.AIR) {
                     val itemsClone = items.clone()
                     this.player.inventory.removeItem(items)
                     this.treaty.add(TreatyTermItems(town, receiver, itemsClone, player))
                 }
             }
-        })
+        }
 
         // render bottom button panel
         if ( sideLocked ) {
@@ -379,13 +371,13 @@ public class TreatyTermsGui(
             // negotiating terms
             // add callbacks for depositing item using mouseclick
             else {
-                GuiButton(x, y, ICON_EMPTY, null, null, { event: InventoryClickEvent ->
-                    val items = event.getCursor()?.clone()
-                    if ( items !== null && items.type !== Material.AIR ) {
+                GuiButton(x, y, ICON_EMPTY, null, null) { event: InventoryClickEvent ->
+                    val items = event.cursor?.clone()
+                    if (items !== null && items.type !== Material.AIR) {
                         this.player.setItemOnCursor(null)
                         this.treaty.add(TreatyTermItems(town, receiver, items, player))
                     }
-                }).render(screen)
+                }.render(screen)
             }
         }
 

@@ -25,13 +25,13 @@ import phonon.nodes.objects.Town
 import phonon.nodes.objects.TownPair
 
 // state machine for each player's treaty gui views
-public enum class TreatyGuiView {
+enum class TreatyGuiView {
     MAIN,                     // main screen
     SELECT_TERRITORY_OCCUPY   // territory selection to be occupied
 }
 
 // peace treaty instance between two towns
-public class Treaty(
+class Treaty(
     val town1: Town,
     val town2: Town
 ) {
@@ -63,12 +63,12 @@ public class Treaty(
 
     // destroy treaty and delete it
     // occur in response to event (e.g. town or nation involved gets deleted)
-    public fun destroy() {
+    fun destroy() {
         // lock treaty
         this.finished = true
 
         // close inventory for all viewers
-        for ( (view, players) in this.viewers ) {
+        for ( (_, players) in this.viewers ) {
             for ( p in players ) {
                 p.closeInventory()
             }
@@ -82,16 +82,16 @@ public class Treaty(
             term.cancel()
         }
 
-        Treaty.delete(this)
+        delete(this)
     }
 
     // reject treaty and delete it (remove from active treaties)
-    public fun reject(rejector: Town) {
+    fun reject(rejector: Town) {
         // lock treaty
         this.finished = true
 
         // close inventory for all viewers
-        for ( (view, players) in this.viewers ) {
+        for ( (_, players) in this.viewers ) {
             for ( p in players ) {
                 p.closeInventory()
             }
@@ -105,7 +105,7 @@ public class Treaty(
             term.cancel()
         }
 
-        Treaty.delete(this)
+        delete(this)
         
         // print reject message
         val other = if ( rejector === this.town1 ) {
@@ -133,7 +133,7 @@ public class Treaty(
     // offer terms from town:
     // - if other side already offered, enter confirmation state
     // - else, lock side's terms
-    public fun offer(side: Town) {
+    fun offer(side: Town) {
         if ( side === town1 ) {
             this.town1Locked = true
         }
@@ -148,7 +148,7 @@ public class Treaty(
     }
 
     // confirm terms
-    public fun confirm(side: Town) {
+    fun confirm(side: Town) {
         if ( side === town1 ) {
             this.town1Confirmed = true
         }
@@ -169,7 +169,7 @@ public class Treaty(
     }
 
     // undo confirm + lock, revise treaty terms
-    public fun revise(side: Town) {
+    fun revise(side: Town) {
         // undo confirmation
         this.town1Confirmed = false
         this.town2Confirmed = false
@@ -189,12 +189,12 @@ public class Treaty(
     }
 
     // run treaty and all terms, then apply truce between towns
-    public fun execute() {
+    fun execute() {
         // lock treaty terms
         this.finished = true
 
         // close inventory for all viewers
-        for ( (view, players) in this.viewers ) {
+        for ( (_, players) in this.viewers ) {
             for ( p in players ) {
                 p.closeInventory()
             }
@@ -214,13 +214,13 @@ public class Treaty(
         // remove enemy status
         Nodes.removeEnemy(this.town1, this.town2)
         
-        Treaty.delete(this)
+        delete(this)
 
         Message.broadcast("${ChatColor.BOLD}${this.town1.name} has signed a peace treaty with ${this.town2.name}")
     }
 
     // add term to treaty
-    public fun add(term: TreatyTerm) {
+    fun add(term: TreatyTerm) {
         // check if side locked
         if ( ( term.provider === this.town1 && this.town1Locked == true ) || ( term.provider === this.town2 && this.town2Locked == true ) ) {
             return
@@ -239,7 +239,7 @@ public class Treaty(
     }
 
     // remove term from treaty
-    public fun remove(term: TreatyTerm) {
+    fun remove(term: TreatyTerm) {
         // check if side locked
         if ( ( term.provider === this.town1 && this.town1Locked == true ) || ( term.provider === this.town2 && this.town2Locked == true ) ) {
             return
@@ -258,7 +258,7 @@ public class Treaty(
     }
 
     // add player actively viewing treaty
-    public fun addViewer(player: Player, view: TreatyGuiView) {
+    fun addViewer(player: Player, view: TreatyGuiView) {
         if ( this.finished == true ) {
             return
         }
@@ -267,7 +267,7 @@ public class Treaty(
     }
 
     // remove player actively viewing treaty
-    public fun removeViewer(player: Player, view: TreatyGuiView) {
+    fun removeViewer(player: Player, view: TreatyGuiView) {
         if ( this.finished == true ) {
             return
         }
@@ -276,7 +276,7 @@ public class Treaty(
     }
 
     // re-render main view for players viewing
-    public fun renderMainView() {
+    fun renderMainView() {
         val viewers: List<Player> = this.viewers.get(TreatyGuiView.MAIN)!!.toList()
         for ( p in viewers ) {
             // get town from player
@@ -302,7 +302,7 @@ public class Treaty(
     }
 
     // set player gui view
-    public fun setPlayerGuiView(view: TreatyGuiView, player: Player, treaty: Treaty, town: Town) {
+    fun setPlayerGuiView(view: TreatyGuiView, player: Player, treaty: Treaty, town: Town) {
         // player.closeInventory()
         
         val guiTreaty = TreatyGui(
@@ -320,7 +320,7 @@ public class Treaty(
     companion object {
 
         // list of all treaties in progress
-        public val treaties: HashMap<TownPair, Treaty> = hashMapOf()
+        val treaties: HashMap<TownPair, Treaty> = hashMapOf()
         
         // get peace treaty object between two towns
         fun get(town1: Town, town2: Town): Treaty? {
@@ -334,7 +334,7 @@ public class Treaty(
             var treaty = treaties.get(TownPair(town1, town2))
             var result: Boolean = true
             if ( treaty == null ) {
-                treaty = Treaty.create(town1, town2)
+                treaty = create(town1, town2)
                 result = false
             }
 
@@ -352,12 +352,12 @@ public class Treaty(
         // create new active peace treaty
         fun create(town1: Town, town2: Town): Treaty {
             val treaty = Treaty(town1, town2)
-            Treaty.treaties.put(TownPair(town1, town2), treaty)
+            treaties.put(TownPair(town1, town2), treaty)
             return treaty
         }
 
         fun delete(treaty: Treaty) {
-            Treaty.treaties.remove(TownPair(treaty.town1, treaty.town2))
+            treaties.remove(TownPair(treaty.town1, treaty.town2))
         }
     }
 }

@@ -60,7 +60,7 @@ private val HEADER = arrayOf(
     "${ChatColor.RED}-5         0          5"
 )
 
-public class Minimap(
+class Minimap(
     val resident: Resident,
     val player: Player,
     var size: Int // display square half extend, renders [-size, size]
@@ -74,25 +74,25 @@ public class Minimap(
         this.size = Math.min(5, Math.max(3, this.size))
 
         // create scoreboard
-        val scoreboard = PlayerScoreboardManager.getScoreboard(player.getUniqueId())
+        val scoreboard = PlayerScoreboardManager.getScoreboard(player.uniqueId)
 
         // team required for objective
         val team = scoreboard.getTeam("player") ?: scoreboard.registerNewTeam("player")
-        if ( !team.hasEntry(player.getName()) ) {
-            team.addEntry(player.getName())
+        if ( !team.hasEntry(player.name) ) {
+            team.addEntry(player.name)
         }
 
         val objective = scoreboard.getObjective("player") ?: scoreboard.registerNewObjective("player", "minimap", "Minimap")
-        objective.setDisplaySlot(DisplaySlot.SIDEBAR)
+        objective.displaySlot = DisplaySlot.SIDEBAR
         // objective.setDisplayName("Minimap")
 
         this.scoreboard = scoreboard
         this.objective = objective
-        player.setScoreboard(this.scoreboard)
+        player.scoreboard = this.scoreboard
 
         // initial render, get player current location
         val world = Bukkit.getWorlds()[0]
-        val loc = this.player.getLocation()
+        val loc = this.player.location
         val coordX = kotlin.math.floor(loc.x).toInt()
         val coordZ = kotlin.math.floor(loc.z).toInt()
         val coord = Coord.fromBlockCoords(coordX, coordZ)
@@ -101,29 +101,29 @@ public class Minimap(
     }
 
     // render minimap centered at coord (current player location)
-    public fun render(coord: Coord) {
+    fun render(coord: Coord) {
         // clear previous render
-        for ( entry in this.scoreboard.getEntries() ) {
+        for ( entry in this.scoreboard.entries) {
             this.scoreboard.resetScores(entry)
         }
 
         // create new render
         val score = this.objective.getScore(HEADER[size-3])
-        score.setScore(size+1)
+        score.score = size+1
 
         val size = this.size
         for ( (i, y) in (size downTo -size).withIndex() ) {
             val lineIdString = LINE_ID[i]
             val renderedLine = WorldMap.renderLine(resident, coord, coord.z - y, coord.x - size, coord.x + size)
             val score = this.objective.getScore("${lineIdString}${renderedLine}")
-            score.setScore(y)
+            score.score = y
         }
     }
 
-    public fun destroy() {
+    fun destroy() {
         // set player to new scoreboard
         this.scoreboard.clearSlot(DisplaySlot.SIDEBAR)
-        player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard())
+        player.scoreboard = Bukkit.getScoreboardManager()!!.newScoreboard
     }
 
 }

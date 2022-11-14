@@ -9,7 +9,7 @@ import java.nio.file.StandardOpenOption
 import java.util.concurrent.Future
 
 // check restrictions on string inputs
-public fun stringInputIsValid(s: String, maxLength: Int = 32): Boolean {
+fun stringInputIsValid(s: String, maxLength: Int = 32): Boolean {
     if ( s.length > maxLength ) {
         return false
     }
@@ -22,7 +22,7 @@ public fun stringInputIsValid(s: String, maxLength: Int = 32): Boolean {
 }
 
 // escape format string characters
-public fun sanitizeString(s: String): String {
+fun sanitizeString(s: String): String {
     var sEscaped = s.replace("$", "\$")
     sEscaped = sEscaped.replace("%", "%%")
     sEscaped = sEscaped.replace("\n", "")
@@ -33,7 +33,7 @@ public fun sanitizeString(s: String): String {
     return sEscaped
 }
 
-public fun saveStringToFile(str: String, path: Path) {
+fun saveStringToFile(str: String, path: Path) {
     val buffer = ByteBuffer.wrap(str.toByteArray())
     val fileChannel: AsynchronousFileChannel = AsynchronousFileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
     val operation: Future<Int> = fileChannel.write(buffer, 0)
@@ -43,7 +43,7 @@ public fun saveStringToFile(str: String, path: Path) {
 /**
  * Load long number from file
  */
-public fun loadLongFromFile(path: Path): Long? {
+fun loadLongFromFile(path: Path): Long? {
     if ( Files.exists(path) ) {
         try {
             val numString = String(Files.readAllBytes(path))
@@ -71,7 +71,7 @@ public fun loadLongFromFile(path: Path): Long? {
  * copypastad, only works up to 10 digits and on POSITIVE inputs
  * this will by default take absolute value
  */
-public fun estimateNumDigits(x: Int): Int {
+fun estimateNumDigits(x: Int): Int {
     val number = Math.abs(x)
     if ( number < 100000 ) {
         if ( number < 100 ) {
@@ -110,7 +110,4 @@ public fun estimateNumDigits(x: Int): Int {
             }
         }
     }
-
-    // return next closest num digits
-    return 11
 }

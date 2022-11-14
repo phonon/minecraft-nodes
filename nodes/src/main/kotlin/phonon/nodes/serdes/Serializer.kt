@@ -18,7 +18,7 @@ import phonon.nodes.objects.Town
 import phonon.nodes.objects.Nation
 
 
-public object Serializer {
+object Serializer {
     
     fun worldToJson(
         residents: List<Resident>,
@@ -71,7 +71,7 @@ public object Serializer {
         jsonString.append("\"residents\":{")
 
         for ( (i, resident) in residents.withIndex() ) {
-            jsonString.append("\"${resident.uuid.toString()}\":")
+            jsonString.append("\"${resident.uuid}\":")
             jsonString.append(resident.getSaveState().toJsonString())
             if ( i < residents.size - 1 ) {
                 jsonString.append(",")

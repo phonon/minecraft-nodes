@@ -35,7 +35,7 @@ plugins {
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
-    jcenter()
+    mavenCentral()
 
     // paper
     maven {
@@ -43,6 +43,9 @@ repositories {
     }
     maven {
         url = uri("https://ci.ender.zone/plugin/repository/everything")
+    }
+    maven {
+        url = uri("https://repo.clojars.org/")
     }
 }
 
@@ -97,6 +100,10 @@ dependencies {
         target = "1.18"
         // spigot/paper api
         compileOnly("io.papermc.paper:paper-api:1.18.1-R0.1-SNAPSHOT")
+    } else if (project.hasProperty("1.19") == true) {
+        target = "1.18"
+        // multipaper api
+        compileOnly("com.github.puregero:multipaper-api:1.19.2-R0.1-SNAPSHOT")
     }
 }
 

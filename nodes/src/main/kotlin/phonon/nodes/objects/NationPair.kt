@@ -7,7 +7,7 @@
 
 package phonon.nodes.objects
 
-public data class NationPair(
+data class NationPair(
     val nation1: Nation,
     val nation2: Nation
 ) {
@@ -24,7 +24,7 @@ public data class NationPair(
         return ( this.nation1 === other.nation1 || this.nation1 === other.nation2 ) && ( this.nation2 === other.nation1 || this.nation2 === other.nation2 )
     }
 
-    override public fun hashCode(): Int {
+    override fun hashCode(): Int {
         return this.nation1.hashCode() + this.nation2.hashCode()
     }
 }

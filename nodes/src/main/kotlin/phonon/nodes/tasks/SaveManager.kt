@@ -18,11 +18,11 @@ import org.bukkit.scheduler.BukkitTask
 import phonon.nodes.Nodes
 import phonon.nodes.Config
 
-public object SaveManager {
+object SaveManager {
 
     private var task: BukkitTask? = null
 
-    public fun start(plugin: Plugin, period: Long) {
+    fun start(plugin: Plugin, period: Long) {
         if ( this.task !== null ) {
             return
         }
@@ -35,7 +35,7 @@ public object SaveManager {
                 Files.createDirectories(Paths.get(Config.pathPlugin).normalize())
             }
 
-            override public fun run() {
+            override fun run() {
                 // schedule main thread to run save
                 Bukkit.getScheduler().runTask(plugin, object: Runnable {
                     override fun run() {
@@ -48,7 +48,7 @@ public object SaveManager {
         this.task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task, period, period)
     }
 
-    public fun stop() {
+    fun stop() {
         val task = this.task
         if ( task === null ) {
             return

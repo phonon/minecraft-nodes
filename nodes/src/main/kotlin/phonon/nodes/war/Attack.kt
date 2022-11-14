@@ -17,7 +17,7 @@ import phonon.nodes.objects.Coord
 import phonon.nodes.objects.TerritoryChunk
 import phonon.nodes.objects.Town
 
-public class Attack(
+class Attack(
     val attacker: UUID,        // attacker's UUID
     val town: Town,            // attacker's town
     val chunk: TerritoryChunk, // chunk under attack
@@ -59,7 +59,7 @@ public class Attack(
         
         // set boss bar progress
         val progressNormalized: Double = this.progress.toDouble() / this.attackTime.toDouble()
-        this.progressBar.setProgress(progressNormalized)
+        this.progressBar.progress = progressNormalized
         this.progressColor = FlagWar.getProgressColor(progressNormalized)
 
         // pre-generate main part of the JSON serialization string
@@ -75,11 +75,11 @@ public class Attack(
         this.jsonString = StringBuilder(jsonStringBufferSize)
     }
 
-    override public fun run() {
+    override fun run() {
         FlagWar.attackTick(this)
     }
     
-    public fun cancel() {
+    fun cancel() {
         this.thread.cancel()
         
         val attack = this
@@ -92,7 +92,7 @@ public class Attack(
 
     // returns json format string as a StringBuilder
     // only used with WarSerializer objects
-    public fun toJson(): StringBuilder {
+    fun toJson(): StringBuilder {
         // reset json StringBuilder
         this.jsonString.setLength(0)
 
@@ -100,7 +100,7 @@ public class Attack(
         this.jsonString.append(this.jsonStringBase)
 
         // add progress in ticks
-        this.jsonString.append("\"p\":${this.progress.toString()}") 
+        this.jsonString.append("\"p\":${this.progress}")
         this.jsonString.append("}")
 
         return this.jsonString
@@ -126,7 +126,7 @@ private fun generateFixedJsonBase(
     s.append("{")
 
     // attacker uuid
-    s.append("\"id\":\"${attacker.toString()}\",")
+    s.append("\"id\":\"$attacker\",")
 
     // chunk coord [c.x, c.z]
     s.append("\"c\":[${coord.x},${coord.z}],")

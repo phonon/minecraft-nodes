@@ -14,14 +14,14 @@ import org.bukkit.plugin.java.JavaPlugin
 /*
  * Implement bukkit plugin interface
  */
-public class PortPlugin : JavaPlugin() {
+class PortPlugin : JavaPlugin() {
 
     override fun onEnable() {
         // measure load time
         val timeStart = System.currentTimeMillis()
 
-        val logger = this.getLogger()
-        val pluginManager = this.getServer().getPluginManager()
+        val logger = this.logger
+        val pluginManager = this.server.pluginManager
 
         // load everything
         Ports.initialize(this)

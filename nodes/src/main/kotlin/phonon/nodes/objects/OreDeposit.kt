@@ -18,7 +18,7 @@ data class OreDeposit(
     val ymax: Int = 255)
 {
     // return deep copy
-    public fun clone(): OreDeposit {
+    fun clone(): OreDeposit {
         return OreDeposit(
             this.material,
             this.dropChance,
@@ -33,7 +33,7 @@ data class OreDeposit(
     // merge rules:
     // - sum together dropChance (going >1.0 is okay)
     // - take MAX of both minAmount and maxAmount
-    public fun merge(other: OreDeposit): OreDeposit {
+    fun merge(other: OreDeposit): OreDeposit {
         return OreDeposit(
             this.material,
             this.dropChance + other.dropChance,

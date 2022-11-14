@@ -25,15 +25,15 @@ import phonon.nodes.objects.Nation
 import phonon.nodes.constants.*
 
 // peace request status results
-public enum class AllianceRequest {
+enum class AllianceRequest {
     NEW,       // new offer created
     ACCEPTED   // offer accepted
 }
 
 // errors
-public val ErrorAllyRequestEnemies = Exception("Not enemies")
-public val ErrorAllyRequestAlreadyAllies = Exception("Already allies")
-public val ErrorAllyRequestAlreadyCreated = Exception("Already sent an ally request")
+val ErrorAllyRequestEnemies = Exception("Not enemies")
+val ErrorAllyRequestAlreadyAllies = Exception("Already allies")
+val ErrorAllyRequestAlreadyCreated = Exception("Already sent an ally request")
 
 // timeout for ally request to cancel (default 1200 ticks ~ 1 minute)
 private const val ALLY_REQUEST_TIMEOUT: Long = 1200L
@@ -41,13 +41,13 @@ private const val ALLY_REQUEST_TIMEOUT: Long = 1200L
 /**
  * Alliance request manager
  */
-public object Alliance {
+object Alliance {
 
     // offers lists: maps TownPair involved -> Initiating Town
-    public val requests: HashMap<TownPair, Town> = hashMapOf()
+    val requests: HashMap<TownPair, Town> = hashMapOf()
 
     // threads to delete requests after timeout
-    public val requestTimers: HashMap<TownPair, BukkitTask> = hashMapOf()
+    val requestTimers: HashMap<TownPair, BukkitTask> = hashMapOf()
 
     /**
      * Offer/accept request between two towns. Inputs:
@@ -59,7 +59,7 @@ public object Alliance {
      * else, create new request
      * 
      */
-    public fun request(town1: Town, town2: Town): Result<AllianceRequest> {
+    fun request(town1: Town, town2: Town): Result<AllianceRequest> {
         // check towns are not enemies
         if ( town1.enemies.contains(town2) || town2.enemies.contains(town1) ) {
             return Result.failure(ErrorAllyRequestEnemies)
@@ -70,20 +70,20 @@ public object Alliance {
         }
 
         val towns = TownPair(town1, town2)
-        val initiator = Alliance.requests.get(towns)
+        val initiator = requests.get(towns)
         
         // no request, create new request
         if ( initiator === null ) {
-            Alliance.requests.put(towns, town1)
+            requests.put(towns, town1)
 
             // create timeout thread
             val timeoutThread = Bukkit.getScheduler().runTaskLaterAsynchronously(Nodes.plugin!!, object: Runnable {
                 override fun run() {
-                    Alliance.cancelRequest(towns)
+                    cancelRequest(towns)
                 }
             }, ALLY_REQUEST_TIMEOUT)
             
-            Alliance.requestTimers.put(towns, timeoutThread)
+            requestTimers.put(towns, timeoutThread)
 
             return Result.success(AllianceRequest.NEW)
         }
@@ -95,10 +95,10 @@ public object Alliance {
             }
             else { // accept request
                 // remove request
-                Alliance.requests.remove(towns)
+                requests.remove(towns)
                 
                 // cancel timeout thread
-                val timeoutThread = Alliance.requestTimers.remove(towns)
+                val timeoutThread = requestTimers.remove(towns)
                 if ( timeoutThread !== null ) {
                     timeoutThread.cancel()
                 }
@@ -110,11 +110,11 @@ public object Alliance {
     }
 
     // remove and cancel peace request
-    public fun cancelRequest(towns: TownPair) {
-        val initiator = Alliance.requests.remove(towns)
+    fun cancelRequest(towns: TownPair) {
+        val initiator = requests.remove(towns)
         if ( initiator !== null ) {
             // cancel timeout thread
-            val timeoutThread = Alliance.requestTimers.remove(towns)
+            val timeoutThread = requestTimers.remove(towns)
             if ( timeoutThread !== null ) {
                 timeoutThread.cancel()
             }

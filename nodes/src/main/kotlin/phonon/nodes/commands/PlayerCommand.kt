@@ -17,7 +17,7 @@ import phonon.nodes.utils.string.filterResident
  * @command /truce
  * Print list of player's town's truces and list of times
  */
-public class PlayerCommand : CommandExecutor, TabCompleter {
+class PlayerCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
 

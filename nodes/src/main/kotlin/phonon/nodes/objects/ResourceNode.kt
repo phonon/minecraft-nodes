@@ -32,7 +32,7 @@ data class ResourceNode(
     val costScale: Double
 ) {
     // print info about object
-    public fun printInfo(sender: CommandSender) {
+    fun printInfo(sender: CommandSender) {
         Message.print(sender, "${ChatColor.BOLD}Resource node \"${this.name}\":")
                 
         Message.print(sender, "Income:")
@@ -58,7 +58,7 @@ data class ResourceNode(
     }
 
     // clone of this object
-    public fun clone(): ResourceNode {
+    fun clone(): ResourceNode {
         // deep clone ores
         val oresClone: EnumMap<Material, OreDeposit> = EnumMap<Material, OreDeposit>(Material::class.java)
         for ( (mat, ore) in this.ores ) {
@@ -88,7 +88,7 @@ data class ResourceNode(
     // Probabilities going >1.0 is okay, crop/animal rates are
     // limited to 1.0 by actual handler.
     // OreSampler will handle non-normalized probabilities
-    public fun merge(other: ResourceNode): ResourceNode {
+    fun merge(other: ResourceNode): ResourceNode {
         // sum together income
         other.income.forEach { k, v ->
             this.income.get(k)?.let { currentVal -> 

@@ -9,8 +9,6 @@
 
 package phonon.nodes.commands
 
-import java.util.EnumMap
-import kotlin.system.measureTimeMillis
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Sound
@@ -26,11 +24,10 @@ import phonon.nodes.Config
 import phonon.nodes.Message
 import phonon.nodes.objects.*
 import phonon.nodes.war.*
-import phonon.nodes.serdes.Serializer
-import phonon.nodes.serdes.Deserializer
 import phonon.nodes.utils.sanitizeString
 import phonon.nodes.utils.stringInputIsValid
 import phonon.nodes.utils.string.*
+import java.util.*
 
 // list of all subcommands, used for onTabComplete
 private val SUBCOMMANDS: List<String> = listOf(
@@ -120,11 +117,9 @@ private val DEBUG_SUBCOMMANDS: List<String> = listOf(
     "nation"
 )
 
-public class NodesAdminCommand : CommandExecutor, TabCompleter {
+class NodesAdminCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
-        
-        val player = if ( sender is Player ) sender else null
     
         // no args, print plugin info
         if ( args.size == 0 ) {
@@ -134,7 +129,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
 
         // parse subcommand
-        when ( args[0].toLowerCase() ) {
+        when (args[0].lowercase(Locale.getDefault())) {
             "help" -> printHelp(sender)
             "reload" -> reload(sender, args)
             "war" -> war(sender, args)
@@ -167,7 +162,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         // match each subcommand format
         else if ( args.size > 1 ) {
             // handle specific subcommands
-            when ( args[0].toLowerCase() ) {
+            when (args[0].lowercase(Locale.getDefault())) {
                 "reload" -> {
                     if ( args.size == 2 ) {
                         return filterByStart(RELOAD_SUBCOMMANDS, args[1])
@@ -187,7 +182,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                         return filterByStart(RESIDENT_SUBCOMMANDS, args[1])
                     }
                     else if ( args.size > 2 ) {
-                        when ( args[1].toLowerCase() ) {
+                        when (args[1].lowercase(Locale.getDefault())) {
                             // /nodesadmin resident [subcommand] [player]
                             "towncooldown" -> {
                                 if ( args.size == 3 ) {
@@ -205,7 +200,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                     }
                     // handle subcommand
                     else if ( args.size > 2 ) {
-                        when ( args[1].toLowerCase() ) {
+                        when (args[1].lowercase(Locale.getDefault())) {
 
                             // /nodesadmin town [subcommand] [town] ...
                             "delete",
@@ -296,7 +291,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                     }
                     // handle subcommand
                     else if ( args.size > 2 ) {
-                        when ( args[1].toLowerCase() ) {
+                        when (args[1].lowercase(Locale.getDefault())) {
                             
                             // /nodesadmin nation [subcommand] [nation] ...
                             "delete" -> {
@@ -363,7 +358,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                     }
                     // handle subcommand
                     else if ( args.size > 2 ) {
-                        when ( args[1].toLowerCase() ) {
+                        when (args[1].lowercase(Locale.getDefault())) {
                             "resident" -> {
                                 if ( args.size == 3 ) {
                                     return filterResident(args[2])
@@ -420,7 +415,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        val subcommand = args[1].toLowerCase()
+        val subcommand = args[1].lowercase(Locale.getDefault())
         if ( subcommand == "config" ) {
             Nodes.reloadConfig()
             Message.print(sender, "[Nodes] reloaded configs")
@@ -449,7 +444,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         // war subcommands
         else {
-            val function = args[1].toLowerCase()
+            val function = args[1].lowercase(Locale.getDefault())
             // full war: allow annex, can attack any territory
             when ( function ) {
                 "enable" -> {
@@ -458,7 +453,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
 
                     // play MENACING wither spawn sound
                     for ( p in Bukkit.getOnlinePlayers() ) {
-                        p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1.0f, 0.0f);
+                        p.playSound(p.location, Sound.ENTITY_WITHER_SPAWN, 1.0f, 0.0f)
                     }
                 }
 
@@ -469,7 +464,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
 
                     // play MENACING wither spawn sound
                     for ( p in Bukkit.getOnlinePlayers() ) {
-                        p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1.0f, 0.0f);
+                        p.playSound(p.location, Sound.ENTITY_WITHER_SPAWN, 1.0f, 0.0f)
                     }
                 }
 
@@ -532,7 +527,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         else {
             // route subcommand function
-            when ( args[1].toLowerCase() ) {
+            when (args[1].lowercase(Locale.getDefault())) {
                 "help" -> printResidentHelp(sender)
                 "towncooldown" -> setResidentTownCooldown(sender, args)
                 else -> { printResidentHelp(sender) }
@@ -578,7 +573,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         else {
             // route subcommand function
-            when ( args[1].toLowerCase() ) {
+            when (args[1].lowercase(Locale.getDefault())) {
                 "create" -> createTown(sender, args)
                 "delete" -> deleteTown(sender, args)
                 "addplayer" -> addPlayerToTown(sender, args)
@@ -835,7 +830,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         for ( i in 3 until args.size ) {
             val id = args[i].toInt()
             val terr = Nodes.territories.get(id)
-            if ( terr == null || terr?.town != town ) {
+            if ( terr == null || terr.town != town ) {
                 Message.error(sender, "Invalid territory id=${id}: does not belong to town")
                 return
             }
@@ -1432,7 +1427,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
         else {
             // route subcommand function
-            when ( args[1].toLowerCase() ) {
+            when (args[1].lowercase(Locale.getDefault())) {
                 "create" -> createNation(sender, args)
                 "delete" -> deleteNation(sender, args)
                 "addtown" -> addTownToNation(sender, args)
@@ -1966,8 +1961,8 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
             Message.error(sender, "Term side arg[5] must be \"0\" or \"1\"")
             return
         }
-        provider = provider as Town
-        receiver = receiver as Town
+        provider = provider
+        receiver = receiver
 
         // get add/remove term
         if ( args[3] == "add" ) {
@@ -2034,7 +2029,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
     // TODO: add optional path name for world data to load?
     private fun loadWorld(sender: CommandSender) {
         Message.print(sender, "[Nodes] Loading world")
-        Nodes.loadWorld(Config.pathPlugin)
+        Nodes.loadWorld()
     }
 
     // =============================================================
@@ -2068,7 +2063,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         }
 
         // get object instance
-        val instance: Any? = when ( args[1].toLowerCase() ) {
+        val instance: Any? = when (args[1].lowercase(Locale.getDefault())) {
             "resource" -> Nodes.resourceNodes.get(args[2])
             "chunk" -> Nodes.territoryChunks.get(Coord.fromString(args[2]))
             "territory" -> Nodes.territories.get(args[2].toInt())
@@ -2087,7 +2082,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
         val fieldName = args[3]
         try {
             val classField = classType.getDeclaredField(fieldName)
-            classField.setAccessible(true)
+            classField.isAccessible = true
             println(classField.get(instance))
         } catch ( e: NoSuchFieldException ) {
             Message.error(sender, "No such field: ${fieldName}")

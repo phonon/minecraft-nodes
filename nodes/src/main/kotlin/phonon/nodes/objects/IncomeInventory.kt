@@ -28,7 +28,7 @@ import org.bukkit.inventory.meta.SpawnEggMeta
 import phonon.nodes.utils.entity.entityTypeFromOrdinal
 import java.util.*
 
-public class IncomeInventory: InventoryHolder {
+class IncomeInventory: InventoryHolder {
 
     // normal items:
     // map material -> current amount of it in storage
@@ -60,7 +60,7 @@ public class IncomeInventory: InventoryHolder {
 
     // public interface to add new items to storage
     // meta: integer metadata depends on material, either EntityType or damage value
-    public fun add(mat: Material, amount: Int, meta: Int = 0) {
+    fun add(mat: Material, amount: Int, meta: Int = 0) {
         if ( amount <= 0 ) {
             return
         }
@@ -78,12 +78,12 @@ public class IncomeInventory: InventoryHolder {
     }
 
     // checks if any items in inventory or storage
-    public fun empty(): Boolean {
+    fun empty(): Boolean {
         return ( storage.size == 0 ) && ( storageSpawnEgg.size == 0 )
     }
 
     // implement getInventory for InventoryHolder
-    override public fun getInventory(): Inventory {
+    override fun getInventory(): Inventory {
         // populate inventory
         while ( this.storage.size > 0 ) {
             val item = this.storage.iterator().next()
@@ -135,7 +135,7 @@ public class IncomeInventory: InventoryHolder {
     // return if items moved (needed to determine if town needsUpdate()):
     // - true: if any items moved
     // - false: if no items moved
-    public fun pushToStorage(force: Boolean): Boolean {
+    fun pushToStorage(force: Boolean): Boolean {
         var hasMovedItems = false
 
         val viewers = this._inventory.viewers

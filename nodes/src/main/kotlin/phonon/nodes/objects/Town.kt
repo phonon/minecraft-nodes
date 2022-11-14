@@ -28,7 +28,7 @@ private var townNametagIdCounter: Int = 0
 // random number generator
 private val random = Random()
 
-public class Town(
+class Town(
     val uuid: UUID,
     var name: String,
     var home: Territory, // main territory owned by town
@@ -158,13 +158,13 @@ public class Town(
         this.saveState = TownSaveState(this)
     }
     
-    override public fun hashCode(): Int {
+    override fun hashCode(): Int {
         return this.uuid.hashCode()
     }
 
     // update town nametag display strings from name
     // (different color for each diplomacy group)
-    public fun updateNametags() {
+    fun updateNametags() {
         this.nametagTown = "${ChatColor.GREEN}[${this.name}] "
         this.nametagNation = "${ChatColor.DARK_GREEN}[${this.name}] "
         this.nametagNeutral = "${ChatColor.GOLD}[${this.name}] "
@@ -173,7 +173,7 @@ public class Town(
     }
 
     // prints out nation object info
-    public fun printInfo(sender: CommandSender) {
+    fun printInfo(sender: CommandSender) {
         val nation = this.nation?.name ?: "${ChatColor.GRAY}None"
         val leader = this.leader?.name ?: "${ChatColor.GRAY}None"
         val officers = if ( this.officers.size > 0 ) {
@@ -226,50 +226,50 @@ public class Town(
      * Immutable save snapshot, must be composed of immutable primitives.
      * Used to generate json string serialization.
      */
-    public class TownSaveState(t: Town): JsonSaveState {
-        public val uuid = t.uuid
-        public val leader = t.leader?.uuid
-        public val home = t.home.id
-        public val spawnpoint = doubleArrayOf(t.spawnpoint.x, t.spawnpoint.y, t.spawnpoint.z)
-        public val color = intArrayOf(t.color.r, t.color.g, t.color.b)
-        public val permissions = t.permissions.clone()
-        public val residents = t.residents.map{ x -> x.uuid }
-        public val officers =  t.officers.map{ x -> x.uuid }
-        public val claimsBonus = t.claimsBonus
-        public val claimsAnnexed = t.claimsAnnexed
-        public val claimsPenalty = t.claimsPenalty
-        public val claimsPenaltyTime = t.claimsPenaltyTime
-        public val territories = t.territories.map{ x -> x.id }
-        public val annexed = t.annexed.map{ x -> x.id }
-        public val captured = t.captured.map{ x -> x.id }
-        public val outposts: HashMap<String, TownOutpost> = HashMap(t.outposts)
-        public val allies = t.allies.map{ x -> x.name }
-        public val enemies = t.enemies.map{ x -> x.name }
-        public val income = t.income.storage.clone()
-        public val incomeEgg = t.income.storageSpawnEgg.clone()
-        public val isOpen = t.isOpen
-        public val protectedBlocks: HashSet<Block> = HashSet(t.protectedBlocks)
-        public val moveHomeCooldown = t.moveHomeCooldown
+    class TownSaveState(t: Town): JsonSaveState {
+        val uuid = t.uuid
+        val leader = t.leader?.uuid
+        val home = t.home.id
+        val spawnpoint = doubleArrayOf(t.spawnpoint.x, t.spawnpoint.y, t.spawnpoint.z)
+        val color = intArrayOf(t.color.r, t.color.g, t.color.b)
+        val permissions = t.permissions.clone()
+        val residents = t.residents.map{ x -> x.uuid }
+        val officers =  t.officers.map{ x -> x.uuid }
+        val claimsBonus = t.claimsBonus
+        val claimsAnnexed = t.claimsAnnexed
+        val claimsPenalty = t.claimsPenalty
+        val claimsPenaltyTime = t.claimsPenaltyTime
+        val territories = t.territories.map{ x -> x.id }
+        val annexed = t.annexed.map{ x -> x.id }
+        val captured = t.captured.map{ x -> x.id }
+        val outposts: HashMap<String, TownOutpost> = HashMap(t.outposts)
+        val allies = t.allies.map{ x -> x.name }
+        val enemies = t.enemies.map{ x -> x.name }
+        val income = t.income.storage.clone()
+        val incomeEgg = t.income.storageSpawnEgg.clone()
+        val isOpen = t.isOpen
+        val protectedBlocks: HashSet<Block> = HashSet(t.protectedBlocks)
+        val moveHomeCooldown = t.moveHomeCooldown
 
-        override public var jsonString: String? = null
+        override var jsonString: String? = null
 
-        override public fun createJsonString(): String {
-            val leaderUUID = if ( this.leader != null ) "\"${this.leader.toString()}\"" else null
-            val officers = this.officers.asSequence().map{ x -> "\"${x.toString()}\"" }.joinToString(",", "[", "]")
-            val residents = this.residents.asSequence().map{ x -> "\"${x.toString()}\"" }.joinToString(",", "[", "]")
+        override fun createJsonString(): String {
+            val leaderUUID = if ( this.leader != null ) "\"${this.leader}\"" else null
+            val officers = this.officers.asSequence().map{ x -> "\"$x\"" }.joinToString(",", "[", "]")
+            val residents = this.residents.asSequence().map{ x -> "\"$x\"" }.joinToString(",", "[", "]")
             val territories = this.territories.joinToString(",", "[", "]")
             val annexed = this.annexed.joinToString(",", "[", "]")
             val captured = this.captured.joinToString(",", "[", "]")
-            val allies = this.allies.asSequence().map{ x -> "\"${x.toString()}\"" }.joinToString(",", "[", "]")
-            val enemies = this.enemies.asSequence().map{ x -> "\"${x.toString()}\"" }.joinToString(",", "[", "]")
+            val allies = this.allies.asSequence().map{ x -> "\"$x\"" }.joinToString(",", "[", "]")
+            val enemies = this.enemies.asSequence().map{ x -> "\"$x\"" }.joinToString(",", "[", "]")
             val income = stringMapFromMap<Material, Int>(
                 this.income,
-                { k -> "\"${k.toString()}\"" },
+                { k -> "\"$k\"" },
                 { v -> "${v}" }
             )
             val incomeSpawnEgg = stringMapFromMap<EntityType, Int>(
                 this.incomeEgg,
-                { k -> "\"${k.toString()}\"" },
+                { k -> "\"$k\"" },
                 { v -> "${v}" }
             )
 
@@ -279,7 +279,7 @@ public class Town(
             val permissions = permissionsToJsonString(this.permissions)
 
             val jsonStrong = ("{"
-            + "\"uuid\":\"${this.uuid.toString()}\","
+            + "\"uuid\":\"${this.uuid}\","
             + "\"leader\":${leaderUUID},"
             + "\"home\":${this.home},"
             + "\"spawn\":${spawn},"
@@ -308,14 +308,14 @@ public class Town(
     }
 
     // function to let client flag this object as dirty
-    public fun needsUpdate() {
+    fun needsUpdate() {
         this._needsUpdate = true
     }
 
     // wrapper to return self as savestate
     // - returns memoized copy if needsUpdate false
     // - otherwise, parses self
-    public fun getSaveState(): TownSaveState {
+    fun getSaveState(): TownSaveState {
         if ( this._needsUpdate ) {
             this.saveState = TownSaveState(this)
             this._needsUpdate = false

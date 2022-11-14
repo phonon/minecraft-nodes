@@ -26,19 +26,19 @@ import phonon.nodes.objects.Nation
 import phonon.nodes.constants.*
 
 // peace request status results
-public enum class PeaceRequest {
+enum class PeaceRequest {
     NEW,       // new offer created
     ACCEPTED   // offer accepted
 }
 
 // errors
-public val ErrorPeaceRequestNotEnemies = Exception("Not enemies")
-public val ErrorPeaceRequestAlreadyCreated = Exception("Already sent a peace request")
+val ErrorPeaceRequestNotEnemies = Exception("Not enemies")
+val ErrorPeaceRequestAlreadyCreated = Exception("Already sent a peace request")
 
 // timeout for peace request to cancel (default 1200 ticks ~ 1 minute)
 private const val PEACE_REQUEST_TIMEOUT: Long = 1200L
 
-public data class PeaceRequestInstance(
+data class PeaceRequestInstance(
     val town1: Town,
     val town2: Town,
     val creator: Town // who initiated/responded
@@ -56,19 +56,19 @@ public data class PeaceRequestInstance(
         return ( this.town1 === other.town1 || this.town1 === other.town2 ) && ( this.town2 === other.town1 || this.town2 === other.town2 )
     }
 
-    override public fun hashCode(): Int {
+    override fun hashCode(): Int {
         return this.town1.hashCode() + this.town2.hashCode()
     }
 }
 
 
-public object Peace {
+object Peace {
 
     // peace offer lists
-    public val requests: ArrayList<PeaceRequestInstance> = arrayListOf()
+    val requests: ArrayList<PeaceRequestInstance> = arrayListOf()
 
     // threads to delete requests after timeout
-    public val requestTimers: HashMap<PeaceRequestInstance, BukkitTask> = hashMapOf()
+    val requestTimers: HashMap<PeaceRequestInstance, BukkitTask> = hashMapOf()
 
     // offer/accept peace request between two towns
     // if no peace offer exists, create new peace request
@@ -77,7 +77,7 @@ public object Peace {
     // input requirements:
     // - if town1, town2 have nations, town1, town2 should be === nation.capital
     // - town1 should always be the town that initiates peace offer
-    public fun request(town1: Town, town2: Town): Result<PeaceRequest> {
+    fun request(town1: Town, town2: Town): Result<PeaceRequest> {
         // check towns are enemies
         if ( !town1.enemies.contains(town2) && !town2.enemies.contains(town1) ) {
             return Result.failure(ErrorPeaceRequestNotEnemies)
@@ -86,17 +86,17 @@ public object Peace {
         val peaceRequest = PeaceRequestInstance(town1, town2, town1)
         
         // if request exists, accept peace request
-        val index = Peace.requests.indexOf(peaceRequest)
+        val index = requests.indexOf(peaceRequest)
         if ( index != -1 ) {
             // check peace request responder is not same town
-            val existingPeaceRequest = Peace.requests.get(index)
+            val existingPeaceRequest = requests.get(index)
             
             if ( peaceRequest.creator !== existingPeaceRequest.creator ) {
                 // remove peace request
-                Peace.requests.removeAt(index)
+                requests.removeAt(index)
 
                 // cancel timeout thread
-                val timeoutThread = Peace.requestTimers.remove(peaceRequest)
+                val timeoutThread = requestTimers.remove(peaceRequest)
                 if ( timeoutThread !== null ) {
                     timeoutThread.cancel()
                 }
@@ -112,30 +112,30 @@ public object Peace {
         }
         // add peace request
         else {
-            Peace.requests.add(peaceRequest)
+            requests.add(peaceRequest)
 
             // create timeout thread
             val timeoutThread = Bukkit.getScheduler().runTaskLaterAsynchronously(Nodes.plugin!!, object: Runnable {
                 override fun run() {
-                    Peace.cancelRequest(peaceRequest)
+                    cancelRequest(peaceRequest)
                 }
             }, PEACE_REQUEST_TIMEOUT)
             
-            Peace.requestTimers.put(peaceRequest, timeoutThread)
+            requestTimers.put(peaceRequest, timeoutThread)
 
             return Result.success(PeaceRequest.NEW)
         }
     }
 
     // remove and cancel peace request
-    public fun cancelRequest(peaceRequest: PeaceRequestInstance) {
-        val index = Peace.requests.indexOf(peaceRequest)
+    fun cancelRequest(peaceRequest: PeaceRequestInstance) {
+        val index = requests.indexOf(peaceRequest)
         if ( index != -1 ) {
             // remove peace request
-            Peace.requests.removeAt(index)
+            requests.removeAt(index)
 
             // cancel timeout thread
-            val timeoutThread = Peace.requestTimers.remove(peaceRequest)
+            val timeoutThread = requestTimers.remove(peaceRequest)
             if ( timeoutThread !== null ) {
                 timeoutThread.cancel()
             }

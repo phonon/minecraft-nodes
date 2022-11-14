@@ -30,7 +30,7 @@ val ICON_TERRITORY = ItemStack(Material.GRASS, 1)
 val ICON_OCCUPIED = ItemStack(Material.DIRT, 1, 2.toShort()) // podzol
 
 // render a territory button with territory info and callback on press
-public fun TerritoryButton(
+fun TerritoryButton(
     screen: GuiWindow,
     x: Int,
     y: Int,
@@ -58,7 +58,7 @@ public fun TerritoryButton(
     ).render(screen)
 }
 
-public class TerritorySelectGui(
+class TerritorySelectGui(
     val player: Player,
     val treaty: Treaty,
     val town: Town,
@@ -66,12 +66,12 @@ public class TerritorySelectGui(
     val callback: (Territory) -> Unit
 ): GuiElement {
     
-    override public fun render(screen: GuiWindow) {
+    override fun render(screen: GuiWindow) {
 
         // render cancel button
-        val guiButtonBack = GuiButton(8, 5, ICON_BACK, null, null, {
+        GuiButton(8, 5, ICON_BACK, null, null) {
             treaty.setPlayerGuiView(TreatyGuiView.MAIN, player, treaty, town)
-        }).render(screen)
+        }.render(screen)
 
         // index for inventory slot
         var index = 0

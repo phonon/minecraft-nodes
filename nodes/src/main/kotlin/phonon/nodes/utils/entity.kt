@@ -13,14 +13,14 @@ private val ENTITY_TYPES = EntityType.values()
  * get entity type from string ordinal
  * client assumes responsibility for i within array bounds
  */
-public fun entityTypeFromOrdinal(i: Int): EntityType {
+fun entityTypeFromOrdinal(i: Int): EntityType {
     return ENTITY_TYPES[i]
 }
 
 /**
  * Get spawn egg material from entity type
  */
-public fun spawnEggFromEntity(entityType: EntityType): Material? {
+fun spawnEggFromEntity(entityType: EntityType): Material? {
     return when ( entityType ) {
         EntityType.BEE -> Material.BEE_SPAWN_EGG
         EntityType.BLAZE -> Material.BLAZE_SPAWN_EGG

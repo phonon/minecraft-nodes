@@ -27,7 +27,7 @@ import phonon.nodes.war.Treaty
  * @subcommand /peace [nation]
  * Offer peace to a nation
  */
-public class PeaceCommand : CommandExecutor, TabCompleter {
+class PeaceCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
         
@@ -119,7 +119,7 @@ public class PeaceCommand : CommandExecutor, TabCompleter {
 
         // returns true if treaty exists, else false creates new treaty
         val result = Treaty.show(player, town, enemy)
-        if ( result === false ) { // print messages indicating new treaty occuring
+        if (!result) { // print messages indicating new treaty occuring
             val enemyName = if ( enemyNation !== null ) {
                 "nation ${enemyNation.name}"
             }
@@ -139,7 +139,7 @@ public class PeaceCommand : CommandExecutor, TabCompleter {
                 for ( r in townNation.residents ) {
                     val p = r.player()
                     if ( p !== null ) {
-                        Message.print(p, "Your nation is negotiating peace with ${enemyName}")
+                        Message.print(p, "Your nation is negotiating peace with $enemyName")
                     }
                 }
             }
@@ -147,7 +147,7 @@ public class PeaceCommand : CommandExecutor, TabCompleter {
                 for ( r in town.residents ) {
                     val p = r.player()
                     if ( p !== null ) {
-                        Message.print(p, "Your town is negotiating peace with ${enemyName}")
+                        Message.print(p, "Your town is negotiating peace with $enemyName")
                     }
                 }
             }
@@ -158,7 +158,7 @@ public class PeaceCommand : CommandExecutor, TabCompleter {
                 for ( r in enemyNation.residents ) {
                     val p = r.player()
                     if ( p !== null ) {
-                        Message.print(p, "${initiatorName} is offering your nation a peace treaty, use \"/peace ${initiatorName}\" to negotiate")
+                        Message.print(p, "$initiatorName is offering your nation a peace treaty, use \"/peace ${initiatorName}\" to negotiate")
                     }
                 }
             }
@@ -166,7 +166,7 @@ public class PeaceCommand : CommandExecutor, TabCompleter {
                 for ( r in enemy.residents ) {
                     val p = r.player()
                     if ( p !== null ) {
-                        Message.print(p, "${initiatorName} is offering your town a peace treaty, use \"/peace ${initiatorName}\" to negotiate")
+                        Message.print(p, "$initiatorName is offering your town a peace treaty, use \"/peace ${initiatorName}\" to negotiate")
                     }
                 }
             }

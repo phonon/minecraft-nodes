@@ -146,11 +146,11 @@ private val COLOR_OCCUPIED_ENEMY: Array<String> = arrayOf(
     "${ChatColor.DARK_RED}${CONQUERED1}"
 )
 
-public object WorldMap {
+object WorldMap {
 
     // render a horizontal line (constant z)
     // units in chunk coords
-    public fun renderLine(resident: Resident, playerCoord: Coord, z: Int, xMin: Int, xMax: Int): String {
+    fun renderLine(resident: Resident, playerCoord: Coord, z: Int, xMin: Int, xMax: Int): String {
         var renderedString = ""
 
         for ( x in xMin..xMax ) {

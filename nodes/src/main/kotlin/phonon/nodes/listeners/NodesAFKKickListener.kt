@@ -17,18 +17,18 @@ val AFK_MESSAGES = listOf(
     "You have been idle for too long!"
 )
 
-public class NodesPlayerAFKKickListener: Listener {
+class NodesPlayerAFKKickListener: Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
-	public fun onPlayerKick(event: PlayerKickEvent) {
+    fun onPlayerKick(event: PlayerKickEvent) {
 
-        val reason: String = event.getReason()
+        val reason: String = event.reason
 
         for ( msg in AFK_MESSAGES ) {
             if ( msg == reason ) {
 
                 // get resident
-                val player: Player = event.getPlayer()        
+                val player: Player = event.player
                 val resident = Nodes.getResident(player)
                 if ( resident === null ) {
                     return

@@ -18,7 +18,7 @@ import java.util.*
 // random number generator
 private val random = Random()
 
-public class Nation(
+class Nation(
     val uuid: UUID,
     var name: String,
     var capital: Town    // main town in nation, used for nation leadership
@@ -53,12 +53,12 @@ public class Nation(
         this.saveState = NationSaveState(this)
     }
 
-    override public fun hashCode(): Int {
+    override fun hashCode(): Int {
         return this.uuid.hashCode()
     }
 
     // prints out nation object info
-    public fun printInfo(sender: CommandSender) {
+    fun printInfo(sender: CommandSender) {
         val leader = this.capital.leader?.name ?: "${ChatColor.GRAY}None"
 
         // read info out of towns:
@@ -101,25 +101,24 @@ public class Nation(
      * Immutable save snapshot, must be composed of immutable primitives.
      * Used to generate json string serialization.
      */
-    public class NationSaveState(n: Nation): JsonSaveState {
-        public val uuid = n.uuid
-        public val capital = n.capital.name
-        public val color = n.color
-        public val towns = n.towns.map{ x -> x.name }
-        public val allies = n.allies.map{ x -> x.name }
-        public val enemies = n.enemies.map{ x -> x.name }
+    class NationSaveState(n: Nation): JsonSaveState {
+        val uuid = n.uuid
+        val capital = n.capital.name
+        val color = n.color
+        val towns = n.towns.map{ x -> x.name }
+        val allies = n.allies.map{ x -> x.name }
+        val enemies = n.enemies.map{ x -> x.name }
 
-        override public var jsonString: String? = null
+        override var jsonString: String? = null
 
-        override public fun createJsonString(): String {
+        override fun createJsonString(): String {
             val capitalName = "\"${capital}\""
-            val col = this.color
             val towns = this.towns.asSequence().map{ x -> "\"${x}\""}.joinToString(",", "[", "]")
             val allies = this.allies.asSequence().map{ x -> "\"${x}\""}.joinToString(",", "[", "]")
             val enemies = this.enemies.asSequence().map{ x -> "\"${x}\""}.joinToString(",", "[", "]")
 
             val jsonString = ("{"
-            + "\"uuid\":\"${this.uuid.toString()}\","
+            + "\"uuid\":\"${this.uuid}\","
             + "\"capital\":${capitalName},"
             + "\"color\":[${this.color.r},${this.color.g},${this.color.b}],"
             + "\"towns\":${towns},"
@@ -132,14 +131,14 @@ public class Nation(
     }
 
     // function to let client flag this object as dirty
-    public fun needsUpdate() {
+    fun needsUpdate() {
         this._needsUpdate = true
     }
 
     // wrapper to return self as savestate
     // - returns memoized copy if needsUpdate false
     // - otherwise, parses self
-    public fun getSaveState(): NationSaveState {
+    fun getSaveState(): NationSaveState {
         if ( this._needsUpdate ) {
             this.saveState = NationSaveState(this)
             this._needsUpdate = false

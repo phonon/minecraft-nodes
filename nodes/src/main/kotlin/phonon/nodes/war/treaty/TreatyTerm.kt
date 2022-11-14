@@ -17,25 +17,25 @@ import phonon.nodes.objects.Town
 import phonon.nodes.objects.TownPair
 
 // interface for a treaty term item
-public interface TreatyTerm {
+interface TreatyTerm {
     val provider: Town // offering term
     val receiver: Town // receiving term
 
     // runs this treaty term and affect world
-    public fun execute()
+    fun execute()
 
     // cancel this treaty term
-    public fun cancel()
+    fun cancel()
 }
 
 // treaty term for receiver to occupy a territory
-public data class TreatyTermOccupation(
+data class TreatyTermOccupation(
     override val provider: Town,
     override val receiver: Town,
     val territory: Territory
 ): TreatyTerm {
     
-    override public fun execute() {
+    override fun execute() {
         if ( provider === territory.town ) {
             Nodes.captureTerritory(receiver, territory)
             
@@ -45,17 +45,17 @@ public data class TreatyTermOccupation(
         }
     }
 
-    override public fun cancel() {}
+    override fun cancel() {}
 }
 
 // treaty term for provider to release a territory
-public data class TreatyTermRelease(
+data class TreatyTermRelease(
     override val provider: Town,
     override val receiver: Town,
     val territory: Territory
 ): TreatyTerm {
     
-    override public fun execute() {
+    override fun execute() {
         if ( provider === territory.occupier ) {
             Nodes.releaseTerritory(territory)
 
@@ -70,14 +70,14 @@ public data class TreatyTermRelease(
         }
     }
 
-    override public fun cancel() {}
+    override fun cancel() {}
 }
 
 // treaty term for receiver to get provider's items
 // items: itemStack
 // player: player who provided items
 // town: town player belongs to
-public class TreatyTermItems(
+class TreatyTermItems(
     override val provider: Town,
     override val receiver: Town,
     val items: ItemStack,
@@ -85,14 +85,14 @@ public class TreatyTermItems(
 ): TreatyTerm {
     // give items to other town's /town income chest
     // gets rid of any item metadata, so only works for basic items
-    override public fun execute() {
+    override fun execute() {
         Nodes.addToIncome(receiver, items.type, items.amount)
     }
 
     // return items to player or /town income chest if no room
-    override public fun cancel() {
+    override fun cancel() {
         if ( this.player !== null ) {
-            val leftover = player.getInventory().addItem(items)
+            val leftover = player.inventory.addItem(items)
 
             // drop remaining items at player
             val world = player.world

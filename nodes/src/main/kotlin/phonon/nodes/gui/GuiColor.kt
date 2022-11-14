@@ -7,7 +7,7 @@ package phonon.nodes.gui
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 
-public enum class GuiColor {
+enum class GuiColor {
     WHITE,
     ORANGE,
     MAGENTA,
@@ -65,30 +65,30 @@ private val CONCRETE_LIST = listOf(
 )
 
 // pre-generated item stacks
-public val GUI_STAINED_GLASS: List<ItemStack> = enumValues<GuiColor>().map({ c: GuiColor -> 
+val GUI_STAINED_GLASS: List<ItemStack> = enumValues<GuiColor>().map({ c: GuiColor ->
     // 1.16
     val item = ItemStack(STAINED_GLASS_LIST[c.ordinal], 1)
 
     // 1.12
     // val item = ItemStack(Material.STAINED_GLASS_PANE, 1, c.ordinal.toShort())
 
-    val meta = item.getItemMeta()
-    meta.setDisplayName(" ")
-    item.setItemMeta(meta)
+    val meta = item.itemMeta
+    meta?.setDisplayName(" ")
+    item.itemMeta = meta
 
     item
 })
 
-public val GUI_CONCRETE: List<ItemStack> = enumValues<GuiColor>().map({ c: GuiColor -> 
+val GUI_CONCRETE: List<ItemStack> = enumValues<GuiColor>().map({ c: GuiColor ->
     // 1.16
     val item = ItemStack(CONCRETE_LIST[c.ordinal], 1)
 
     // 1.12
     // val item = ItemStack(Material.CONCRETE, 1, c.ordinal.toShort())
 
-    val meta = item.getItemMeta()
-    meta.setDisplayName(" ")
-    item.setItemMeta(meta)
+    val meta = item.itemMeta
+    meta!!.setDisplayName(" ")
+    item.itemMeta = meta
 
     item
 })

@@ -3,17 +3,17 @@
  * to residents in towns involved that truce expired
  */
 
-package phonon.nodes.listeners;
+package phonon.nodes.listeners
 
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import phonon.nodes.Message
 import phonon.nodes.event.AllianceCreatedEvent
 
-public class NodesDiplomacyAllianceListener: Listener {
+class NodesDiplomacyAllianceListener: Listener {
 
     @EventHandler
-    public fun onAllianceCreated(event: AllianceCreatedEvent) {
+    fun onAllianceCreated(event: AllianceCreatedEvent) {
         val town1 = event.town1
         val town2 = event.town2
 

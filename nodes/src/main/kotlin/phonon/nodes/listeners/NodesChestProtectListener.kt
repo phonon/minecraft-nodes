@@ -32,17 +32,17 @@ import phonon.nodes.objects.Resident
 import phonon.nodes.objects.Territory
 import phonon.nodes.objects.Town
 
-public fun NodesPlayerChestProtectListener(player: Player, resident: Resident, town: Town): Listener {
+fun NodesPlayerChestProtectListener(player: Player, resident: Resident, town: Town): Listener {
     return object: Listener {
 
         @EventHandler(priority = EventPriority.HIGHEST)
-        public fun onBlockInteract(event: PlayerInteractEvent) {
+        fun onBlockInteract(event: PlayerInteractEvent) {
             val eventPlayer: Player = event.player
             if ( eventPlayer !== player || resident.isProtectingChests == false ) {
                 return
             }
 
-            val block = event.getClickedBlock()
+            val block = event.clickedBlock
             if ( block !== null ) {
                 if ( PROTECTED_BLOCKS.contains(block.type) ) {
                     val territory: Territory? = Nodes.getTerritoryFromChunk(block.chunk)
@@ -68,8 +68,8 @@ public fun NodesPlayerChestProtectListener(player: Player, resident: Resident, t
                         player.playSound(player.location, NODES_SOUND_CHEST_PROTECT, 1.0f, 1.0f)
                         Message.print(player, "You have protected this chest")
                     }
-                    
-                    event.setCancelled(true)
+
+                    event.isCancelled = true
                     return
                 }
             }
@@ -84,23 +84,23 @@ public fun NodesPlayerChestProtectListener(player: Player, resident: Resident, t
 /**
  * Listener for any special chest protection 
  */
-public class NodesChestProtectionListener: Listener {
+class NodesChestProtectionListener: Listener {
     
     // disable hopper events
     @EventHandler(priority = EventPriority.LOW)
-    public fun onHopperMove(event: InventoryMoveItemEvent) {
+    fun onHopperMove(event: InventoryMoveItemEvent) {
         // check if destination is hopper
-        val dest = event.getDestination()
+        val dest = event.destination
         if ( dest.holder is Hopper ) {
 
             // check if source is a protected block
-            val source = event.getSource()
+            val source = event.source
             if ( source.type == InventoryType.CHEST ) {
-                val block = source.location?.getBlock()
+                val block = source.location?.block
                 if ( block !== null ) {
                     val town: Town? = Nodes.getTerritoryFromChunk(block.chunk)?.town
                     if ( town !== null && town.protectedBlocks.contains(block) ) {
-                        event.setCancelled(true)
+                        event.isCancelled = true
                     }
                 }
             }
@@ -111,10 +111,10 @@ public class NodesChestProtectionListener: Listener {
 /**
  * Listen to block destruction, unprotect chests if occurs
  */
-public class NodesChestProtectionDestroyListener: Listener {
+class NodesChestProtectionDestroyListener: Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public fun onBlockBreak(event: BlockBreakEvent) {
+    fun onBlockBreak(event: BlockBreakEvent) {
         val block: Block = event.block
         val town: Town? = Nodes.getTerritoryFromChunk(block.chunk)?.town
         if ( town !== null ) {
@@ -123,7 +123,7 @@ public class NodesChestProtectionDestroyListener: Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public fun onEntityExplode(event: EntityExplodeEvent) {
+    fun onEntityExplode(event: EntityExplodeEvent) {
         val blockList = event.blockList()
         for ( block in blockList ) {
             val town: Town? = Nodes.getTerritoryFromChunk(block.chunk)?.town
@@ -134,7 +134,7 @@ public class NodesChestProtectionDestroyListener: Listener {
     }
     
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public fun onBlockExplode(event: BlockExplodeEvent) {
+    fun onBlockExplode(event: BlockExplodeEvent) {
         val blockList = event.blockList()
         for ( block in blockList ) {
             val town: Town? = Nodes.getTerritoryFromChunk(block.chunk)?.town

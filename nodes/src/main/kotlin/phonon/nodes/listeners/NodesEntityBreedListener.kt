@@ -12,15 +12,15 @@ import phonon.nodes.Nodes
 import phonon.nodes.objects.Territory
 import phonon.nodes.utils.entity.spawnEggFromEntity
 
-public class NodesEntityBreedListener: Listener {
+class NodesEntityBreedListener: Listener {
 
     // Cancelling breed event causes entities to keep breeding until timeout
     // Cannot stop breeding, instead delete spawned child with % chance
     // from territory resource nodes
     @EventHandler
-    public fun onEntitySpawn(event: CreatureSpawnEvent) {
+    fun onEntitySpawn(event: CreatureSpawnEvent) {
         
-        val spawnReason = event.getSpawnReason()
+        val spawnReason = event.spawnReason
         if ( spawnReason != SpawnReason.BREEDING && spawnReason != SpawnReason.DISPENSE_EGG && spawnReason != SpawnReason.EGG ) {
             return
         }
@@ -31,22 +31,22 @@ public class NodesEntityBreedListener: Listener {
 
         // checks that breed event meets sky light level requirements
         if ( block.lightFromSky < Config.breedingMinSkyLight ) {
-            event.setCancelled(true)
+            event.isCancelled = true
             return
         }
 
         // check breed event within height range allowed
         if ( blockY < Config.breedingMinYHeight || blockY > Config.breedingMaxYHeight ) {
-            event.setCancelled(true)
+            event.isCancelled = true
             return
         }
         
-        val entity: Entity = event.getEntity() //father and mother are the same entity type
+        val entity: Entity = event.entity //father and mother are the same entity type
         val territory: Territory? = Nodes.getTerritoryFromChunk(entity.location.chunk)        
 
         // check if territory is wilderness (either no territory or unowned land)
         if ( !Config.allowBreedingInWilderness && ( territory === null || territory.town === null ) ) {
-            event.setCancelled(true)
+            event.isCancelled = true
             return
         }
         
@@ -72,7 +72,7 @@ public class NodesEntityBreedListener: Listener {
                     event.entity.remove()
                 }
                 // handle town over max claims penalty
-                else if ( territory?.town?.isOverClaimsMax == true ) {
+                else if ( territory.town?.isOverClaimsMax == true ) {
                     if ( Math.random() < Config.overClaimsMaxPenalty ) {
                         event.entity.remove()
                     }

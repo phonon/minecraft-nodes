@@ -12,11 +12,11 @@ import org.bukkit.block.Block
 import phonon.nodes.objects.Town
 import phonon.nodes.objects.Territory
 
-public class WarAttackCancelEvent(
-    public val attacker: UUID,
-    public val attackingTown: Town,
-    public val territory: Territory,
-    public val block: Block
+class WarAttackCancelEvent(
+    val attacker: UUID,
+    val attackingTown: Town,
+    val territory: Territory,
+    val block: Block
 ): Event(), Cancellable {
 
     private var isCancelled: Boolean = false
@@ -38,7 +38,7 @@ public class WarAttackCancelEvent(
 
         @JvmStatic
         fun getHandlerList(): HandlerList {
-            return WarAttackCancelEvent.handlers
+            return handlers
         }
     }
 }

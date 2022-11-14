@@ -124,7 +124,7 @@ private class ItemDistribution(inputItems: List<OreDeposit>) {
     }
 
     // return item from probability distribution
-    public fun sample(): List<ItemStack> {
+    fun sample(): List<ItemStack> {
         val roll = random.nextInt(this.size)
         val p = random.nextDouble()
         val oreDeposit = if ( p <= this.probability[roll] ) {
@@ -147,7 +147,7 @@ private class ItemDistribution(inputItems: List<OreDeposit>) {
 
     // return item from all ores in this distribution
     // that satisfy the roll
-    public fun sampleAll(): List<ItemStack> {
+    fun sampleAll(): List<ItemStack> {
         val roll = random.nextDouble()
         val drops: MutableList<ItemStack> = mutableListOf()
 
@@ -163,7 +163,7 @@ private class ItemDistribution(inputItems: List<OreDeposit>) {
             }
         }
 
-        return drops as List<ItemStack>
+        return drops
     }
 
 }
@@ -223,7 +223,7 @@ class OreSampler(
     }
 
     // sample ore deposits distribution at given height
-    public fun sample(y: Int): List<ItemStack> {
+    fun sample(y: Int): List<ItemStack> {
         // ensure y in [0, 255]
         if ( y >= Y_WORLD_MIN && y <= Y_WORLD_MAX ) {
             val sampler = this.itemsAtHeight[y]
@@ -237,7 +237,7 @@ class OreSampler(
 
     // simple sample, iterate all ore types and sample
     // return every sample which roll < chance
-    public fun sampleAll(y: Int): List<ItemStack> {
+    fun sampleAll(y: Int): List<ItemStack> {
         // ensure y in [0, 255]
         if ( y >= Y_WORLD_MIN && y <= Y_WORLD_MAX ) {
             val sampler = this.itemsAtHeight[y]

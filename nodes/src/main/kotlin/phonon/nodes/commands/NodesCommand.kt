@@ -17,6 +17,7 @@ import phonon.nodes.utils.string.filterByStart
 import phonon.nodes.utils.string.filterNation
 import phonon.nodes.utils.string.filterResident
 import phonon.nodes.utils.string.filterTown
+import java.util.*
 
 // list of all subcommands, used for onTabComplete
 private val subcommands: List<String> = listOf(
@@ -29,7 +30,7 @@ private val subcommands: List<String> = listOf(
     "war"
 )
 
-public class NodesCommand : CommandExecutor, TabCompleter {
+class NodesCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
             
@@ -51,7 +52,7 @@ public class NodesCommand : CommandExecutor, TabCompleter {
         }
 
         // parse subcommand
-        when ( args[0].toLowerCase() ) {
+        when (args[0].lowercase(Locale.getDefault())) {
             "help" -> printHelp(sender)
             "resource" -> printResourceNodeInfo(sender, args)
             "territory" -> printTerritoryInfo(sender, args)
@@ -69,12 +70,6 @@ public class NodesCommand : CommandExecutor, TabCompleter {
     }
 
     override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<String>): List<String> {
-        val player: Player = if ( sender is Player ) {
-            sender
-        } else {
-            return listOf()
-        }
-
         // match subcommand
         if ( args.size == 1 ) {
             return filterByStart(subcommands, args[0])
@@ -82,7 +77,7 @@ public class NodesCommand : CommandExecutor, TabCompleter {
         // match each subcommand format
         else if ( args.size > 1 ) {
             // handle specific subcommands
-            when ( args[0].toLowerCase() ) {
+            when (args[0].lowercase(Locale.getDefault())) {
 
                 // /nodes town name
                 "town",
@@ -170,7 +165,7 @@ public class NodesCommand : CommandExecutor, TabCompleter {
             // if command sender was player, print territory info of current location
             val player = if ( sender is Player ) sender else null
             if ( player != null ) {
-                val loc = player.getLocation()
+                val loc = player.location
                 val getTerritory = Nodes.getTerritoryFromBlock(loc.x.toInt(), loc.z.toInt())
 
                 Message.print(sender, "Territory at current location:")

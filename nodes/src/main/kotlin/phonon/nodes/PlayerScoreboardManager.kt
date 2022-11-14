@@ -31,11 +31,11 @@ object PlayerScoreboardManager {
     /**
      * Get scoreboard from player, creates new one if does not exist
      */
-    public fun getScoreboard(uuid: UUID): Scoreboard {
-        val scoreboard = PlayerScoreboardManager.playerScoreboards.get(uuid)
+    fun getScoreboard(uuid: UUID): Scoreboard {
+        val scoreboard = playerScoreboards.get(uuid)
         if ( scoreboard === null ) {
-            val newScoreboard = scoreboardManager.getNewScoreboard()
-            PlayerScoreboardManager.playerScoreboards.put(uuid, newScoreboard)
+            val newScoreboard = scoreboardManager!!.newScoreboard
+            playerScoreboards.put(uuid, newScoreboard)
             return newScoreboard
         }
         else {

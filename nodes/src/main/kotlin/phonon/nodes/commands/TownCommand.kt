@@ -26,6 +26,8 @@ import phonon.nodes.utils.string.filterResident
 import phonon.nodes.utils.string.filterTown
 import phonon.nodes.utils.string.filterTownResident
 import phonon.nodes.utils.stringInputIsValid
+import java.util.*
+import kotlin.collections.ArrayList
 
 // list of all subcommands, used for onTabComplete
 private val SUBCOMMANDS: List<String> = listOf(
@@ -136,7 +138,7 @@ val MAP_STR_END = arrayOf(
 // ==================================================
 
 
-public class TownCommand : CommandExecutor, TabCompleter {
+class TownCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
         
@@ -156,7 +158,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // parse subcommand
-        when ( args[0].toLowerCase() ) {
+        when (args[0].lowercase(Locale.getDefault())) {
             "help" -> printHelp(sender)
             "create" -> createTown(player, args)
             "new" -> createTown(player, args)
@@ -216,7 +218,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         // match each subcommand format
         else if ( args.size > 1 ) {
             // handle specific subcommands
-            when ( args[0].toLowerCase() ) {
+            when (args[0].lowercase(Locale.getDefault())) {
 
                 // /town [subcommand] [resident]
                 "officer",
@@ -380,7 +382,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         // check if player has cooldown
         if ( resident.townCreateCooldown > 0 ) {
             val remainingTime = resident.townCreateCooldown
-            val remainingTimeString = if ( remainingTime > 0 ) {
+            val remainingTimeString = if ( remainingTime > 0L ) {
                 val hour: Long = remainingTime/3600000L
                 val min: Long = 1L + (remainingTime - hour * 3600000L)/60000L
                 "${hour}hr ${min}min"
@@ -434,10 +436,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // check if player is town leader
-        val resident = Nodes.getResident(player)
-        if ( resident == null ) {
-            return
-        }
+        val resident = Nodes.getResident(player) ?: return
 
         val town = resident.town
         if ( town == null ) {
@@ -458,7 +457,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // do not allow during war
-        if ( !Config.canDestroyTownDuringWar && Nodes.war.enabled == true ) {
+        if (!Config.canDestroyTownDuringWar && Nodes.war.enabled) {
             Message.error(player, "Cannot delete your town during war")
             return
         }
@@ -485,10 +484,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // check if player is town leader
-        val resident = Nodes.getResident(player)
-        if ( resident == null ) {
-            return
-        }
+        val resident = Nodes.getResident(player) ?: return
 
         val town = resident.town
         if ( town == null ) {
@@ -541,7 +537,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             }
         }
         // add officer
-        else if ( toggle === true ) {
+        else if (toggle) {
             if ( !town.officers.contains(target) ) {
                 Nodes.townAddOfficer(town, target)
                 Message.print(player, "Made ${target.name} a town officer")
@@ -552,7 +548,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             }
         }
         // remove officer
-        else if ( toggle === false ) {
+        else {
             if ( town.officers.contains(target) ) {
                 Nodes.townRemoveOfficer(town, target)
                 Message.print(player, "Removed ${target.name} from town officers")
@@ -664,7 +660,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         Bukkit.getPlayer(town.leader!!.name)?.let { player ->
             approvers.add(player)
         }
-        town.officers.forEach() { officer ->
+        town.officers.forEach { officer ->
             Bukkit.getPlayer(officer.name)?.let { player ->
                 approvers.add(player)
             }
@@ -675,7 +671,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        approvers.forEach() { approver ->
+        approvers.forEach { approver ->
             Message.print(approver, "${resident.name} has applied to join to your town. \nType \"/t accept\" to let them in or \"/t reject\" to refuse the offer.")
         }
         Message.print(player, "Your application has been sent")
@@ -807,10 +803,10 @@ public class TownCommand : CommandExecutor, TabCompleter {
 
             var applicant: Resident = resident
             if ( town.applications.size == 1 ) {
-                town.applications.forEach { k, v ->
+                town.applications.forEach { (k, _) ->
                     applicant = k
                 }
-                if ( args.size > 1 && args[1].toLowerCase() != applicant.name.toLowerCase()) {
+                if ( args.size > 1 && args[1].lowercase(Locale.getDefault()) != applicant.name.lowercase(Locale.getDefault())) {
                     Message.error(player, "That player has not applied or their application has expired")
                     return
                 }
@@ -822,7 +818,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
                 }
 
                 applicant = Nodes.getResidentFromName(args[1])!!
-                if ( !town.applications.containsKey(applicant!!)) {
+                if ( !town.applications.containsKey(applicant)) {
                     Message.error(player, "That player has not applied or their application has expired")
                     return
                 }
@@ -874,7 +870,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
 
             var applicant: Resident = resident
             if ( town.applications.size == 1 ) {
-                town.applications.forEach { k, v ->
+                town.applications.forEach { k, _ ->
                     applicant = k
                 }
                 if ( args.size > 1 && args[1] != applicant.name) {
@@ -889,7 +885,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
                 }
 
                 applicant = Nodes.getResidentFromName(args[1])!!
-                if ( !town.applications.containsKey(applicant!!)) {
+                if ( !town.applications.containsKey(applicant)) {
                     Message.error(player, "That player has not applied or their application has expired")
                     return
                 }
@@ -1033,7 +1029,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             if ( outpost !== null ) {
                 // pay item cost to teleport
                 if ( Config.outpostTeleportCost.size > 0 ) {
-                    val inventory = player.getInventory()
+                    val inventory = player.inventory
                     for ( (material, amount) in Config.outpostTeleportCost ) {
                         val items = ItemStack(material)
                         if ( !inventory.containsAtLeast(items, amount) ) {
@@ -1076,7 +1072,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         var teleportTimerTicks = Math.max(0.0, Config.townSpawnTime * 20.0)
 
         // multiplier during war and if home occupied
-        if ( Nodes.war.enabled && town.home?.occupier !== null ) {
+        if ( Nodes.war.enabled && town.home.occupier !== null ) {
             Message.error(player, "${ChatColor.BOLD}Your home is occupied, town spawn will take much longer...")
             teleportTimerTicks *= Config.occupiedHomeTeleportMultiplier
         }
@@ -1179,7 +1175,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        var town: Town? = null
+        val town: Town?
         if ( args.size == 1 ) {
             if ( resident.town == null ) {
                 Message.error(player, "You do not belong to a town")
@@ -1216,7 +1212,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        var town: Town? = null
+        val town: Town?
         if ( args.size == 1 ) {
             if ( resident.town == null ) {
                 Message.error(player, "You do not belong to a town")
@@ -1258,15 +1254,9 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // check if player is town leader
-        val resident = Nodes.getResident(player)
-        if ( resident == null ) {
-            return
-        }
+        val resident = Nodes.getResident(player) ?: return
 
-        val town = resident.town
-        if ( town == null ) {
-            return
-        }
+        val town = resident.town ?: return
 
         val leader = town.leader
         if ( resident !== leader ) {
@@ -1312,7 +1302,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // get territory from chunk and run claim process
-        val loc = player.getLocation()
+        val loc = player.location
         val territory = Nodes.getTerritoryFromBlock(loc.x.toInt(), loc.z.toInt())
         if ( territory == null ) {
             Message.error(player, "This chunk has no territory")
@@ -1355,7 +1345,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
         
         // get territory from chunk and run claim process
-        val loc = player.getLocation()
+        val loc = player.location
         val territory = Nodes.getTerritoryFromBlock(loc.x.toInt(), loc.z.toInt())
         if ( territory == null ) {
             Message.error(player, "This chunk has no territory")
@@ -1399,12 +1389,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         else if ( town.permissions.get(TownPermissions.INCOME)!!.contains(PermissionsGroup.TOWN) && resident.town === town ) {
             true
         }
-        else if ( town.permissions.get(TownPermissions.INCOME)!!.contains(PermissionsGroup.TRUSTED) && resident.town === town && resident.trusted ) {
-            true
-        }
-        else {
-            false
-        }
+        else town.permissions.get(TownPermissions.INCOME)!!.contains(PermissionsGroup.TRUSTED) && resident.town === town && resident.trusted
 
         // open town inventory
         if ( hasPermissions ) {
@@ -1443,7 +1428,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         // setting personal prefix
         else if ( args.size == 2 ) {
             val prefix = args[1]
-            if ( prefix.toLowerCase() == "remove" ) {
+            if ( prefix.lowercase(Locale.getDefault()) == "remove" ) {
                 Nodes.setResidentPrefix(resident, "")
                 Message.print(player, "Removed your prefix.")
             }
@@ -1481,7 +1466,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             }
 
             val prefix = args[2]
-            if ( prefix.toLowerCase() == "remove" ) {
+            if ( prefix.lowercase(Locale.getDefault()) == "remove" ) {
                 Nodes.setResidentPrefix(target, "")
                 Message.print(player, "Removed ${target.name} prefix.")
             }
@@ -1520,7 +1505,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         // setting personal prefix
         else if ( args.size == 2 ) {
             val prefix = args[1]
-            if ( prefix.toLowerCase() == "remove" ) {
+            if ( prefix.lowercase(Locale.getDefault()) == "remove" ) {
                 Nodes.setResidentSuffix(resident, "")
                 Message.print(player, "Removed your suffix.")
             }
@@ -1558,7 +1543,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             }
 
             val prefix = args[2]
-            if ( prefix.toLowerCase() == "remove" ) {
+            if ( prefix.lowercase(Locale.getDefault()) == "remove" ) {
                 Nodes.setResidentSuffix(target, "")
                 Message.print(player, "Removed ${target.name} suffix.")
             }
@@ -1605,7 +1590,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        if ( town.name.toLowerCase() == args[1].toLowerCase() ) {
+        if ( town.name.lowercase(Locale.getDefault()) == args[1].lowercase(Locale.getDefault())) {
             Message.error(player, "Your town is already named ${town.name}")
             return
         }
@@ -1628,12 +1613,9 @@ public class TownCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        val resident = Nodes.getResident(player)
-        if ( resident == null ) {
-            return
-        }
-        
-        val loc = player.getLocation()
+        val resident = Nodes.getResident(player) ?: return
+
+        val loc = player.location
         val coordX = kotlin.math.floor(loc.x).toInt()
         val coordZ = kotlin.math.floor(loc.z).toInt()
         val coord = Coord.fromBlockCoords(coordX, coordZ)
@@ -1732,7 +1714,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // match permissions and group
-        val permissions: TownPermissions = when ( args[1].toLowerCase() ) {
+        val permissions: TownPermissions = when (args[1].lowercase(Locale.getDefault())) {
             "build" -> TownPermissions.BUILD
             "destroy" -> TownPermissions.DESTROY
             "interact" -> TownPermissions.INTERACT
@@ -1745,7 +1727,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             }
         }
 
-        val group: PermissionsGroup = when ( args[2].toLowerCase() ) {
+        val group: PermissionsGroup = when (args[2].lowercase(Locale.getDefault())) {
             "town" -> PermissionsGroup.TOWN
             "nation" -> PermissionsGroup.NATION
             "ally" -> PermissionsGroup.ALLY
@@ -1758,7 +1740,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
 
         // get flag state (allow/deny)
-        val flag = when ( args[3].toLowerCase() ) {
+        val flag = when (args[3].lowercase(Locale.getDefault())) {
             "allow",
             "true" -> { true }
             
@@ -1800,7 +1782,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
         
         if ( args.size > 1 ) {
-            if ( args[1].toLowerCase() == "show" ) {
+            if ( args[1].lowercase(Locale.getDefault()) == "show" ) {
                 Message.print(player, "Protected chests:")
                 // print protected chests
                 for ( block in town.protectedBlocks ) {
@@ -1900,10 +1882,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        val resident = Nodes.getResident(player)
-        if ( resident == null ) {
-            return
-        }
+        val resident = Nodes.getResident(player) ?: return
 
         val town = resident.town
         if ( town == null ) {
@@ -1971,10 +1950,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        val resident = Nodes.getResident(player)
-        if ( resident == null ) {
-            return
-        }
+        val resident = Nodes.getResident(player) ?: return
 
         val town = resident.town
         if ( town == null ) {
@@ -2068,7 +2044,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
         }
         else {
             // route subcommand function
-            when ( args[1].toLowerCase() ) {
+            when (args[1].lowercase(Locale.getDefault())) {
                 "list" -> outpostList(player, args)
                 "setspawn" -> outpostSetSpawn(player, args)
                 else -> { printOutpostHelp(sender) }
@@ -2088,10 +2064,7 @@ public class TownCommand : CommandExecutor, TabCompleter {
      * Print list of town's outposts.
      */
     private fun outpostList(player: Player, args: Array<String>) {
-        val resident = Nodes.getResident(player)
-        if ( resident == null ) {
-            return
-        }
+        val resident = Nodes.getResident(player) ?: return
 
         val town = resident.town
         if ( town == null ) {

@@ -4,8 +4,8 @@
 
 package phonon.nodes.gui
 
-public class GuiElementList(val list: List<GuiElement>): GuiElement {
-    override public fun render(screen: GuiWindow) {
+class GuiElementList(val list: List<GuiElement>): GuiElement {
+    override fun render(screen: GuiWindow) {
         for ( obj in this.list ) {
             obj.render(screen)
         }

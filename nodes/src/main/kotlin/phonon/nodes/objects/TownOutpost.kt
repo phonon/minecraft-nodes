@@ -7,14 +7,14 @@ package phonon.nodes.objects
 
 import org.bukkit.Location
 
-public data class TownOutpost(
+data class TownOutpost(
     var name: String,
     val territory: Territory,
     var spawn: Location
 ) {
 
     // serialize territory id + spawn location to json string
-    public fun toJsonString(): String {
+    fun toJsonString(): String {
         return "[${territory.id}, ${spawn.x}, ${spawn.y}, ${spawn.z}]"
     }
 }

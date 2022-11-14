@@ -20,6 +20,8 @@ import phonon.nodes.constants.*
 import phonon.nodes.utils.sanitizeString
 import phonon.nodes.utils.stringInputIsValid
 import phonon.nodes.utils.string.*
+import java.util.*
+import kotlin.collections.ArrayList
 
 // list of all subcommands, used for onTabComplete
 private val subcommands: List<String> = listOf(
@@ -42,7 +44,7 @@ private val subcommands: List<String> = listOf(
     "spawn"
 )
 
-public class NationCommand : CommandExecutor, TabCompleter {
+class NationCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, cmd: Command, commandLabel: String, args: Array<String>): Boolean {
         
@@ -62,7 +64,7 @@ public class NationCommand : CommandExecutor, TabCompleter {
         }
 
         // parse subcommand
-        when ( args[0].toLowerCase() ) {
+        when (args[0].lowercase(Locale.getDefault())) {
             "help" -> printHelp(sender)
             "create" -> createNation(player, args)
             "new" -> createNation(player, args)
@@ -100,7 +102,7 @@ public class NationCommand : CommandExecutor, TabCompleter {
         // match each subcommand format
         else if ( args.size > 1 ) {
             // handle specific subcommands
-            when ( args[0].toLowerCase() ) {
+            when (args[0].lowercase(Locale.getDefault())) {
 
                 // /nation invite town
                 "invite" -> {
@@ -390,7 +392,7 @@ public class NationCommand : CommandExecutor, TabCompleter {
             Message.error(player, "That town has no leader (?)")
             return
         }
-        val invitee: Player? = Bukkit.getPlayer(inviteeResident?.name)
+        val invitee: Player? = Bukkit.getPlayer(inviteeResident.name)
         if ( invitee == null) {
             Message.error(player, "That town's leader is not online")
             return
@@ -576,7 +578,7 @@ public class NationCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        if ( nation.name.toLowerCase() == args[1].toLowerCase() ) {
+        if ( nation.name.lowercase(Locale.getDefault()) == args[1].lowercase(Locale.getDefault())) {
             Message.error(player, "Your nation is already named ${nation.name}")
             return
         }
@@ -606,7 +608,7 @@ public class NationCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        var nation: Nation? = null
+        val nation: Nation?
         if ( args.size == 1 ) {
             if ( resident.nation == null ) {
                 Message.error(player, "You do not belong to a nation")
@@ -647,7 +649,7 @@ public class NationCommand : CommandExecutor, TabCompleter {
             return
         }
 
-        var nation: Nation? = null
+        val nation: Nation?
         if ( args.size == 1 ) {
             if ( resident.nation == null ) {
                 Message.error(player, "You do not belong to a nation")
@@ -730,7 +732,7 @@ public class NationCommand : CommandExecutor, TabCompleter {
 
         // pay item cost to teleport
         if ( Config.nationTownTeleportCost.size > 0 ) {
-            val inventory = player.getInventory()
+            val inventory = player.inventory
             for ( (material, amount) in Config.nationTownTeleportCost ) {
                 val items = ItemStack(material)
                 if ( !inventory.containsAtLeast(items, amount) ) {

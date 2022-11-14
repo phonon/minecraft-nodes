@@ -9,9 +9,9 @@ import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 import phonon.nodes.objects.Town
 
-public class AllianceCreatedEvent(
-    public val town1: Town,
-    public val town2: Town
+class AllianceCreatedEvent(
+    val town1: Town,
+    val town2: Town
 ): Event() {
 
     override fun getHandlers(): HandlerList {

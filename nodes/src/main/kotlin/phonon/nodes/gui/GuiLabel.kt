@@ -9,7 +9,7 @@ package phonon.nodes.gui
 
 import org.bukkit.inventory.ItemStack
 
-public class GuiLabel(
+class GuiLabel(
     val x: Int,
     val y: Int,
     val icon: ItemStack,
@@ -19,13 +19,13 @@ public class GuiLabel(
     
     // set icon meta
     init {
-        val itemMeta = icon.getItemMeta()
-        itemMeta.setDisplayName(title)
-        itemMeta.setLore(tooltip)
-        icon.setItemMeta(itemMeta)
+        val itemMeta = icon.itemMeta
+        itemMeta!!.setDisplayName(title)
+        itemMeta.lore = tooltip
+        icon.itemMeta = itemMeta
     }
     
-    override public fun render(screen: GuiWindow) {
+    override fun render(screen: GuiWindow) {
         screen.draw(this, x, y, icon)
     }
 }

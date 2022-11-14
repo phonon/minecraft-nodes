@@ -14,10 +14,10 @@ import org.bukkit.event.player.*
 import phonon.nodes.Nodes
 import phonon.nodes.objects.Nametag
 
-public class NodesNametagListener: Listener {
+class NodesNametagListener: Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public fun onPlayerJoin(event: PlayerJoinEvent) {
+    fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player
         if ( Nodes.getResident(player)?.town !== null ) {
             Nametag.updateTextForPlayer(player)

@@ -6,11 +6,11 @@ package phonon.nodes.gui
 
 import org.bukkit.event.inventory.InventoryClickEvent
 
-public interface GuiElement {
+interface GuiElement {
 
     // render object to Inventory screen container
-    public fun render(screen: GuiWindow)
+    fun render(screen: GuiWindow)
 
     // onClick handler
-    public fun onClick(event: InventoryClickEvent) {}
+    fun onClick(event: InventoryClickEvent) {}
 }

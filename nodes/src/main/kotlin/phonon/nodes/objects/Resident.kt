@@ -20,7 +20,7 @@ import phonon.nodes.chat.ChatMode
 import phonon.nodes.serdes.JsonSaveState
 import java.util.*
 
-public class Resident(val uuid: UUID, val name: String) {
+class Resident(val uuid: UUID, val name: String) {
     var town: Town? = null
     var nation: Nation? = null
     
@@ -69,13 +69,13 @@ public class Resident(val uuid: UUID, val name: String) {
         this.saveState = ResidentSaveState(this)
     }
     
-    override public fun hashCode(): Int {
+    override fun hashCode(): Int {
         return this.uuid.hashCode()
     }
     
     // returns player associated with resident
     // returns null when player is offline
-    public fun player(): Player? {
+    fun player(): Player? {
         return Bukkit.getPlayer(this.uuid)
     }
 
@@ -85,7 +85,7 @@ public class Resident(val uuid: UUID, val name: String) {
     // and only viewable by player
     // ===================================
 
-    public fun createMinimap(player: Player, size: Int) {
+    fun createMinimap(player: Player, size: Int) {
         // remove any existing minimap
         this.destroyMinimap()
 
@@ -93,7 +93,7 @@ public class Resident(val uuid: UUID, val name: String) {
         this.minimap = Minimap(this, player, size)
     }
 
-    public fun destroyMinimap() {
+    fun destroyMinimap() {
         val minimap = this.minimap
         if ( minimap != null ) {
             minimap.destroy()
@@ -102,14 +102,14 @@ public class Resident(val uuid: UUID, val name: String) {
     }
 
     // update player minimap if it exists
-    public fun updateMinimap(coord: Coord) {
+    fun updateMinimap(coord: Coord) {
         this.minimap?.render(coord)
     }
 
     // ===================================
 
     // print resident info
-    public fun printInfo(sender: CommandSender) {
+    fun printInfo(sender: CommandSender) {
         val town = this.town?.name ?: "${ChatColor.GRAY}None"
         val nation = this.nation?.name ?: "${ChatColor.GRAY}None"
 
@@ -123,21 +123,21 @@ public class Resident(val uuid: UUID, val name: String) {
      * Immutable save snapshot, must be composed of immutable primitives.
      * Used to generate json string serialization.
      */
-    public class ResidentSaveState(r: Resident): JsonSaveState {
-        public val uuid = r.uuid
-        public val name = r.name
-        public val town = r.town?.name
-        public val nation = r.nation?.name
-        public val claims = r.claims
-        public val claimsTime = r.claimsTime
-        public val prefix = r.prefix
-        public val suffix = r.suffix
-        public val trusted = r.trusted
-        public val townCreateCooldown = r.townCreateCooldown
+    class ResidentSaveState(r: Resident): JsonSaveState {
+        val uuid = r.uuid
+        val name = r.name
+        val town = r.town?.name
+        val nation = r.nation?.name
+        val claims = r.claims
+        val claimsTime = r.claimsTime
+        val prefix = r.prefix
+        val suffix = r.suffix
+        val trusted = r.trusted
+        val townCreateCooldown = r.townCreateCooldown
 
-        override public var jsonString: String? = null
+        override var jsonString: String? = null
 
-        override public fun createJsonString(): String {
+        override fun createJsonString(): String {
             val jsonString = ("{"
             + "\"name\":\"${this.name}\","
             + "\"town\":${ if ( this.town !== null ) "\"${this.town}\"" else null },"
@@ -153,14 +153,14 @@ public class Resident(val uuid: UUID, val name: String) {
     }
 
     // function to let client flag this object as dirty
-    public fun needsUpdate() {
+    fun needsUpdate() {
         this._needsUpdate = true
     }
 
     // wrapper to return self as state
     // - returns memoized copy if needsUpdate false
     // - otherwise, parses self
-    public fun getSaveState(): ResidentSaveState {
+    fun getSaveState(): ResidentSaveState {
         if ( this._needsUpdate ) {
             this.saveState = ResidentSaveState(this)
             this._needsUpdate = false

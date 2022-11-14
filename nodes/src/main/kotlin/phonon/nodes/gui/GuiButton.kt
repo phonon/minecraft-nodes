@@ -7,7 +7,7 @@ package phonon.nodes.gui
 import org.bukkit.inventory.ItemStack
 import org.bukkit.event.inventory.InventoryClickEvent
 
-public class GuiButton(
+class GuiButton(
     val x: Int,
     val y: Int, 
     val icon: ItemStack,
@@ -19,25 +19,25 @@ public class GuiButton(
     // set icon meta
     init {
         if ( title != null || tooltip != null ) {
-            val itemMeta = icon.getItemMeta()
+            val itemMeta = icon.itemMeta
 
             if ( title != null ) {
-                itemMeta.setDisplayName(title)
+                itemMeta!!.setDisplayName(title)
             }
             if ( tooltip != null ) {
-                itemMeta.setLore(tooltip)
+                itemMeta!!.lore = tooltip
             }
-            
-            icon.setItemMeta(itemMeta)
+
+            icon.itemMeta = itemMeta
         }
         
     }
     
-    override public fun onClick(event: InventoryClickEvent) {
+    override fun onClick(event: InventoryClickEvent) {
         callback(event)
     }
 
-    override public fun render(screen: GuiWindow) {
+    override fun render(screen: GuiWindow) {
         screen.draw(this, x, y, icon)
     }
 }

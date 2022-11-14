@@ -15,20 +15,20 @@ import phonon.nodes.Message
 import phonon.nodes.Nodes
 import phonon.nodes.objects.Territory
 
-public class NodesSheepShearListener: Listener {
+class NodesSheepShearListener: Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
-	public fun onEntityShear(event: PlayerShearEntityEvent) {
+    fun onEntityShear(event: PlayerShearEntityEvent) {
 
         // require shearing sheep in sheep node
         if ( Config.requireSheepNodeToShear ) {
-            val entity: Entity = event.getEntity()
+            val entity: Entity = event.entity
             val territory: Territory? = Nodes.getTerritoryFromChunk(entity.location.chunk)
             
             if ( territory?.animals?.contains(EntityType.SHEEP) != true ) {
                 val player = event.player
                 Message.error(player, "You can only collect wool in sheep nodes")
-                event.setCancelled(true)
+                event.isCancelled = true
             }
         }
 

@@ -2,19 +2,19 @@
  * Coordinate system for Nodes, follow game chunks
  */
 
-package phonon.nodes.objects;
+package phonon.nodes.objects
 
-const val CHUNK_SIZE: Int = 16;
+const val CHUNK_SIZE: Int = 16
 
 fun toChunk(v: Int): Int {
-    return Math.floorDiv(v, CHUNK_SIZE);
+    return Math.floorDiv(v, CHUNK_SIZE)
 }
 
 data class Coord(val x: Int, val z: Int) {
 
     // bernstein djb2 hash using magic number 33:
     // hash = 33 * x + z
-    override public fun hashCode(): Int {
+    override fun hashCode(): Int {
         return ((this.x shl 5) + this.x) + z
     }
 
