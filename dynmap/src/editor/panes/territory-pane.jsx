@@ -31,7 +31,7 @@ const TerritoryNodesList = (props) => {
                 let iconSrc = props.resourceIcons.get(icon);
 
                 nodesDivList.push(
-                    <div key={name} className="nodes-editor-terr-nodes-list-item">
+                    <div key={nodeName} className="nodes-editor-terr-nodes-list-item">
                         <div className="nodes-editor-terr-nodes-list-item-icon">
                             {iconSrc !== undefined ?
                             <img

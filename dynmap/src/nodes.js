@@ -11,6 +11,7 @@ import "@babel/polyfill";
 import { createRoot } from "react-dom/client";
 
 import { saveAs } from "file-saver";
+import { v4 as uuidv4 } from "uuid";
 
 import {
 	RESIDENT_RANK_NONE, RESIDENT_RANK_OFFICER, RESIDENT_RANK_LEADER,
@@ -76,6 +77,45 @@ const createNewResident = (uuid, name, rank) => {
 		uuid: uuid,
 		name: name,
 		rank: rank,
+	}
+}
+
+/**
+ * Create a new blank town object.
+ */
+const createNewTown = (name) => {
+	return {
+		uuid: "",
+		name: name,
+		color: [255, 255, 255],
+		colorTown: [255, 255, 255],
+		colorNation: [255, 255, 255],
+
+		// flag that anyone can join
+		open: false,
+
+		// residents
+		leader: undefined,
+		playerNames: [],
+		residents: [],
+
+		// territories
+		territories: [],
+		annexed: [],
+		captured: [],
+		home: -1,
+		spawn: [0.0, 0.0, 0.0],
+		
+		// relations with other towns
+		allies: [],
+		enemies: [],
+		truce: [],
+		
+		// misc in-game state
+		income: {},
+		incomeEgg: {},
+		claimsBonus: 0,
+		claimsPenalty: [0, 0],
 	}
 }
 
@@ -803,9 +843,22 @@ const Nodes = {
 			Object.keys(data.towns).forEach(name => {
 				const town = data.towns[name];
 				town.name = name;
-				town.playerNames = town.residents.map(uuid => {
-					return Nodes.residents.get(uuid).name; 
+
+				// map each resident UUID into a resident object
+				// if resident does not exist, create a new "Anonymous" resident
+				town.residents = town.residents.map(uuid => {
+					return createNewResident(
+						uuid,
+						Nodes.residents.get(uuid)?.name ?? "Anonymous",
+						RESIDENT_RANK_NONE,	
+					);
+				})
+				
+				// pre-computed list of each resident's name
+				town.playerNames = town.residents.map(r => {
+					return r.name; 
 				});
+
 				Nodes.towns.set(name, town);
 
 				// make links claims -> town
@@ -821,6 +874,10 @@ const Nodes = {
 						Nodes.territories.get(id).occupier = town;
 					}
 				});
+
+				// save specific town color and nation color
+				town.colorTown = town.color;
+				town.colorNation = town.color;
 			});
 
 			// parse nations
@@ -834,6 +891,7 @@ const Nodes = {
 						const town = Nodes.towns.get(t);
 						town.nation = name;
 						town.color = nation.color;
+						town.colorNation = nation.color;
 					}
 				});
 			});
@@ -1130,6 +1188,15 @@ const Nodes = {
 			selectedTown: Nodes.selectedTown,
 			selectedTownIndex: Nodes.selectedTownIndex,
 			selectTown: Nodes._selectTown,
+			createTown: Nodes.createTown,
+			deleteTown: Nodes.deleteTown,
+			setTownName: Nodes.setTownName,
+			setNationName: Nodes.setNationName,
+			setTownHome: Nodes.setTownHome,
+			addTownResident: Nodes.addTownResident,
+			removeTownResident: Nodes.removeTownResident,
+			addTownTerritories: Nodes.addTownTerritories,
+			removeTownTerritories: Nodes.removeTownTerritories,
 		};
 
 		Nodes.editorContainerRoot?.render(<Editor {...props}/>);
@@ -1234,8 +1301,11 @@ const Nodes = {
 	// internal
 	// =====================================
 
-	// reset all world objects, separate 
-	// function to capture event in case debugging needed
+	/**
+	 * Clear all world territory and resource state.
+	 * Does not clear towns or nations (which are separate "layer" that
+	 * only references territories/resources state).
+	 */
 	_clearWorld: () => {
 		Nodes.nodes.clear();
 		Nodes.nodesNameList = [];
@@ -1245,7 +1315,9 @@ const Nodes = {
 		Nodes.wasmWorld.setTerritoryIdCounter(0);
 	},
 
-	// clear nations and towns
+	/**
+	 * Clear towns and nations.
+	 */
 	_clearTowns: () => {
 		Nodes.residents.clear();
 		Nodes.towns.clear();
@@ -1259,15 +1331,255 @@ const Nodes = {
 		});
 	},
 
-	// clear ports
+	/**
+	 * Clear ports.
+	 */
 	_clearPorts: () => {
 		Nodes.ports.clear();
 		Nodes.portsJsx = [];
 	},
 
+	/**
+	 * Clear all resource definitions and strip all resources from
+	 * territories.
+	 */
+	_clearResources: () => {
+		Nodes.nodes = new Map();
+		Nodes.nodesNameList = [];
+		
+		Nodes.territories.forEach((territory, id) => {
+			territory.nodes = [];
+		});
+	},
+
 	// =====================================
 	// town/nation stuff
 	// =====================================
+	
+	/**
+	 * Create a new blank town with input name. If `newName` is undefined,
+	 * this will try to name the town as "townN", incrementing integer N
+	 * until a  free town name is found.
+	 * 
+	 * If `selectNewTown` is true, this will make the newly created town
+	 * selected.
+	 */
+	createTown: (name = undefined, selectNewTown = true) => {
+		let newTownName = name;
+		if ( newTownName === undefined || newTownName === null ) {
+			let n = 0;
+			do {
+				newTownName = `town${n}`;
+				n += 1;
+			} while ( Nodes.towns.has(newTownName) )
+		}
+		else {
+			// new name was inputed, if it already exists, error and stop
+			if ( Node.towns.has(newTownName) ) {
+				console.error(`Cannot create new town ${newTownName} because name already exists.`);
+				return;
+			}
+		}
+
+		const town = createNewTown(
+			name = newTownName,
+		);
+		
+		// set town in storage and update towns list
+		Nodes.towns.set(newTownName, town);
+		Nodes.townsList = Nodes._sortTownsNationsResidents();
+
+		if ( selectNewTown ) {
+			Nodes.selectedTown = town;
+			Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.name == newTownName);
+		}
+
+		// re-render
+		Nodes.renderEditor()
+	},
+
+	/**
+	 * Delete town from its name, if it exists.
+	 */
+	deleteTown: (name) => {
+		let town = Nodes.towns.get(name);
+
+		if ( town === undefined ) {
+			console.log(`Town with name ${name} does not exist, cannot be deleted.`);
+			return;
+		}
+		
+		// remove town from storage and update towns list
+		Nodes.towns.delete(name);
+		Nodes.townsList = Nodes._sortTownsNationsResidents();
+
+		// if deleted town was the selected town, de-select
+		if ( town == Nodes.selectedTown ) {
+			Nodes.selectedTown = undefined;
+			Nodes.selectedTownIndex = undefined; 
+		} else { // need to re-find selected town's index in updated list
+			if ( Nodes.selectedTown !== undefined ) {
+				Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.name == Nodes.selectedTown.name);
+			}
+		}
+
+		Nodes.renderEditor()
+	},
+
+	/**
+	 * Set a town's name.
+	 */
+	setTownName: (town, newTownName) => {
+		console.log(`Setting town name ${town} ${town.name} to ${newTownName}`);
+
+		if ( town === undefined || town === null ) {
+			return;
+		}
+
+		// if new town name same, ignore
+		if ( town.name === newTownName ) {
+			return;
+		}
+
+		// if town with name already exists, print error and return
+		if ( Nodes.towns.has(newTownName) ) {
+			console.error(`Cannot rename ${town.name} => ${newTownName} because name already exists.`);
+			return;
+		}
+
+		// remove old town in towns map
+		if ( Nodes.towns.delete(town.name) !== true ) {
+			console.error (`Failed to delete old town named ${town.name} from towns map`);
+			return;
+		}
+
+		town.name = newTownName;
+		Nodes.towns.set(newTownName, town);
+
+		console.log(newTownName, town);
+		// update towns list
+		Nodes.townsList = Nodes._sortTownsNationsResidents();
+
+		// if this was selected town, re-find selected index
+		if ( town == Nodes.selectedTown ) {
+			Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.name == newTownName);
+		}
+
+		// re-render
+		Nodes.renderEditor()
+	},
+
+	/**
+	 * Set a town's home territory id.
+	 */
+	setTownHome: (town, newHomeId) => {
+		if ( town === undefined || town === null ) {
+			return
+		}
+
+		// parse to make sure newHomeId is an integer
+		const newHomeIdInt = parseInt(newHomeId);
+		
+		// update town home
+		town.home = newHomeIdInt;
+	},
+
+	/**
+	 * Set a town's nation's name. This directly sets on the nation object
+	 * and so will change the nation name for all towns.
+	 */
+	setNationName: (nation, newNationName) => {
+		// TODO
+	},
+
+	/**
+	 * Add resident to a town. If town does not exist this will early exit
+	 * printing an error and do nothing. If player does not exist in
+	 * residents storage, player will be added as an "Anonymous" player
+	 * with a new random uuid. Optionally specify new resident's rank
+	 * (default, officer, or leader).
+	 */
+	addTownResident: (town, playerName, rank = RESIDENT_RANK_NONE) => {
+		// if town undefined early exit
+		if ( town === undefined || town === null ) {
+			console.log("Town undefined, cannot add resident");
+			return;
+		}
+		
+		// if player already in town, skip
+		if ( town.residents.some(r => r.name === playerName) ) {
+			console.error(`Town ${town.name} already has resident ${playerName}, skipping`);
+			return;
+		}
+
+		// append new resident and re-create town residents array
+		// (to trigger useMemo re-render)
+		// if player exists in residents, use existing player's uuid
+		// otherwise, generate a new random uuid for player.
+		// NOTE: this uuid will not match the real mineman uuid...
+		// todo: resolve by mineman auth lookup? https://wiki.vg/Mojang_API
+		let playerUuid = Nodes.residents.get(playerName)?.uuid ?? uuidv4();
+
+		town.residents = [...town.residents, createNewResident(
+			playerUuid,
+			playerName,
+			rank,
+		)];
+	},
+
+	/**
+	 * Remove resident player from a town. If town or player do not exist,
+	 * this will early printing an error and doing nothing. 
+	 */
+	removeTownResident: (town, playerName) => {
+		// if town undefined early exit
+		if ( town === undefined || town === null ) {
+			console.error("Town undefined, cannot add resident");
+			return;
+		}
+		
+		// find player index in residents array
+		const playerIndex = town.residents.findIndex(r => r.name === playerName);
+		if ( playerIndex === -1 ) {
+			console.error(`Town ${town.name} does not have resident ${playerName}, skipping`);
+			return;
+		}
+
+		// if player is leader or officer, update those fields as well
+		const resident = town.residents[playerIndex];
+		if ( town.leader === resident.uuid ) {
+			town.leader = undefined;
+		}
+		town.officers = town.officers?.filter(uuid => uuid !== resident.uuid) ?? [];
+		town.residents = [
+			...town.residents.slice(0, playerIndex),
+			...town.residents.slice(playerIndex + 1),
+		]
+
+		// force re-render to update players list
+		Nodes.renderEditor();
+	},
+
+	/**
+	 * Add array of territory ids to a town. If town does not exist, print
+	 * an error and early exist. Skip any of the territories that do not
+	 * exist or are are owned by another town.
+	 */
+	addTownTerritories: (town, territories) => {
+		console.log(`Adding territories ${territories} to town ${town.name}`);
+		// TODO
+	},
+	
+	/**
+	 * Remove an array of territory ids owned by a town. If town does not
+	 * exist, print an error and early exit. Skip any of the territories
+	 * that either do not exist or are not owned by the town. 
+	 */
+	removeTownTerritories: (town, territories) => {
+		console.log(`Removing territories ${territories} from town ${town.name}`);
+		// TODO
+	},
+
 	/**
 	 * Sort input town data:
 	 * 1. sort nations by player count (high-to-low)
@@ -1325,7 +1637,7 @@ const Nodes = {
 		townsWithoutNation.sort((a, b) => b.residents.length - a.residents.length);
 
 		townsList.push(...townsWithoutNation);
-		
+
 		// for each town, sort residents by status:
 		// [leader, officers, rest...]
 		// replace each resident uuid with a resident object:
@@ -1335,25 +1647,27 @@ const Nodes = {
 		//    rank: rank,
 		// }
 		for ( const town of townsList ) {
+			// console.log("sorting town", town);
 			const peasants = [];
 			const officers = [];
 
 			for ( const r of town.residents ) {
-				if ( r === town.leader ) {
+				// console.log("res", r);
+				if ( r.uuid === town.leader ) {
 					// skip leader, will handle at end
 					continue;
 				}
-				else if ( town.officers.includes(r) ) {
+				else if ( town.officers?.includes(r.uuid) ) {
 					officers.push(createNewResident(
-						r,
-						Nodes.residents.get(r)?.name,
+						r.uuid,
+						Nodes.residents.get(r.uuid)?.name,
 						RESIDENT_RANK_OFFICER
 					));
 				}
 				else {
 					peasants.push(createNewResident(
-						r,
-						Nodes.residents.get(r)?.name,
+						r.uuid,
+						Nodes.residents.get(r.uuid)?.name,
 						RESIDENT_RANK_NONE,
 					));
 				}

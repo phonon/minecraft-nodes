@@ -227,8 +227,8 @@ export const NodesPane = (props) => {
     return (
         <>
         <div id="nodes-editor-nodes-header">
-            <div id="nodes-editor-nodes-header-text">Node Library:</div>
-            <div id="nodes-editor-nodes-header-buttons">
+            <div className="nodes-editor-nodes-header-text">Node Library:</div>
+            <div className="nodes-editor-nodes-header-buttons">
                 <UI.Button
                     className="nodes-editor-nodes-header-btn"
                     onClick={() => props.createNode()}

@@ -13,11 +13,13 @@
 	display: flex;
 }
 
-#nodes-editor-nodes-header-text {
+.nodes-editor-nodes-header-text {
 	flex-grow: 1;
 }
 
-#nodes-editor-nodes-header-buttons {
+.nodes-editor-nodes-header-buttons {
+	display: flex;
+	flex-direction: row;
 	flex-shrink: 0;
 	flex-grow: 0;
 }

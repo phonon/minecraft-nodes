@@ -8,11 +8,12 @@ import { useState, useEffect, useRef } from "react";
 
 import "ui/css/nodes-scrollbar.css";
 import "editor/css/editor.css";
-import {GenerationPane} from "editor/panes/generation-pane.jsx";
-import {NodesPane} from "editor/panes/nodes-pane.jsx";
-import {OptionsPane} from "editor/panes/options-pane.jsx";
-import {TerritoryPane} from "editor/panes/territory-pane.jsx";
-import {WorldPane} from "editor/panes/world-pane.jsx";
+import { GenerationPane } from "editor/panes/generation-pane.jsx";
+import { NodesPane } from "editor/panes/nodes-pane.jsx";
+import { OptionsPane } from "editor/panes/options-pane.jsx";
+import { TerritoryPane } from "editor/panes/territory-pane.jsx";
+import { WorldPane } from "editor/panes/world-pane.jsx";
+import { TownsPane } from "editor/panes/towns-pane.jsx";
 
 import IconLoad from "assets/icon/icon-load.svg";
 import IconMerge from "assets/icon/icon-merge.svg";
@@ -21,13 +22,15 @@ import IconTabWorld from "assets/icon/icon-tab-world.svg";
 import IconTabTerritory from "assets/icon/icon-tab-territory.svg";
 import IconTabNodes from "assets/icon/icon-tab-nodes.svg";
 import IconTabGeneration from "assets/icon/icon-tab-generation.svg";
+import IconTabTowns from "assets/icon/icon-tab-towns.svg";
 import IconTabOptions from "assets/icon/icon-tab-options.svg";
 
 const PANEL_WORLD = 0;
 const PANEL_TERRITORY = 1;
 const PANEL_NODES = 2;
 const PANEL_GENERATION = 3;
-const PANEL_OPTIONS = 4;
+const PANEL_TOWNS = 4;
+const PANEL_OPTIONS = 5;
 
 const EditorTab = (props) => {
     let className = "nodes-editor-tab";
@@ -78,7 +81,7 @@ function EditorHeaderButton(props) {
 
 export const Editor = (props) => {
 
-    const [currentTab, setCurrentTab] = useState(PANEL_WORLD);
+    const [currentTab, setCurrentTab] = useState(PANEL_TOWNS);
     
     useEffect(() => {
         // if editor pane is nodes editor, enable territory resource nodes editing
@@ -168,6 +171,12 @@ export const Editor = (props) => {
                     onClick={() => setCurrentTab(PANEL_GENERATION)}
                 />
                 <EditorTab
+                    name={"Towns"}
+                    icon={IconTabTowns}
+                    selected={currentTab === PANEL_TOWNS}
+                    onClick={() => setCurrentTab(PANEL_TOWNS)}
+                />
+                <EditorTab
                     name={"Options"}
                     icon={IconTabOptions}
                     selected={currentTab === PANEL_OPTIONS}
@@ -254,6 +263,28 @@ export const Editor = (props) => {
                     active={currentTab === PANEL_GENERATION}
                 >
                     <GenerationPane/>
+                </EditorPane>
+
+                <EditorPane
+                    id="nodes-editor-pane-options"
+                    active={currentTab === PANEL_TOWNS}
+                >
+                    <TownsPane
+                        towns={props.towns}
+                        townsNameList={props.townsNameList}
+                        selectedTown={props.selectedTown}
+                        selectedTownIndex={props.selectedTownIndex}
+                        selectTown={props.selectTown}
+                        createTown={props.createTown}
+                        deleteTown={props.deleteTown}
+                        setTownName={props.setTownName}
+                        setNationName={props.setNationName}
+                        setTownHome={props.setTownHome}
+                        addTownResident={props.addTownResident}
+                        removeTownResident={props.removeTownResident}
+                        addTownTerritories={props.addTownTerritories}
+                        removeTownTerritories={props.removeTownTerritories}
+                    />
                 </EditorPane>
 
                 <EditorPane
