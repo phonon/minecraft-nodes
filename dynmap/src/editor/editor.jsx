@@ -282,8 +282,8 @@ export const Editor = (props) => {
                         setTownHome={props.setTownHome}
                         addTownResident={props.addTownResident}
                         removeTownResident={props.removeTownResident}
-                        addTownTerritories={props.addTownTerritories}
-                        removeTownTerritories={props.removeTownTerritories}
+                        addSelectedTownSelectedTerritories={props.addSelectedTownSelectedTerritories}
+                        removeSelectedTownSelectedTerritories={props.removeSelectedTownSelectedTerritories}
                     />
                 </EditorPane>
 

@@ -182,8 +182,8 @@ export const TownsPane = ({
     setTownHome,
     addTownResident,
     removeTownResident,
-    addTownTerritories,
-    removeTownTerritories,
+    addSelectedTownSelectedTerritories,
+    removeSelectedTownSelectedTerritories,
 }) => {
     // local state
     const [inputNewPlayerName, setInputNewPlayerName] = useState("");
@@ -283,13 +283,13 @@ export const TownsPane = ({
             <div id="nodes-editor-terr-toolbar-g1">
                 <UI.Button
                     className="nodes-editor-terr-tool-btn"
-                    onClick={() => {}}
+                    onClick={addSelectedTownSelectedTerritories}
                     icon={IconPlus}
                     tooltip={"Add selected to town"}
                 />
                 <UI.Button
                     className="nodes-editor-terr-tool-btn"
-                    onClick={() => {}}
+                    onClick={removeSelectedTownSelectedTerritories}
                     icon={IconDelete}
                     tooltip={"Remove selected from town"}
                 />
