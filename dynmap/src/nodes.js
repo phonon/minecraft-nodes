@@ -1204,7 +1204,10 @@ const Nodes = {
             addTownResident: Nodes.addTownResident,
             removeTownResident: Nodes.removeTownResident,
             addSelectedTownSelectedTerritories: Nodes.addSelectedTownSelectedTerritories,
+            addSelectedTownSelectedTerritoriesAsCaptured: Nodes.addSelectedTownSelectedTerritoriesAsCaptured,
             removeSelectedTownSelectedTerritories: Nodes.removeSelectedTownSelectedTerritories,
+            removeSelectedTerritoriesOwned: Nodes.removeSelectedTerritoriesOwned,
+            removeSelectedTerritoriesCaptured: Nodes.removeSelectedTerritoriesCaptured,
         };
 
         Nodes.editorContainerRoot?.render(<Editor {...props}/>);
@@ -1624,6 +1627,45 @@ const Nodes = {
                 Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid == town.uuid);
             }
         }
+
+        Nodes.renderWorld();
+    },
+
+    /**
+     * Add array of territory ids to a town. If town does not exist, print
+     * an error and early exist. Skip any of the territories that do not
+     * exist or are are owned by another town.
+     */
+    addTownCapturedTerritories: (town, territories) => {
+        if ( town === undefined || town === null ) {
+            console.error("Town undefined, cannot add territories");
+            return;
+        }
+
+        if ( territories === undefined || territories === null || territories.size === 0 ) {
+            console.error("No territories to add");
+            return;
+        }
+
+        // for each territory, link occupier to input town
+        // if town not undefined and if town is not same as input town
+        const validTerritoryIds = [];
+        territories.forEach((terr, _terrId) => {
+            if ( terr.town !== undefined && terr.town !== null && terr.town.uuid !== town.uuid ) {
+                terr.occupier = town;
+                validTerritoryIds.push(terr.id);
+            }
+        });
+
+        // add territories to town's captured territories
+        town.captured = [...town.captured, ...validTerritoryIds];
+
+        // update stripe patterns
+        Nodes._updateStripePatterns();
+
+        // force re-render modified territories in world map
+        Nodes._updateTerritoryElementIds(validTerritoryIds);
+        Nodes.renderWorld();
     },
     
     /**
@@ -1638,7 +1680,7 @@ const Nodes = {
         }
 
         if ( territories === undefined || territories === null || territories.size === 0 ) {
-            console.error("No territories to add");
+            console.error("No territories to remove");
             return;
         }
 
@@ -1675,6 +1717,8 @@ const Nodes = {
                 Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid == town.uuid);
             }
         }
+
+        Nodes.renderWorld();
     },
 
     /**
@@ -1684,6 +1728,16 @@ const Nodes = {
      */
     addSelectedTownSelectedTerritories: () => {
         Nodes.addTownTerritories(Nodes.selectedTown, Nodes.selectedTerritories);
+    },
+
+    /**
+     * Wrapper to add currently selected territories to selected town
+     * as "captured" territories (occupied territory owned by another town).
+     * If selected town is undefined or selected territories empty,
+     * print an error and early exit.
+     */
+    addSelectedTownSelectedTerritoriesAsCaptured: () => {
+        Nodes.addTownCapturedTerritories(Nodes.selectedTown, Nodes.selectedTerritories);
     },
     
     /**
@@ -1707,7 +1761,117 @@ const Nodes = {
         }
         Nodes.renderEditor();
     },
+
+    /**
+     * Remove an array of territory ids from all their town owners.
+     */
+    removeTerritoriesOwned: (territories) => {
+        if ( territories === undefined || territories === null || territories.size === 0 ) {
+            console.error("No territories to remove");
+            return;
+        }
+
+        // for each territory, remove link to town owner or occupier
+        // mark town or occupier as modified, will update later
+        const modifiedTownIds = new Set();
+
+        territories.forEach((terr, _terrId) => {
+            if ( terr.town !== undefined ) {
+                modifiedTownIds.add(terr.town.uuid);
+                terr.town = undefined;
+            }
+            if ( terr.occupier !== undefined ) {
+                modifiedTownIds.add(terr.occupier.uuid);
+                terr.occupier = undefined;
+            }
+        });
+
+        // remove territories from town's owned, "annexed", and "captured"
+        modifiedTownIds.forEach(townId => {
+            const town = Nodes.towns.get(townId);
+            if ( town !== undefined ) {
+                town.territories = town.territories.filter(t => !territories.has(t));
+                town.annexed = town.annexed.filter(t => !territories.has(t));
+                town.captured = town.captured.filter(t => !territories.has(t));
+                
+                // if territory removed was town's home, remove home id
+                if ( territories.has(town.home) ) {
+                    town.home = -1;
+                }
+            }
+        });
         
+        // force re-render modified territories in world map
+        const territoryIds = Array.from(territories.keys());
+        Nodes._updateStripePatterns();
+        Nodes._updateTerritoryElementIds(territoryIds);
+
+        // if sort order is by territory count, re-sort towns list
+        if ( Nodes.townsSortKey === TownSortKey.TERRITORIES ) {
+            Nodes.townsList = Nodes._sortTownsNations(Nodes.townsSortKey);
+            // if this was selected town, re-find selected index
+            if ( Nodes.selectedTown !== undefined ) {
+                Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid == Nodes.selectedTown.uuid);
+            }
+        }
+
+        Nodes.renderEditor();
+        Nodes.renderWorld();
+    },
+
+    /**
+     * Remove an array of territory ids from their occupier town.
+     * This only releases "captured" territories, which are occupied
+     * by a town different than its actual towner.
+     */
+    removeTerritoriesCaptured: (territories) => {
+        if ( territories === undefined || territories === null || territories.size === 0 ) {
+            console.error("No territories to remove");
+            return;
+        }
+
+        // for each territory, remove link to town owner or occupier
+        // mark town or occupier as modified, will update later
+        const modifiedTownIds = new Set();
+
+        territories.forEach((terr, _terrId) => {
+            if ( terr.occupier !== undefined ) {
+                modifiedTownIds.add(terr.occupier.uuid);
+                terr.occupier = undefined;
+            }
+        });
+
+        // remove territories from town's owned, "annexed", and "captured"
+        modifiedTownIds.forEach(townId => {
+            const town = Nodes.towns.get(townId);
+            if ( town !== undefined ) {
+                town.captured = town.captured.filter(t => !territories.has(t));
+            }
+        });
+        
+        // force re-render modified territories in world map
+        const territoryIds = Array.from(territories.keys());
+        Nodes._updateStripePatterns();
+        Nodes._updateTerritoryElementIds(territoryIds);
+        Nodes.renderWorld();
+    },
+
+    /**
+     * Wrapper to remove currently selected territories from their
+     * town owners and occupiers.
+     */
+    removeSelectedTerritoriesOwned: () => {
+        Nodes.removeTerritoriesOwned(Nodes.selectedTerritories);
+    },
+
+    /**
+     * Wrapper to remove currently selected territories from thier
+     * occupier only (not actual town owner).
+     */
+    removeSelectedTerritoriesCaptured: () => {
+        Nodes.removeTerritoriesCaptured(Nodes.selectedTerritories);
+    },
+
     /**
      * Sort input town data:
      * 1. sort nations by player count (high-to-low)

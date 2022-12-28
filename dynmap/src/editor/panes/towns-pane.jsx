@@ -14,7 +14,10 @@ import * as UI from "ui/ui.jsx";
 
 import IconDelete from "assets/icon/icon-x.svg";
 import IconDeleteThin from "assets/icon/icon-x-thin.svg";
+import IconDeleteAll from "assets/icon/icon-terr-remove-all-owner.svg";
+import IconRemoveCapture from "assets/icon/icon-terr-remove-capture.svg";
 import IconPlus from "assets/icon/icon-plus.svg";
+import IconTerritoryCapture from "assets/icon/icon-terr-capture.svg";
 import IconPlayerLeader from "assets/icon/icon-player-leader.svg";
 import IconPlayerOfficer from "assets/icon/icon-player-officer.svg";
 import IconSave from "assets/icon/icon-save.svg";
@@ -185,7 +188,10 @@ export const TownsPane = ({
     addTownResident,
     removeTownResident,
     addSelectedTownSelectedTerritories,
+    addSelectedTownSelectedTerritoriesAsCaptured,
     removeSelectedTownSelectedTerritories,
+    removeSelectedTerritoriesOwned,
+    removeSelectedTerritoriesCaptured,
 }) => {
     // local state
     const [inputNewPlayerName, setInputNewPlayerName] = useState("");
@@ -305,6 +311,12 @@ export const TownsPane = ({
             <div id="nodes-editor-terr-toolbar-g1">
                 <UI.Button
                     className="nodes-editor-terr-tool-btn"
+                    onClick={addSelectedTownSelectedTerritoriesAsCaptured}
+                    icon={IconTerritoryCapture}
+                    tooltip={"Capture selected for town"}
+                />
+                <UI.Button
+                    className="nodes-editor-terr-tool-btn"
                     onClick={addSelectedTownSelectedTerritories}
                     icon={IconPlus}
                     tooltip={"Add selected to town"}
@@ -314,6 +326,20 @@ export const TownsPane = ({
                     onClick={removeSelectedTownSelectedTerritories}
                     icon={IconDelete}
                     tooltip={"Remove selected from town"}
+                />
+            </div>
+            <div id="nodes-editor-terr-toolbar-g2">
+                <UI.Button
+                    className="nodes-editor-terr-tool-btn"
+                    onClick={removeSelectedTerritoriesCaptured}
+                    icon={IconRemoveCapture}
+                    tooltip={"Uncapture selected from all towns"}
+                />
+                <UI.Button
+                    className="nodes-editor-terr-tool-btn"
+                    onClick={removeSelectedTerritoriesOwned}
+                    icon={IconDeleteAll}
+                    tooltip={"Remove selected from all towns"}
                 />
             </div>
         </div>
