@@ -63,20 +63,20 @@ const EditorPane = (props) => {
  * Shows tooltip underneath
  */
 function EditorHeaderButton(props) {
-	return (
-		<div className="nodes-editor-header-btn-container">
-			<div className="nodes-editor-header-btn"
-				style={props.style}
-				onMouseDown={props.onMouseDown}>
-				<img src={props.icon} className="nodes-editor-header-btn-icon" draggable="false" style={props.styleIcon}/>
-			</div>
-			<div className="nodes-editor-header-btn-tooltip">
-				<div className="nodes-editor-header-btn-tooltip-text">
-				{props.hint}
-				</div>
-			</div>
-		</div>
-	);
+    return (
+        <div className="nodes-editor-header-btn-container">
+            <div className="nodes-editor-header-btn"
+                style={props.style}
+                onMouseDown={props.onMouseDown}>
+                <img src={props.icon} className="nodes-editor-header-btn-icon" draggable="false" style={props.styleIcon}/>
+            </div>
+            <div className="nodes-editor-header-btn-tooltip">
+                <div className="nodes-editor-header-btn-tooltip-text">
+                {props.hint}
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export const Editor = (props) => {

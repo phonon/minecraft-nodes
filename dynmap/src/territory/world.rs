@@ -12,19 +12,19 @@ use territory::generator::{CellDiagram, generate_random_cells};
 
 #[wasm_bindgen]
 extern {
-	#[wasm_bindgen(js_namespace = console)]
-	fn log(msg: &str);
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(msg: &str);
 
-	#[wasm_bindgen(js_namespace = console)]
-	fn error(msg: &str);
+    #[wasm_bindgen(js_namespace = console)]
+    fn error(msg: &str);
 }
 
 fn print1(s: &str) {
-	// log(s);
+    // log(s);
 }
 
 fn print2(s: &str) {
-	log(s);
+    log(s);
 }
 
 // max territory node colors
@@ -239,8 +239,8 @@ impl World {
     #[wasm_bindgen(js_name=addCircleToTerritory)]
     pub fn add_circle_to_territory(&mut self, id: u32, cx: i32, cy: i32, radius: i32) -> bool {
         // ignore 0 or negative radius
-		if radius <= 0 {
-			return false;
+        if radius <= 0 {
+            return false;
         }
         
         // add radius to territory if it exists
@@ -280,8 +280,8 @@ impl World {
     #[wasm_bindgen(js_name=removeCircleToTerritory)]
     pub fn remove_circle_to_territory(&mut self, id: u32, cx: i32, cy: i32, radius: i32) -> bool {
         // ignore 0 or negative radius
-		if radius <= 0 {
-			return false;
+        if radius <= 0 {
+            return false;
         }
         
         // add radius to territory if it exists

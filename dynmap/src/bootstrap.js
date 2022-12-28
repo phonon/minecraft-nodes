@@ -9,17 +9,17 @@
  */
 
 let Nodes = {
-	initialize: function(options, callback) {
-		import('./nodes.js')
-			.then((module) => {
-				// set window value
-				window.Nodes = module.default;
+    initialize: function(options, callback) {
+        import('./nodes.js')
+            .then((module) => {
+                // set window value
+                window.Nodes = module.default;
 
-				// run nodes initialization
-				module.default.initialize(options, callback);
-			})
-			.catch(err => console.error('[Nodes] Load failed', err));
-	}
+                // run nodes initialization
+                module.default.initialize(options, callback);
+            })
+            .catch(err => console.error('[Nodes] Load failed', err));
+    }
 };
 
 // export to webpack

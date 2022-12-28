@@ -9,8 +9,8 @@
 import { useState, useMemo } from "react";
 
 import {
-	RESIDENT_RANK_NONE, RESIDENT_RANK_OFFICER, RESIDENT_RANK_LEADER,
-	RENDER_TOWN_NAMETAG_NONE, RENDER_TOWN_NAMETAG_TOWN, RENDER_TOWN_NAMETAG_NATION,
+    RESIDENT_RANK_NONE, RESIDENT_RANK_OFFICER, RESIDENT_RANK_LEADER,
+    RENDER_TOWN_NAMETAG_NONE, RENDER_TOWN_NAMETAG_TOWN, RENDER_TOWN_NAMETAG_NATION,
 } from "constants.js";
 import * as UI from "ui/ui.jsx";
 import IconOptionIcons from "assets/icon/icon-option-icons.svg";

@@ -19,15 +19,15 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 extern {
-	#[wasm_bindgen(js_namespace = console)]
-	fn log(msg: &str);
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(msg: &str);
 
-	#[wasm_bindgen(js_namespace = console)]
-	fn error(msg: &str);
+    #[wasm_bindgen(js_namespace = console)]
+    fn error(msg: &str);
 }
 
 fn log1(s: &str) {
-	// log(s);
+    // log(s);
 }
 
 /// Possible Polylabel errors
