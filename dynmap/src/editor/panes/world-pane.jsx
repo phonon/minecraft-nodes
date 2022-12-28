@@ -11,6 +11,7 @@ import { useState, useMemo } from "react";
 import {
     RESIDENT_RANK_NONE, RESIDENT_RANK_OFFICER, RESIDENT_RANK_LEADER,
     RENDER_TOWN_NAMETAG_NONE, RENDER_TOWN_NAMETAG_TOWN, RENDER_TOWN_NAMETAG_NATION,
+    TownSortKey,
 } from "constants.js";
 import * as UI from "ui/ui.jsx";
 import IconOptionIcons from "assets/icon/icon-option-icons.svg";
@@ -21,6 +22,9 @@ import IconOptionNoBorder from "assets/icon/icon-option-noborder.svg";
 import IconOptionTownName from "assets/icon/icon-option-town-name.svg";
 import IconOptionNationName from "assets/icon/icon-option-nation-name.svg";
 import IconOptionCapitals from "assets/icon/icon-map-capital.svg";
+import IconSortByAlphabetical from "assets/icon/icon-sort-by-alphabetical.svg";
+import IconSortByPlayers from "assets/icon/icon-sort-by-players.svg";
+import IconSortByTerritories from "assets/icon/icon-sort-by-territories.svg";
 
 import IconPlayerLeader from "assets/icon/icon-player-leader.svg";
 import IconPlayerOfficer from "assets/icon/icon-player-officer.svg";
@@ -384,7 +388,29 @@ export const WorldPane = (props) => {
             />
         </div>
 
-        <div id="nodes-editor-town-header">Towns:</div>
+        <div className="nodes-editor-list-header">
+            <div className="nodes-editor-list-header-text">Towns:</div>
+            <div className="nodes-editor-list-header-buttons">
+                <UI.Button
+                    className="nodes-editor-nodes-header-btn"
+                    onClick={() => props.setTownSortKey(TownSortKey.ALPHABETICAL)}
+                    icon={IconSortByAlphabetical}
+                    tooltip={"Sort alphabetical"}
+                />
+                <UI.Button
+                    className="nodes-editor-nodes-header-btn"
+                    onClick={() => props.setTownSortKey(TownSortKey.PLAYERS)}
+                    icon={IconSortByPlayers}
+                    tooltip={"Sort by player count"}
+                />
+                <UI.Button
+                    className="nodes-editor-nodes-header-btn"
+                    onClick={() => props.setTownSortKey(TownSortKey.TERRITORIES)}
+                    icon={IconSortByTerritories}
+                    tooltip={"Sort by territory count"}
+                />
+            </div>
+        </div>
 
         {townList}
 

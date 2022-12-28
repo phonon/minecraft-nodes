@@ -7,8 +7,7 @@
 import { useState, useMemo } from "react";
 
 import {
-    RESIDENT_RANK_NONE, RESIDENT_RANK_OFFICER, RESIDENT_RANK_LEADER,
-    RENDER_TOWN_NAMETAG_NONE, RENDER_TOWN_NAMETAG_TOWN, RENDER_TOWN_NAMETAG_NATION,
+    TownSortKey, RESIDENT_RANK_NONE, RESIDENT_RANK_OFFICER, RESIDENT_RANK_LEADER,
 } from "constants.js";
 import Nodes from "nodes.js";
 import * as UI from "ui/ui.jsx";
@@ -19,6 +18,9 @@ import IconPlus from "assets/icon/icon-plus.svg";
 import IconPlayerLeader from "assets/icon/icon-player-leader.svg";
 import IconPlayerOfficer from "assets/icon/icon-player-officer.svg";
 import IconSave from "assets/icon/icon-save.svg";
+import IconSortByAlphabetical from "assets/icon/icon-sort-by-alphabetical.svg";
+import IconSortByPlayers from "assets/icon/icon-sort-by-players.svg";
+import IconSortByTerritories from "assets/icon/icon-sort-by-territories.svg";
 
 import "ui/css/nodes-scrollbar.css";
 import "editor/css/panes/common.css";
@@ -174,7 +176,7 @@ export const TownsPane = ({
     selectedTownIndex,
     selectedTown,
     selectTown,
-
+    setTownSortKey,
     createTown,
     deleteTown,
     setTownName,
@@ -226,18 +228,38 @@ export const TownsPane = ({
 
     return (
         <>
-        <div id="nodes-editor-nodes-header">
-            <div className="nodes-editor-nodes-header-text">Towns:</div>
-            <div className="nodes-editor-nodes-header-buttons">
+        <div className="nodes-editor-list-header">
+            <div className="nodes-editor-list-header-text">Towns:</div>
+            <div className="nodes-editor-list-header-buttons">
+                <UI.Button
+                    className="nodes-editor-nodes-header-btn"
+                    onClick={() => setTownSortKey(TownSortKey.ALPHABETICAL)}
+                    icon={IconSortByAlphabetical}
+                    tooltip={"Sort alphabetical"}
+                />
+                <UI.Button
+                    className="nodes-editor-nodes-header-btn"
+                    onClick={() => setTownSortKey(TownSortKey.PLAYERS)}
+                    icon={IconSortByPlayers}
+                    tooltip={"Sort by player count"}
+                />
+                <UI.Button
+                    className="nodes-editor-nodes-header-btn"
+                    onClick={() => setTownSortKey(TownSortKey.TERRITORIES)}
+                    icon={IconSortByTerritories}
+                    tooltip={"Sort by territory count"}
+                />
                 <UI.Button
                     className="nodes-editor-nodes-header-btn"
                     onClick={() => createTown()}
                     icon={IconPlus}
+                    tooltip={"Create new town"}
                 />
                 <UI.Button
                     className="nodes-editor-nodes-header-btn"
                     onClick={() => {console.log("TODO: SAVE TOWNS")}}
                     icon={IconSave}
+                    tooltip={"Download towns.json"}
                 />
             </div>
         </div>

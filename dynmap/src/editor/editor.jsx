@@ -207,6 +207,7 @@ export const Editor = (props) => {
                         setRenderTerritoryCapitals={props.setRenderTerritoryCapitals}
                         renderTownNames={props.renderTownNames}
                         setRenderTownNames={props.setRenderTownNames}
+                        setTownSortKey={props.setTownSortKey}
                         resourceIcons={props.resourceIcons}
                         nodes={props.nodes}
                         towns={props.towns}
@@ -275,6 +276,7 @@ export const Editor = (props) => {
                         selectedTown={props.selectedTown}
                         selectedTownIndex={props.selectedTownIndex}
                         selectTown={props.selectTown}
+                        setTownSortKey={props.setTownSortKey}
                         createTown={props.createTown}
                         deleteTown={props.deleteTown}
                         setTownName={props.setTownName}

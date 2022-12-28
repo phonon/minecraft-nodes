@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from "uuid";
 import {
     RESIDENT_RANK_NONE, RESIDENT_RANK_OFFICER, RESIDENT_RANK_LEADER,
     RENDER_TOWN_NAMETAG_NONE, RENDER_TOWN_NAMETAG_TOWN, RENDER_TOWN_NAMETAG_NATION,
+    TownSortKey,
 } from "./constants.js";
 import IconMapCapital from "assets/icon/icon-map-capital.svg";
 import { StripePattern } from "ui/stripe-pattern.jsx";
@@ -83,9 +84,9 @@ const createNewResident = (uuid, name, rank) => {
 /**
  * Create a new blank town object.
  */
-const createNewTown = (name) => {
+const createNewTown = (name, uuid = undefined) => {
     return {
-        uuid: "",
+        uuid: uuid ?? uuidv4(),
         name: name,
         color: [255, 255, 255],
         colorTown: [255, 255, 255],
@@ -415,6 +416,8 @@ const Nodes = {
     // paint settings
     minPaintRadius: 1.0,  // min brush radius
     maxPaintRadius: 10.0, // max brush radius
+    // towns list sort key
+    townsSortKey: TownSortKey.TERRITORIES,
 
     // random generation settings
     generatorAverageRadius: 4.0,
@@ -896,7 +899,11 @@ const Nodes = {
                 });
             });
 
-            Nodes.townsList = Nodes._sortTownsNationsResidents();
+            // sort towns and residents
+            Nodes.townsList = Nodes._sortTownsNations(Nodes.townsSortKey);
+            for ( const town of Nodes.townsList ) {
+                town.residents = Nodes._sortTownResidents(town);
+            }
 
             // update render
             Nodes._updateStripePatterns();
@@ -1188,6 +1195,7 @@ const Nodes = {
             selectedTown: Nodes.selectedTown,
             selectedTownIndex: Nodes.selectedTownIndex,
             selectTown: Nodes._selectTown,
+            setTownSortKey: Nodes.setTownSortKey,
             createTown: Nodes.createTown,
             deleteTown: Nodes.deleteTown,
             setTownName: Nodes.setTownName,
@@ -1387,11 +1395,11 @@ const Nodes = {
         
         // set town in storage and update towns list
         Nodes.towns.set(newTownName, town);
-        Nodes.townsList = Nodes._sortTownsNationsResidents();
+        Nodes.townsList = Nodes._sortTownsNations(Nodes.townsSortKey);
 
         if ( selectNewTown ) {
             Nodes.selectedTown = town;
-            Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.name == newTownName);
+            Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid === town.uuid);
         }
 
         // re-render
@@ -1411,7 +1419,7 @@ const Nodes = {
         
         // remove town from storage and update towns list
         Nodes.towns.delete(name);
-        Nodes.townsList = Nodes._sortTownsNationsResidents();
+        Nodes.townsList = Nodes._sortTownsNations(Nodes.townsSortKey);
 
         // if deleted town was the selected town, de-select
         if ( town == Nodes.selectedTown ) {
@@ -1419,7 +1427,7 @@ const Nodes = {
             Nodes.selectedTownIndex = undefined; 
         } else { // need to re-find selected town's index in updated list
             if ( Nodes.selectedTown !== undefined ) {
-                Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.name == Nodes.selectedTown.name);
+                Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid === Nodes.selectedTown.uuid);
             }
         }
 
@@ -1456,9 +1464,8 @@ const Nodes = {
         town.name = newTownName;
         Nodes.towns.set(newTownName, town);
 
-        console.log(newTownName, town);
         // update towns list
-        Nodes.townsList = Nodes._sortTownsNationsResidents();
+        Nodes.townsList = Nodes._sortTownsNations(Nodes.townsSortKey);
 
         // if this was selected town, re-find selected index
         if ( town == Nodes.selectedTown ) {
@@ -1525,6 +1532,17 @@ const Nodes = {
             playerName,
             rank,
         )];
+
+        town.residents = Nodes._sortTownResidents(town);
+
+        // if sort order is by player count, re-sort towns list
+        if ( Nodes.townsSortKey === TownSortKey.PLAYERS ) {
+            Nodes.townsList = Nodes._sortTownsNations(Nodes.townsSortKey);
+            // if this was selected town, re-find selected index
+            if ( town == Nodes.selectedTown ) {
+                Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid == town.uuid);
+            }
+        }
     },
 
     /**
@@ -1554,7 +1572,17 @@ const Nodes = {
         town.residents = [
             ...town.residents.slice(0, playerIndex),
             ...town.residents.slice(playerIndex + 1),
-        ]
+        ];
+        town.residents = Nodes._sortTownResidents(town);
+
+        // if sort order is by player count, re-sort towns list
+        if ( Nodes.townsSortKey === TownSortKey.PLAYERS ) {
+            Nodes.townsList = Nodes._sortTownsNations(Nodes.townsSortKey);
+            // if this was selected town, re-find selected index
+            if ( town == Nodes.selectedTown ) {
+                Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid == town.uuid);
+            }
+        }
 
         // force re-render to update players list
         Nodes.renderEditor();
@@ -1587,6 +1615,15 @@ const Nodes = {
 
         // force re-render modified territories in world map
         Nodes._updateTerritoryElementIds(territoryIds);
+
+        // if sort order is by territory count, re-sort towns list
+        if ( Nodes.townsSortKey === TownSortKey.TERRITORIES ) {
+            Nodes.townsList = Nodes._sortTownsNations(Nodes.townsSortKey);
+            // if this was selected town, re-find selected index
+            if ( town == Nodes.selectedTown ) {
+                Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid == town.uuid);
+            }
+        }
     },
     
     /**
@@ -1629,6 +1666,15 @@ const Nodes = {
         // force re-render modified territories in world map
         const territoryIds = Array.from(territories.keys());
         Nodes._updateTerritoryElementIds(territoryIds);
+
+        // if sort order is by territory count, re-sort towns list
+        if ( Nodes.townsSortKey === TownSortKey.TERRITORIES ) {
+            Nodes.townsList = Nodes._sortTownsNations(Nodes.townsSortKey);
+            // if this was selected town, re-find selected index
+            if ( town == Nodes.selectedTown ) {
+                Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid == town.uuid);
+            }
+        }
     },
 
     /**
@@ -1650,14 +1696,26 @@ const Nodes = {
     },
 
     /**
+     * Update editor towns list sort key and re-render towns list.
+     */
+    setTownSortKey: (sortKey) => {
+        Nodes.townsSortKey = sortKey;
+        Nodes.townsList = Nodes._sortTownsNations(sortKey);
+        // update selected town index
+        if ( Nodes.selectedTown !== undefined ) {
+            Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid === Nodes.selectedTown.uuid);
+        }
+        Nodes.renderEditor();
+    },
+        
+    /**
      * Sort input town data:
      * 1. sort nations by player count (high-to-low)
      * 2. sort towns in each nation by player count (high-to-low)
-     * 3. sort residents in each town by status: leader, officer, rest...
      * 
      * Nation-less towns inserted at end, also sorted by player count.
      */
-    _sortTownsNationsResidents: () => {
+    _sortTownsNations: (sortKey = TownSortKey.TERRITORIES) => {
         let townsList = [];
         
         // store array of:
@@ -1665,33 +1723,53 @@ const Nodes = {
         //    nation: nation,
         //    towns: [town1, town2, ...],
         // }
-        let nationsByPlayers = [];
+        let nationsAndTowns = [];
 
-        // first count # of players in each nation, add property to nation
-        for ( const nation of Nodes.nations.values() ) {
+        // first count # of players and # of territories in each nation
+        // mutate by adding property to nation
+        // TODO: should do this elsewhere i guess...
+        Nodes.nations.forEach((nation, nationName) => {
             let numPlayers = 0;
+            let numTerritories = 0;
             let nationTowns = [];
             for ( const townName of nation.towns ) {
                 const town = Nodes.towns.get(townName);
                 if ( town !== undefined ) {
                     numPlayers += town.residents.length;
+                    numTerritories += town.territories.length;
                     nationTowns.push(town);
                 }
             }
             nation.numPlayers = numPlayers;
+            nation.numTerritories = numTerritories;
 
-            nationsByPlayers.push({
+            nationsAndTowns.push({
+                nationName: nationName,
                 nation: nation,
                 towns: nationTowns,
             });
-        }
+        });
 
-        // sorts from high to low
-        nationsByPlayers.sort((a, b) => b.nation.numPlayers - a.nation.numPlayers);
-        
+        // nation sorting functions, map from enum => function
+        const nationSortFunctions = {
+            [TownSortKey.ALPHABETICAL]: (a, b) => a.nationName.localeCompare(b.nationName),
+            [TownSortKey.PLAYERS]: (a, b) => b.nation.numPlayers - a.nation.numPlayers,
+            [TownSortKey.TERRITORIES]: (a, b) => b.nation.numTerritories - a.nation.numTerritories,
+        };
+
+        // town sorting functions
+        const townSortFunctions = {
+            [TownSortKey.ALPHABETICAL]: (a, b) => a.name.localeCompare(b.name),
+            [TownSortKey.PLAYERS]: (a, b) => b.residents.length - a.residents.length,
+            [TownSortKey.TERRITORIES]: (a, b) => b.territories.length - a.territories.length,
+        };
+
+        // sorts in-place from high to low
+        nationsAndTowns.sort(nationSortFunctions[sortKey]);
+
         // within each nation sort by town player count
-        for ( const nationData of nationsByPlayers ) {
-            nationData.towns.sort((a, b) => b.residents.length - a.residents.length);
+        for ( const nationData of nationsAndTowns ) {
+            nationData.towns.sort(townSortFunctions[sortKey]);
             townsList.push(...nationData.towns);
         }
 
@@ -1703,61 +1781,57 @@ const Nodes = {
             }
         }
 
-        townsWithoutNation.sort((a, b) => b.residents.length - a.residents.length);
+        townsWithoutNation.sort(townSortFunctions[sortKey]);
 
         townsList.push(...townsWithoutNation);
 
-        // for each town, sort residents by status:
-        // [leader, officers, rest...]
-        // replace each resident uuid with a resident object:
-        // {
-        //    uuid: uuid,
-        //    name: name,
-        //    rank: rank,
-        // }
-        for ( const town of townsList ) {
-            // console.log("sorting town", town);
-            const peasants = [];
-            const officers = [];
+        return townsList;
+    },
 
-            for ( const r of town.residents ) {
-                // console.log("res", r);
-                if ( r.uuid === town.leader ) {
-                    // skip leader, will handle at end
-                    continue;
-                }
-                else if ( town.officers?.includes(r.uuid) ) {
-                    officers.push(createNewResident(
-                        r.uuid,
-                        Nodes.residents.get(r.uuid)?.name,
-                        RESIDENT_RANK_OFFICER
-                    ));
-                }
-                else {
-                    peasants.push(createNewResident(
-                        r.uuid,
-                        Nodes.residents.get(r.uuid)?.name,
-                        RESIDENT_RANK_NONE,
-                    ));
-                }
+    /**
+     * Sort a town's residents list order by status: leader, officer, rest...
+     * Returns a new array of sorted residents. Caller must manually
+     * replace the town's residents array with the returned array.
+     */
+    _sortTownResidents: (town) => {
+        const peasants = []; // un-ranked
+        const officers = [];
+
+        for ( const r of town.residents ) {
+            // console.log("res", r);
+            if ( r.uuid === town.leader ) {
+                // skip leader, will handle at end
+                continue;
             }
-
-            const residentsSorted = [];
-            if ( town.leader !== undefined && town.leader !== null ) {
-                residentsSorted.push(
-                    createNewResident(
-                        town.leader,
-                        Nodes.residents.get(town.leader)?.name,
-                        RESIDENT_RANK_LEADER,
-                    ));
+            else if ( town.officers?.includes(r.uuid) ) {
+                officers.push(createNewResident(
+                    r.uuid,
+                    Nodes.residents.get(r.uuid)?.name,
+                    RESIDENT_RANK_OFFICER
+                ));
             }
-            residentsSorted.push(...officers);
-            residentsSorted.push(...peasants);
-
-            town.residents = residentsSorted;
+            else {
+                peasants.push(createNewResident(
+                    r.uuid,
+                    Nodes.residents.get(r.uuid)?.name,
+                    RESIDENT_RANK_NONE,
+                ));
+            }
         }
 
-        return townsList;
+        const residentsSorted = [];
+        if ( town.leader !== undefined && town.leader !== null ) {
+            residentsSorted.push(
+                createNewResident(
+                    town.leader,
+                    Nodes.residents.get(town.leader)?.name,
+                    RESIDENT_RANK_LEADER,
+                ));
+        }
+        residentsSorted.push(...officers);
+        residentsSorted.push(...peasants);
+
+        return residentsSorted;
     },
 
     // =====================================

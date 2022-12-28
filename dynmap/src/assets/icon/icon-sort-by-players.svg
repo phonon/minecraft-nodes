@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="64pt"
+   height="64pt"
+   version="1.1"
+   viewBox="0 0 22.5778 22.5778"
+   id="svg6"
+   sodipodi:docname="icon-sort-by-players.svg"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <defs
+     id="defs10" />
+  <sodipodi:namedview
+     id="namedview8"
+     pagecolor="#ffffff"
+     bordercolor="#999999"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="pt"
+     showgrid="true"
+     inkscape:zoom="6.1733736"
+     inkscape:cx="40.253517"
+     inkscape:cy="58.071975"
+     inkscape:window-width="1920"
+     inkscape:window-height="1051"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg6">
+    <inkscape:grid
+       type="xygrid"
+       id="grid1118"
+       units="pt"
+       spacingx="0.35277811"
+       spacingy="0.35277811"
+       empspacing="4" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata2">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <circle
+     style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.529166"
+     id="path1222"
+     cx="11.288899"
+     cy="7.5816531"
+     r="3.6632328" />
+  <path
+     style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.264584px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 4.2333383,18.69724 c 0,0 -10e-8,-6.328222 2.3518537,-6.328222 h 9.407415 c 2.351854,0 2.351855,6.328222 2.351855,6.328222 z"
+     id="path1417"
+     sodipodi:nodetypes="csscc" />
+</svg>
