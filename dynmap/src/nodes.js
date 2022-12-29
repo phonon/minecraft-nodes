@@ -216,7 +216,7 @@ class NodesNation {
     static defaultProps = Object.freeze({
         uuid: undefined,
         capital: undefined,
-        color: [0, 0, 0],
+        color: [255, 255, 255],
         towns: [],
         allies: [],
         enemies: [],
@@ -1381,7 +1381,7 @@ const Nodes = {
             createTown: Nodes.createTown,
             deleteTown: Nodes.deleteTown,
             setTownName: Nodes.setTownName,
-            setNationName: Nodes.setNationName,
+            setTownNationFromName: Nodes.setTownNationFromName,
             setTownHome: Nodes.setTownHome,
             addTownResident: Nodes.addTownResident,
             removeTownResident: Nodes.removeTownResident,
@@ -1617,8 +1617,28 @@ const Nodes = {
                 Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid === Nodes.selectedTown.uuid);
             }
         }
+        
+        // update town's territories
+        const modifiedTerritoryIds = [];
+        town.territories.forEach(terrId => {
+            const terr = Nodes.territories.get(terrId);
+            if ( terr !== undefined ) {
+                terr.town = undefined;
+            }
+            modifiedTerritoryIds.push(terrId);
+        });
+        town.captured.forEach(terrId => {
+            const terr = Nodes.territories.get(terrId);
+            if ( terr !== undefined ) {
+                terr.occupier = undefined;
+            }
+            modifiedTerritoryIds.push(terrId);
+        });
+        Nodes._updateTerritoryElementIds(modifiedTerritoryIds);
 
-        Nodes.renderEditor()
+        // re-render
+        Nodes.renderEditor();
+        Nodes.renderWorld();
     },
 
     /**
@@ -1671,19 +1691,134 @@ const Nodes = {
             return
         }
 
+        const modifiedTerritoryIds = [];
+
         // parse to make sure newHomeId is an integer
         const newHomeIdInt = parseInt(newHomeId);
         
-        // update town home
+        // update town home. if either home id is >0, need
+        // to re-render that territory on the map
+        if ( town.home > 0 ) {
+            modifiedTerritoryIds.push(town.home);
+        }
+        
         town.home = newHomeIdInt;
+        
+        if ( newHomeIdInt > 0 ) {
+            modifiedTerritoryIds.push(newHomeIdInt);
+        }
+
+        Nodes._updateTerritoryElementIds(modifiedTerritoryIds);
+        Nodes.renderWorld();
     },
 
     /**
-     * Set a town's nation's name. This directly sets on the nation object
-     * and so will change the nation name for all towns.
+     * Set a town's nation's from name. For now, this has multiple effects
+     * depending on current and new nation name 
+     * (TODO: this has too many different internal functionalities, need to
+     * split up in future).
+     * - Old nation name == "" and new name == "":
+     *      Remove town from its nation.
+     * - Old nation name != "" and new name != "":
+     *      Change nation name. This updates nation, but does not move
+     *      any towns in or out of this nation.
+     * - Old nation name == "" and new name != "":
+     *      Add town to new nation. If nation does not exist, create it.
      */
-    setNationName: (nation, newNationName) => {
-        // TODO
+    setTownNationFromName: (town, newNationName) => {
+        if ( town === undefined || town === null ) {
+            console.error("setTownNationFromName: Town undefined, cannot set nation");
+            return;
+        }
+
+        // if new nation name same, ignore
+        if ( town.nation === newNationName ) {
+            return;
+        }
+
+        // current town is in a nation: either remove, or modify nation name
+        if ( town.nation !== undefined ) {
+            // if new nation name is empty string, remove town from nation
+            if ( newNationName === "" ) {
+                const nation = Nodes.nations.get(town.nation);
+                if ( nation !== undefined ) {
+                    nation.capital = nation.capital === town.name ? undefined : nation.capital;
+                    nation.towns = nation.towns.filter(t => t !== town.name);
+                }
+                town.nation = undefined;
+                town.color = town.colorTown;
+                Nodes.townsList = Nodes._sortTownsNations(Nodes.townsSortKey);
+                Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid === town.uuid);
+                Nodes._updateStripePatterns();
+                Nodes._updateTerritoryElementIds([...town.territories, ...town.captured]);
+            }
+            // switch to different nation if it does exist,
+            // or change nation name if new name does not exist,
+            else {
+                const oldNationName = town.nation;
+                let oldNation = Nodes.nations.get(oldNationName);
+                let newNation = Nodes.nations.get(newNationName);
+                // switch town into new nation
+                if ( newNation !== undefined ) {
+                    if ( oldNation !== undefined ) {
+                        oldNation.capital = oldNation.capital === town.name ? undefined : oldNation.capital;
+                        oldNation.towns = oldNation.towns.filter(t => t !== town.name);
+                    }
+                    newNation.towns = [...newNation.towns, town.name];
+
+                    town.nation = newNationName;
+                    town.colorNation = [...newNation.color];
+                    town.color = town.colorNation;
+                }
+                // change nation name
+                else {
+                    if ( oldNation !== undefined ) {
+                        oldNation.towns.forEach(tName => {
+                            const t = Nodes.towns.get(tName);
+                            if ( t !== undefined ) {
+                                t.nation = newNationName;
+                            }
+                        });
+                        Nodes.nations.delete(oldNationName);
+                        Nodes.nations.set(newNationName, oldNation);
+                    }
+                }
+
+                Nodes.townsList = Nodes._sortTownsNations(Nodes.townsSortKey);
+                Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid === town.uuid);
+                Nodes._updateStripePatterns();
+                Nodes._updateTerritoryElementIds([...town.territories, ...town.captured]);
+            }
+
+            Nodes.renderEditor();
+            Nodes.renderWorld();
+        }
+        else {
+            if ( newNationName === "" ) {
+                return; // do nothing
+            }
+            // add town to new nation, if it does not exist create new nation
+            else {
+                let newNation = Nodes.nations.get(newNationName);
+                if ( newNation === undefined ) {
+                    newNation = new NodesNation({});
+                }
+                newNation.towns = [...newNation.towns, town.name];
+                Nodes.nations.set(newNationName, newNation);
+
+                town.nation = newNationName;
+                town.colorNation = [...newNation.color];
+                town.color = town.colorNation;
+
+                Nodes.townsList = Nodes._sortTownsNations(Nodes.townsSortKey);
+                Nodes.selectedTownIndex = Nodes.townsList.findIndex(t => t.uuid === town.uuid);
+                Nodes._updateStripePatterns();
+                Nodes._updateTerritoryElementIds([...town.territories, ...town.captured]);
+
+                Nodes.renderEditor();
+                Nodes.renderWorld();
+            }
+        }
     },
 
     /**

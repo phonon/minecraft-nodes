@@ -222,7 +222,7 @@ export const TownsPane = ({
     createTown,
     deleteTown,
     setTownName,
-    setNationName,
+    setTownNationFromName,
     setTownHome,
     addTownResident,
     removeTownResident,
@@ -351,7 +351,7 @@ export const TownsPane = ({
             <UI.InputEdit
                 className={"nodes-editor-setting-input"}
                 value={selectedTown?.nation ? selectedTown.nation : ""}
-                onChange={(val) => setNationName(selectedTown?.nation, val)}
+                onChange={(val) => setTownNationFromName(selectedTown, val)}
             />
             <ColorSelector
                 enabled={selectedTown !== undefined}

@@ -307,7 +307,7 @@ export const Editor = (props) => {
                         createTown={props.createTown}
                         deleteTown={props.deleteTown}
                         setTownName={props.setTownName}
-                        setNationName={props.setNationName}
+                        setTownNationFromName={props.setTownNationFromName}
                         setTownHome={props.setTownHome}
                         addTownResident={props.addTownResident}
                         removeTownResident={props.removeTownResident}
