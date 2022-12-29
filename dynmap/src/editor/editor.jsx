@@ -297,6 +297,7 @@ export const Editor = (props) => {
                     active={currentTab === PANEL_TOWNS}
                 >
                     <TownsPane
+                        saveTowns={props.saveTowns}
                         towns={props.towns}
                         townsNameList={props.townsNameList}
                         selectedTown={props.selectedTown}

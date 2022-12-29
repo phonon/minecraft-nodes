@@ -1323,6 +1323,7 @@ const Nodes = {
             editorEnabled: editorEnabled,
 
             save: Nodes.save,
+            saveTowns: Nodes.saveTowns,
             load: Nodes.load,
             x: Nodes.chunkX,
             z: Nodes.chunkY,

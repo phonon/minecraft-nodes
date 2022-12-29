@@ -212,6 +212,7 @@ const TownPlayersList = ({
 };
 
 export const TownsPane = ({
+    saveTowns,
     towns,
     townsNameList,
     selectedTownIndex,
@@ -318,7 +319,7 @@ export const TownsPane = ({
                 />
                 <UI.Button
                     className="nodes-editor-nodes-header-btn"
-                    onClick={() => {console.log("TODO: SAVE TOWNS")}}
+                    onClick={saveTowns}
                     icon={IconSave}
                     tooltip={"Download towns.json"}
                 />
