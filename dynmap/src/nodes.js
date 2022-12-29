@@ -28,27 +28,44 @@ import { Port, PortTooltip } from "world/port.jsx";
 import { World, IndexSampler } from "wasm_main";
 
 /**
- * Constructor for required nodes data (needed by editor)
+ * Required format properties for nodes resources.
+ * Note: resources are fully configurable objects (so in future other
+ * libraries can extend definitions in resources). So, the format
+ * is left unfrozen here.
  */
-const createNewNode = (name) => {
-    return {
-        name: name,
+class NodesResource {
+    static defaultProps = Object.freeze({
+        name: undefined,
         icon: null,
         cost: {
             scale: 1.0,
             constant: 0,
         },
         priority: 0,
-    };
-};
+    });
+    
+    constructor(options = {}) {
+        Object.assign(this, NodesResource.defaultProps, options);
+    }
+
+    /**
+     * Return game compatible object for json serialization.
+     * For resources, return everything (allow full customization in 
+     * editor).
+     */
+    export() {
+        return this;
+    }
+}
 
 /**
- * Constructor for new territory.
- * NOTE: actual chunks in territory handled in wasm
+ * Data format for nodes territories.
+ * NOTE: this is a frontend wrapper for drawing, actual chunks data is
+ * stored in territory object handled in wasm.
  */
-const createNewTerritory = (id) => {
-    return {
-        id: id,
+class NodesTerritory {
+    static defaultProps = Object.freeze({
+        id: undefined,
         name: "",                // territory readable name identifier
         core: undefined,         // {x: x, y: y}
         coreChunk: undefined,    // {x: x, y: y}
@@ -65,29 +82,66 @@ const createNewTerritory = (id) => {
 
         // editor internal variables
         selected: false,
-    };
-};
+    });
 
-/**
- * Create resident wrapper object, holds resident uuid and rank
- * For rank format just use pre-defined magic number ints,
- * defined in `Nodes` object.
- */
-const createNewResident = (uuid, name, rank) => {
-    return {
-        uuid: uuid,
-        name: name,
-        rank: rank,
+    constructor(id) {
+        Object.assign(this, NodesTerritory.defaultProps, {
+            id: id,
+        });
+        Object.seal(this);
+    }
+
+    /**
+     * TODO
+     */
+    export() {
+        return this;
     }
 }
 
 /**
- * Create a new blank town object.
+ * Nodes resident object data format, holds resident uuid and rank.
+ * For rank format just use pre-defined magic number ints,
+ * defined in `Nodes` object.
+ * 
+ * Leave this unsealed so that ingame specific properties are retained
+ * and exported.
  */
-const createNewTown = (name, uuid = undefined) => {
-    return {
-        uuid: uuid ?? uuidv4(),
-        name: name,
+class NodesResident {
+    // required properties
+    static defaultProps = Object.freeze({
+        uuid: undefined,
+        name: "Anonymous",
+        prefix: "",
+        suffix: "",
+        town: undefined,
+        nation: undefined,
+        rank: RESIDENT_RANK_NONE,
+    });
+
+    constructor(options = {}) {
+        Object.assign(this, NodesResident.defaultProps, options);
+
+        // if uuid is undefined, generate new random uuid
+        this.uuid = this.uuid ?? uuidv4();
+    }
+
+    /**
+     * Return everything for export. This may contain in-game specific
+     * properties appended to editor required properties.
+     */
+    export() {
+        return this;
+    }
+}
+
+/**
+ * Format for a nodes Town object.
+ */
+class NodesTown {
+    static defaultProps = Object.freeze({
+        uuid: undefined,
+        name: undefined,
         color: [255, 255, 255],
         colorTown: [255, 255, 255],
         colorNation: [255, 255, 255],
@@ -99,6 +153,7 @@ const createNewTown = (name, uuid = undefined) => {
         leader: undefined,
         playerNames: [],
         residents: [],
+        residentUuids: [],
 
         // territories
         territories: [],
@@ -111,27 +166,107 @@ const createNewTown = (name, uuid = undefined) => {
         allies: [],
         enemies: [],
         truce: [],
-        
-        // misc in-game state
-        income: {},
-        incomeEgg: {},
-        claimsBonus: 0,
-        claimsPenalty: [0, 0],
+
+        // nation
+        nation: undefined,
+    });
+
+    constructor(options = {}) {
+        Object.assign(this, NodesTown.defaultProps, options);
+        this.original = options; // store copy of original, for export
+        Object.seal(this);
+
+        // if uuid is undefined, generate new random uuid
+        this.uuid = this.uuid ?? uuidv4();
+    }
+
+    /**
+     * Return in-game plugin compatible town data object.
+     * Returns original object which may contain in-game specific 
+     * properties not used in the editor. Then overwrite original
+     * with exporter editable properties.
+     */
+    export() {
+        return Object.assign({}, this.original, {
+            uuid: this.uuid,
+            color: this.colorTown,
+            open: this.open,
+            leader: this.leader,
+            residents: this.residentUuids,
+            territories: this.territories,
+            annexed: this.annexed,
+            captured: this.captured,
+            home: this.home,
+            spawn: this.spawn,
+            allies: this.allies,
+            enemies: this.enemies,
+            truce: this.truce,
+            income: this.income,
+            incomeEgg: this.incomeEgg,
+            claimsBonus: this.claimsBonus,
+            claimsPenalty: this.claimsPenalty,
+        });
     }
 }
 
 /**
- * Constructor for required nodes data (needed by editor)
+ * Data format for nodes nation objects.
  */
-const createNewPort = (name, group, x, z) => {
-    return {
-        name: name,
-        group: group,
-        groupsString: group.join(", "),
-        x: x,
-        z: z,
-    };
-};
+class NodesNation {
+    static defaultProps = Object.freeze({
+        uuid: undefined,
+        capital: undefined,
+        color: [0, 0, 0],
+        towns: [],
+        allies: [],
+        enemies: [],
+
+        // editor state
+        numPlayers: 0,
+        numTerritories: 0,
+    });
+
+    constructor(options = {}) {
+        Object.assign(this, NodesNation.defaultProps, options);
+        this.original = options;
+        Object.seal(this);
+
+        // if uuid is undefined, generate new random uuid
+        this.uuid = this.uuid ?? uuidv4();
+    }
+
+    /**
+     * Return in-game plugin compatible nation data object.
+     * Return original object overwritten with editor editable
+     * properties.
+     */
+    export() {
+        return Object.assign({}, this.original, {
+            uuid: this.uuid,
+            capital: this.capital,
+            color: this.color,
+            towns: this.towns,
+            allies: this.allies,
+            enemies: this.enemies,   
+        });
+    }
+}
+
+/**
+ * Data format for nodes port objects.
+ */
+class NodesPort {
+    constructor(name, group, x, z) {
+        this.name = name;
+        this.group = group;
+        this.groupsString = group.join(", ");
+        this.x = x;
+        this.z = z;
+
+        Object.seal(this);
+    }
+}
+
 
 // painting event handlers
 const handleWindowMouseUp = (e) => {
@@ -363,7 +498,7 @@ const Nodes = {
     },
 
     // default string for an empty node, used by nodes ui panel as placeholder
-    defaultNodeString: JSON.stringify(Object.assign(createNewNode("null"), {
+    defaultNodeString: JSON.stringify(Object.assign(new NodesResource({ name: "null" }), {
         income: {},
         ore: {},
         crops: {},
@@ -753,7 +888,7 @@ const Nodes = {
             if ( data.nodes !== undefined ) {
                 Object.keys(data.nodes).forEach(name => {
                     // create new node, assign keys saved
-                    const node = Object.assign(createNewNode(name), data.nodes[name]);
+                    const node = Object.assign(new NodesResource({ name }), data.nodes[name]);
 
                     Nodes.nodes.set(name, node);
                     Nodes.nodesNameList.push(name);
@@ -786,7 +921,7 @@ const Nodes = {
                     }
 
                     const terr = data.territories[idKey];
-                    const newTerritory = createNewTerritory(id);
+                    const newTerritory = new NodesTerritory(id);
                     Nodes.territories.set(id, newTerritory);
                     Nodes.territoryIdToIndex.set(id, startIndex + index);
 
@@ -838,66 +973,75 @@ const Nodes = {
             Nodes._clearTowns();
             
             // parse residents
-            Object.keys(data.residents).forEach(uuid => {
-                Nodes.residents.set(uuid, data.residents[uuid]);
-            });
+            if ( data.residents !== undefined && data.residents !== null ) {
+                Object.keys(data.residents).forEach(uuid => {
+                    Nodes.residents.set(uuid, data.residents[uuid]);
+                });
+            }
 
             // parse towns
-            Object.keys(data.towns).forEach(name => {
-                const town = data.towns[name];
-                town.name = name;
+            if ( data.towns !== undefined && data.towns !== null ) {
+                Object.keys(data.towns).forEach(name => {
+                    const town = new NodesTown({
+                        name: name,
+                        ...data.towns[name],
+                    });
 
-                // map each resident UUID into a resident object
-                // if resident does not exist, create a new "Anonymous" resident
-                town.residents = town.residents.map(uuid => {
-                    return createNewResident(
-                        uuid,
-                        Nodes.residents.get(uuid)?.name ?? "Anonymous",
-                        RESIDENT_RANK_NONE,    
-                    );
-                })
-                
-                // pre-computed list of each resident's name
-                town.playerNames = town.residents.map(r => {
-                    return r.name; 
+                    // map each resident UUID into a resident object
+                    // if resident does not exist, create a new "Anonymous" resident
+                    town.residents = town.residents.map(uuid => {
+                        return new NodesResident({
+                            uuid: uuid,
+                            name: Nodes.residents.get(uuid)?.name ?? "Anonymous",
+                            rank: RESIDENT_RANK_NONE,    
+                        });
+                    })
+                    town.residentUuids = town.residents.map(r => r.uuid);
+                    
+                    // pre-computed list of each resident's name
+                    town.playerNames = town.residents.map(r => {
+                        return r.name; 
+                    });
+
+                    Nodes.towns.set(name, town);
+
+                    // make links claims -> town
+                    town.territories.forEach(id => {
+                        if ( Nodes.territories.has(id) ) {
+                            Nodes.territories.get(id).town = town;
+                        }
+                    });
+
+                    // make links occupied territory -> town
+                    town.captured.forEach(id => {
+                        if ( Nodes.territories.has(id) ) {
+                            Nodes.territories.get(id).occupier = town;
+                        }
+                    });
+
+                    // save specific town color and nation color
+                    town.colorTown = town.color;
+                    town.colorNation = town.color;
                 });
-
-                Nodes.towns.set(name, town);
-
-                // make links claims -> town
-                town.territories.forEach(id => {
-                    if ( Nodes.territories.has(id) ) {
-                        Nodes.territories.get(id).town = town;
-                    }
-                });
-
-                // make links occupied territory -> town
-                town.captured.forEach(id => {
-                    if ( Nodes.territories.has(id) ) {
-                        Nodes.territories.get(id).occupier = town;
-                    }
-                });
-
-                // save specific town color and nation color
-                town.colorTown = town.color;
-                town.colorNation = town.color;
-            });
+            }
 
             // parse nations
-            Object.keys(data.nations).forEach(name => {
-                const nation = data.nations[name];
-                Nodes.nations.set(name, nation);
-
-                // link towns to nation
-                nation.towns.forEach(t => {
-                    if ( Nodes.towns.has(t) ) {
-                        const town = Nodes.towns.get(t);
-                        town.nation = name;
-                        town.color = nation.color;
-                        town.colorNation = nation.color;
-                    }
+            if ( data.nations !== undefined && data.nations !== null ) {
+                Object.keys(data.nations).forEach(name => {
+                    const nation = new NodesNation(data.nations[name]);
+                    Nodes.nations.set(name, nation);
+    
+                    // link towns to nation
+                    nation.towns.forEach(t => {
+                        if ( Nodes.towns.has(t) ) {
+                            const town = Nodes.towns.get(t);
+                            town.nation = name;
+                            town.color = nation.color;
+                            town.colorNation = nation.color;
+                        }
+                    });
                 });
-            });
+            }
 
             // sort towns and residents
             Nodes.townsList = Nodes._sortTownsNations(Nodes.townsSortKey);
@@ -932,7 +1076,7 @@ const Nodes = {
                 if ( !portData.hasOwnProperty("groups") || !portData.hasOwnProperty("x") || !portData.hasOwnProperty("z") ) {
                     continue;
                 }
-                const port = createNewPort(name, portData.groups, portData.x, portData.z);
+                const port = new NodesPort(name, portData.groups, portData.x, portData.z);
                 Nodes.ports.set(name, port);
             }
 
@@ -991,6 +1135,43 @@ const Nodes = {
         };
         let blob = new Blob([JSON.stringify(world)], {type: "application/json"});
         saveAs(blob, "world.json");
+    },
+
+    /**
+     * Serialize and save towns data into a json file.
+     */
+    saveTowns: () => {
+        // serialize residents
+        let residents = {};
+        Nodes.residents.forEach((r, name) => {
+            residents[name] = r;
+        });
+
+        // serialize towns
+        let towns = {};
+        Nodes.towns.forEach((t, name) => {
+            towns[name] = t.export();
+        });
+
+        // serialize nations
+        let nations = {};
+        Nodes.nations.forEach((n, name) => {
+            nations[name] = n;
+        });
+
+        let townsJson = {
+            meta: {
+                type: "towns"
+            },
+            residents: residents,
+            towns: towns,
+            nations: nations,
+        };
+
+        console.log(townsJson);
+
+        let blob = new Blob([JSON.stringify(townsJson, null, 2)], {type: "application/json"});
+        saveAs(blob, "towns.json");
     },
 
     // ============================================
@@ -1394,9 +1575,9 @@ const Nodes = {
             }
         }
 
-        const town = createNewTown(
-            name = newTownName,
-        );
+        const town = new NodesTown({
+            name: newTownName,
+        });
         
         // set town in storage and update towns list
         Nodes.towns.set(newTownName, town);
@@ -1532,13 +1713,14 @@ const Nodes = {
         // todo: resolve by mineman auth lookup? https://wiki.vg/Mojang_API
         let playerUuid = Nodes.residents.get(playerName)?.uuid ?? uuidv4();
 
-        town.residents = [...town.residents, createNewResident(
-            playerUuid,
-            playerName,
-            rank,
-        )];
+        town.residents = [...town.residents, new NodesResident({
+            uuid: playerUuid,
+            name: playerName,
+            rank: rank,
+        })];
 
         town.residents = Nodes._sortTownResidents(town);
+        town.residentUuids = town.residents.map(r => r.uuid);
 
         // if sort order is by player count, re-sort towns list
         if ( Nodes.townsSortKey === TownSortKey.PLAYERS ) {
@@ -2076,29 +2258,28 @@ const Nodes = {
                 continue;
             }
             else if ( town.officers?.includes(r.uuid) ) {
-                officers.push(createNewResident(
-                    r.uuid,
-                    Nodes.residents.get(r.uuid)?.name,
-                    RESIDENT_RANK_OFFICER
-                ));
+                officers.push(new NodesResident({
+                    uuid: r.uuid,
+                    name: Nodes.residents.get(r.uuid)?.name,
+                    rank: RESIDENT_RANK_OFFICER
+                }));
             }
             else {
-                peasants.push(createNewResident(
-                    r.uuid,
-                    Nodes.residents.get(r.uuid)?.name,
-                    RESIDENT_RANK_NONE,
-                ));
+                peasants.push(new NodesResident({
+                    uuid: r.uuid,
+                    name: Nodes.residents.get(r.uuid)?.name,
+                    rank: RESIDENT_RANK_NONE,
+                }));
             }
         }
 
         const residentsSorted = [];
         if ( town.leader !== undefined && town.leader !== null ) {
-            residentsSorted.push(
-                createNewResident(
-                    town.leader,
-                    Nodes.residents.get(town.leader)?.name,
-                    RESIDENT_RANK_LEADER,
-                ));
+            residentsSorted.push(new NodesResident({
+                uuid: town.leader,
+                name: Nodes.residents.get(town.leader)?.name,
+                rank: RESIDENT_RANK_LEADER,
+            }));
         }
         residentsSorted.push(...officers);
         residentsSorted.push(...peasants);
@@ -2194,7 +2375,7 @@ const Nodes = {
     // =====================================
     _setDefaultNodeProperties: (data) => {
         Nodes.defaultNodeProperties = data;
-        Nodes.defaultNodeString = JSON.stringify(Object.assign(createNewNode("null"), Nodes.defaultNodeProperties), null, 3);
+        Nodes.defaultNodeString = JSON.stringify(Object.assign(new NodesResource({ name: "null" }), Nodes.defaultNodeProperties), null, 3);
         Nodes.renderEditor();
     },
 
@@ -2213,7 +2394,7 @@ const Nodes = {
             return;
         }
         
-        const newNode = Object.assign(createNewNode(newName), Nodes.defaultNodeProperties);
+        const newNode = Object.assign(new NodesResource({ name: newName }), Nodes.defaultNodeProperties);
         Nodes.nodes.set(newName, newNode);
         Nodes.nodesNameList = Array.from(Nodes.nodes.keys());
         Nodes.renderEditor();
@@ -2330,7 +2511,7 @@ const Nodes = {
         const id = Nodes.wasmWorld.createTerritory();
 
         // js side territory
-        const newTerritory = createNewTerritory(id);
+        const newTerritory = new NodesTerritory(id);
 
         // if id already exists, just map id -> new territory
         if ( Nodes.territories.has(id) ) {
@@ -2482,7 +2663,7 @@ const Nodes = {
 
         newIds.forEach(id => {
             // js side territory
-            const newTerritory = createNewTerritory(id);
+            const newTerritory = new NodesTerritory(id);
             if ( copyName ) {
                 newTerritory.name = oldName;
             }
