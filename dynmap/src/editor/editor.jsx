@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from "react";
 
 import "ui/css/nodes-scrollbar.css";
 import "editor/css/editor.css";
+import * as UI from "ui/ui.jsx";
 import { GenerationPane } from "editor/panes/generation-pane.jsx";
 import { NodesPane } from "editor/panes/nodes-pane.jsx";
 import { OptionsPane } from "editor/panes/options-pane.jsx";
@@ -83,6 +84,30 @@ export const Editor = (props) => {
 
     const [currentTab, setCurrentTab] = useState(PANEL_TOWNS);
     
+    // color picker usage state
+    const [colorPickerEnabled, setColorPickerEnabled] = useState(false);
+    const [colorPickerColor, setColorPickerColor] = useState("#ff0000");
+    const [colorPickerTop, setColorPickerTop] = useState(100);
+    const [colorPickerLeft, setColorPickerLeft] = useState(100);
+    const [colorPickerOnChange, setColorPickerOnChange] = useState(() => (col) => console.log("Color picker onChange:", col));
+    const [colorPickerOnExit, setColorPickerOnExit] = useState(() => (col) => console.log("Color picker onExit:", col));
+
+    const setColorPicker = (
+        enabled,
+        color,
+        top,
+        left,
+        onChange,
+        onExit,
+    ) => {
+        setColorPickerEnabled(enabled);
+        setColorPickerColor(color);
+        setColorPickerTop(top);
+        setColorPickerLeft(left);
+        setColorPickerOnChange(() => onChange);
+        setColorPickerOnExit(() => onExit);
+    }
+
     useEffect(() => {
         // if editor pane is nodes editor, enable territory resource nodes editing
         if ( currentTab === PANEL_NODES ) {
@@ -122,6 +147,7 @@ export const Editor = (props) => {
     };
 
     return (
+        <>
         <div id="nodes-editor">
             <input ref={fileUploader} id="nodes-file-uploader" type="file" name="file" onChange={(e) => {handleFile(e)}}/>
             
@@ -289,6 +315,9 @@ export const Editor = (props) => {
                         removeSelectedTownSelectedTerritories={props.removeSelectedTownSelectedTerritories}
                         removeSelectedTerritoriesOwned={props.removeSelectedTerritoriesOwned}
                         removeSelectedTerritoriesCaptured={props.removeSelectedTerritoriesCaptured}
+                        setSelectedTownColor={props.setSelectedTownColor}
+                        setSelectedTownNationColor={props.setSelectedTownNationColor}
+                        setColorPicker={setColorPicker}
                     />
                 </EditorPane>
 
@@ -306,6 +335,19 @@ export const Editor = (props) => {
                 }
             </div>
         </div>
+        
+        {/* Re-used color picker for all color selection */}
+        { colorPickerEnabled ?
+        <UI.ColorPicker
+            enabled={colorPickerEnabled}
+            color={colorPickerColor}
+            top={colorPickerTop}
+            left={colorPickerLeft}
+            onChange={colorPickerOnChange}
+            onExit={colorPickerOnExit}
+        /> : (null)
+        }
+        </>
     );
 }
 

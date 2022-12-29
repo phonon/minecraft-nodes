@@ -4,12 +4,11 @@
 
 "use strict";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 import {
     TownSortKey, RESIDENT_RANK_NONE, RESIDENT_RANK_OFFICER, RESIDENT_RANK_LEADER,
 } from "constants.js";
-import Nodes from "nodes.js";
 import * as UI from "ui/ui.jsx";
 
 import IconDelete from "assets/icon/icon-x.svg";
@@ -31,7 +30,11 @@ import "editor/css/panes/towns-pane.css";     // re-use nodes panel css for node
 import "editor/css/panes/territory-pane.css";
 
 const ColorSelector = ({
+    enabled,
     color, // array of rgb [r, g, b]
+    setLocalColor, // updates local color selector state, but not real color
+    setColor,      // updates real target Object color, only color picker closes because high cost
+    setColorPicker,
 }) => {
     let colorRgbStr = undefined;
     if ( color !== undefined ) {
@@ -42,8 +45,43 @@ const ColorSelector = ({
         backgroundColor: colorRgbStr,
     };
 
+    const handleCloseColorPicker = (col) => {
+        // update real color
+        setColor([col.r, col.g, col.b]);
+        // close on screen color picker
+        setColorPicker(
+            false,
+            color,
+            0,
+            0,
+            (col) => console.log("ColorPicker.onChange", col),
+            (col) => console.log("ColorPicker.onExit", col),
+        );
+    };
+
+    // if not enabled, dont allow opening color picker
+    let handleOpenColorPicker;
+    if ( enabled ) {
+        handleOpenColorPicker = (event) => {
+            setColorPicker(
+                true,
+                color,
+                event.clientY - 50,
+                event.clientX + 10,
+                (col) => setLocalColor([col.r, col.g, col.b]),
+                handleCloseColorPicker,
+            );
+        };
+    } else {
+        handleOpenColorPicker = null;
+    }
+
     return (
-        <div className="nodes-editor-town-list-color" style={colorStyle}/>
+        <div
+            className="nodes-editor-town-list-color"
+            style={colorStyle}
+            onClick={handleOpenColorPicker}
+        />
     );
 };
 
@@ -192,10 +230,27 @@ export const TownsPane = ({
     removeSelectedTownSelectedTerritories,
     removeSelectedTerritoriesOwned,
     removeSelectedTerritoriesCaptured,
+    setSelectedTownColor,
+    setSelectedTownNationColor,
+    setColorPicker,
 }) => {
     // local state
     const [inputNewPlayerName, setInputNewPlayerName] = useState("");
+    // local town, nation colors
+    const [localTownColor, setLocalTownColor] = useState([0, 0, 0]);
+    const [localNationColor, setLocalNationColor] = useState([0, 0, 0]);
 
+    // handler for setting local town, nation color from selected town
+    useEffect(() => {
+        if ( selectedTown !== undefined ) {
+            setLocalTownColor(selectedTown.colorTown);
+            setLocalNationColor(selectedTown.colorNation);
+        } else {
+            setLocalTownColor([0, 0, 0]);
+            setLocalNationColor([0, 0, 0]);
+        }
+    }, [selectedTown]);
+    
     // onclick handler for input ui for adding new player to town
     const handleAddPlayerToTown = () => {
         if ( selectedTown !== undefined && inputNewPlayerName !== "" ) {
@@ -214,7 +269,7 @@ export const TownsPane = ({
             selectTown={selectTown}
             deleteTown={deleteTown}
         />
-    , [towns, selectedTown]);
+    , [towns, selectedTown, selectedTown?.nation, selectedTown?.color]);
 
     // selected town info
     const selectedTownTerritories = selectedTown ? `(${selectedTown.territories.length} Territories)` : "";
@@ -280,7 +335,13 @@ export const TownsPane = ({
                 value={selectedTown ? selectedTown.name : ""}
                 onChange={(val) => setTownName(selectedTown, val)}
             />
-            <ColorSelector color={selectedTownColorTown}/>
+            <ColorSelector
+                enabled={selectedTown !== undefined}
+                color={localTownColor}
+                setColor={setSelectedTownColor}
+                setLocalColor={setLocalTownColor}
+                setColorPicker={setColorPicker}
+            />
         </div>
 
         {/* Nation name edit: for now, this will edit ALL nation naes */}
@@ -291,7 +352,13 @@ export const TownsPane = ({
                 value={selectedTown?.nation ? selectedTown.nation : ""}
                 onChange={(val) => setNationName(selectedTown?.nation, val)}
             />
-            <ColorSelector color={selectedTownColorNation}/>
+            <ColorSelector
+                enabled={selectedTown !== undefined}
+                color={localNationColor}
+                setColor={setSelectedTownNationColor}
+                setLocalColor={setLocalNationColor}
+                setColorPicker={setColorPicker}
+            />
         </div>
 
         {/* Town home territory id edit */}

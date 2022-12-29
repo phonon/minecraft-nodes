@@ -1,0 +1,108 @@
+/**
+ * color-picker.css
+ * --------------------------------------------------
+ * CSS for component color-picker.jsx
+ * based on https://github.com/casesandberg/react-color
+ */
+
+.nodes-colorpicker {
+    position: fixed;
+    width: 160px;
+    padding: 4px;
+    background-color: #333;
+    z-index: 9001;
+}
+
+/**
+ * Saturation selector
+ */
+.nodes-colorpicker-saturation {
+    width: 160px;
+    height: 120px;
+    background: hsl(0, 100%, 50%);
+    overflow: hidden;
+}
+
+.nodes-colorpicker-saturation-white {
+    position: relative;
+    width: 160px;
+    height: 120px;
+    background: linear-gradient(to right, #fff, rgba(255,255,255,0));
+}
+
+.nodes-colorpicker-saturation-black {
+  width: 160px;
+  height: 120px;
+  background: linear-gradient(to top, #000, rgba(0,0,0,0));
+}
+
+.nodes-colorpicker-saturation-pointer {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    top: 50%; /*`${ -(this.props.hsv.v * 100) + 100 }%`, */
+    left: 50%; /* `${ this.props.hsv.s * 100 }%`, */
+    cursor: default;
+    transform: translate(-3px, -3px);
+}
+
+.nodes-colorpicker-saturation-pointer-circle {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    cursor: hand;
+    border: 1px solid #fff;
+    box-shadow: 0 0 2px 1px #666
+}
+
+/**
+ * Hue slider
+ */
+.nodes-colorpicker-hue {
+    position: relative;
+    width: 160px;
+    height: 12px;
+    margin: 4px 0;
+    background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0
+        33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+    overflow: hidden;
+}
+
+.nodes-colorpicker-hue-pointer {
+    position: absolute;
+    left: 50%;
+}
+
+.nodes-colorpicker-hue-pointer-slider {
+    width: 4px;
+    height: 8px;
+    margin-top: 2px;
+    box-shadow: 0 0 4px rgba(0, 0, 0, .6);
+    background: #fff;
+    transform: translateX(-2px);
+}
+
+/**
+ * Input fields
+ */
+.nodes-colorpicker-fields {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.nodes-colorpicker-fields-hex {
+    width: 58px;
+    padding: 0 2px;
+}
+.nodes-colorpicker-fields-tone {
+    width: 26px;
+    padding: 0 2px;
+}
+.nodes-colorpicker-fields-labels {
+    padding-top: 2px;
+    text-align: center;
+    color: #999;
+    font-size: 10px;
+    user-select: none;
+}

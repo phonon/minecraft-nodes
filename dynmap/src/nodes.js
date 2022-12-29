@@ -1208,6 +1208,8 @@ const Nodes = {
             removeSelectedTownSelectedTerritories: Nodes.removeSelectedTownSelectedTerritories,
             removeSelectedTerritoriesOwned: Nodes.removeSelectedTerritoriesOwned,
             removeSelectedTerritoriesCaptured: Nodes.removeSelectedTerritoriesCaptured,
+            setSelectedTownColor: Nodes.setSelectedTownColor,
+            setSelectedTownNationColor: Nodes.setSelectedTownNationColor,
         };
 
         Nodes.editorContainerRoot?.render(<Editor {...props}/>);
@@ -1870,6 +1872,112 @@ const Nodes = {
      */
     removeSelectedTerritoriesCaptured: () => {
         Nodes.removeTerritoriesCaptured(Nodes.selectedTerritories);
+    },
+
+    /**
+     * Set a town's color. Color input is array in format [r, g, b].
+     * Update town color and re-render all of town's territory colors.
+     * If town input is undefined, print error and do nothing.
+     */
+    setTownColor: (town, color) => {
+        if ( town === undefined || town === null ) {
+            console.error("setTownColor: town is undefined");
+            return;
+        }
+
+        if ( color === undefined || color === null ) {
+            console.error("setTownColor: color is undefined");
+            return;
+        }
+
+        // town's color
+        town.colorTown = color;
+
+        // only need to re-render if actually using town's color.
+        // if town is part of a nation, nation color is used instead,
+        // so no re-render needed
+        if ( town.nation === undefined ) {
+            town.color = color;
+
+            Nodes._updateStripePatterns();
+            Nodes._updateTerritoryElementIds([].concat(town.territories, town.captured));
+    
+            Nodes.renderEditor();
+            Nodes.renderWorld();
+        }
+    },
+
+    /**
+     * Wrapper to set the currently selected town's color. Color input
+     * is array in format [r, g, b]. If no town selected, print error
+     * and do nothing.
+     */
+    setSelectedTownColor: (color) => {
+        if ( Nodes.selectedTown === undefined || Nodes.selectedTown === null ) {
+            console.error("setSelectedTownColor: no town selected");
+            return;
+        }
+
+        Nodes.setTownColor(Nodes.selectedTown, color);
+    },
+
+    /**
+     * Set a nation's color. Color input is array in format [r, g, b].
+     * Must update a nation and update all colors for town's within nation
+     * (which share the same color on the territory map).
+     * If nation or color undefined, print error and do nothing.
+     */
+    setNationColor: (nation, color) => {
+        if ( nation === undefined || nation === null ) {
+            console.error("setNationColor: nation is undefined");
+            return;
+        }
+
+        if ( color === undefined || color === null ) {
+            console.error("setNationColor: color is undefined");
+            return;
+        }
+
+        nation.color = color;
+
+        // town territories that need to be updated
+        const territoriesChangedIds = [];
+
+        nation.towns
+            .map(townId => Nodes.towns.get(townId))
+            .forEach(town => {
+                if ( town !== undefined ) {
+                    town.colorNation = color;
+                    town.color = color;
+                    territoriesChangedIds.push(...town.territories, ...town.captured);
+                }
+            });
+        
+        Nodes._updateStripePatterns();
+        Nodes._updateTerritoryElementIds(territoriesChangedIds);
+
+        Nodes.renderEditor();
+        Nodes.renderWorld();
+    },
+
+    /**
+     * Wrapper to set the currently selected town's nation color. Color
+     * input is array in format [r, g, b]. If no town selected, print
+     * error and do nothing.
+     */
+    setSelectedTownNationColor: (color) => {
+        if ( Nodes.selectedTown === undefined ) {
+            console.error("setSelectedTownColor: no town selected");
+            return;
+        }
+
+        const nation = Nodes.nations.get(Nodes.selectedTown.nation);
+        if ( nation === undefined ) {
+            console.error("setSelectedTownColor: town has no nation");
+            return;
+        }
+
+        Nodes.setNationColor(nation, color);
     },
 
     /**
