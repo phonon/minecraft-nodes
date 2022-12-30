@@ -20,3 +20,7 @@ wasm-pack.log
 
 # backup files
 *.bak
+
+# ignore specific test files
+test/nodes/towns_ww2.json
+test/nodes/world_ww2.json

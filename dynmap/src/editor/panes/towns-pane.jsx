@@ -16,6 +16,7 @@ import IconDeleteThin from "assets/icon/icon-x-thin.svg";
 import IconDeleteAll from "assets/icon/icon-terr-remove-all-owner.svg";
 import IconRemoveCapture from "assets/icon/icon-terr-remove-capture.svg";
 import IconPlus from "assets/icon/icon-plus.svg";
+import IconSetTownHome from "assets/icon/icon-terr-set-home.svg";
 import IconTerritoryCapture from "assets/icon/icon-terr-capture.svg";
 import IconPlayerLeader from "assets/icon/icon-player-leader.svg";
 import IconPlayerOfficer from "assets/icon/icon-player-officer.svg";
@@ -226,6 +227,7 @@ export const TownsPane = ({
     setTownHome,
     addTownResident,
     removeTownResident,
+    setSelectedTownHomeToSelectedTerritory,
     addSelectedTownSelectedTerritories,
     addSelectedTownSelectedTerritoriesAsCaptured,
     removeSelectedTownSelectedTerritories,
@@ -377,6 +379,12 @@ export const TownsPane = ({
         
         <div id="nodes-editor-terr-toolbar">
             <div id="nodes-editor-terr-toolbar-g1">
+                <UI.Button
+                    className="nodes-editor-terr-tool-btn"
+                    onClick={setSelectedTownHomeToSelectedTerritory}
+                    icon={IconSetTownHome}
+                    tooltip={"Set town home to selected territory"}
+                />
                 <UI.Button
                     className="nodes-editor-terr-tool-btn"
                     onClick={addSelectedTownSelectedTerritoriesAsCaptured}

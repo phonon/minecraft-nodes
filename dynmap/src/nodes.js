@@ -1385,6 +1385,7 @@ const Nodes = {
             setTownHome: Nodes.setTownHome,
             addTownResident: Nodes.addTownResident,
             removeTownResident: Nodes.removeTownResident,
+            setSelectedTownHomeToSelectedTerritory: Nodes.setSelectedTownHomeToSelectedTerritory,
             addSelectedTownSelectedTerritories: Nodes.addSelectedTownSelectedTerritories,
             addSelectedTownSelectedTerritoriesAsCaptured: Nodes.addSelectedTownSelectedTerritoriesAsCaptured,
             removeSelectedTownSelectedTerritories: Nodes.removeSelectedTownSelectedTerritories,
@@ -1688,7 +1689,7 @@ const Nodes = {
      */
     setTownHome: (town, newHomeId) => {
         if ( town === undefined || town === null ) {
-            return
+            return;
         }
 
         const modifiedTerritoryIds = [];
@@ -1696,6 +1697,12 @@ const Nodes = {
         // parse to make sure newHomeId is an integer
         const newHomeIdInt = parseInt(newHomeId);
         
+        // make sure new home is within town's territories
+        if ( !town.territories.includes(newHomeIdInt) ) {
+            console.error(`Cannot set town ${town.name} home to ${newHomeIdInt} because it is not a territory in the town.`);
+            return;
+        }
+
         // update town home. if either home id is >0, need
         // to re-render that territory on the map
         if ( town.home > 0 ) {
@@ -1710,6 +1717,22 @@ const Nodes = {
 
         Nodes._updateTerritoryElementIds(modifiedTerritoryIds);
         Nodes.renderWorld();
+    },
+
+    /**
+     * Wrapper to set selected town's home to first selected territory.
+     */
+    setSelectedTownHomeToSelectedTerritory: () => {
+        if ( Nodes.selectedTown === undefined || Nodes.selectedTown === null ) {
+            console.error(`setSelectedTownHomeToSelectedTerritory: No selected town.`)
+            return;
+        }
+        if ( Nodes.selectedTerritory === undefined || Nodes.selectedTerritory === null ) {
+            console.error(`setSelectedTownHomeToSelectedTerritory: No selected territory.`)
+            return;
+        }
+
+        Nodes.setTownHome(Nodes.selectedTown, Nodes.selectedTerritory.id);
     },
 
     /**
@@ -1929,12 +1952,16 @@ const Nodes = {
 
         // for each territory, add link to town
         territories.forEach((terr, _terrId) => {
+            // remove from previous town first
+            if ( terr.town !== undefined ) {
+                terr.town.territories = terr.town.territories.filter(t => t !== terr.uuid);
+            }
             terr.town = town;
         });
 
-        // add territories to town
+        // add territories to town: use a set to remove duplicates
         const territoryIds = Array.from(territories.keys());
-        town.territories = [...town.territories, ...territoryIds];
+        town.territories = [...new Set([...town.territories, ...territoryIds])];
 
         // force re-render modified territories in world map
         Nodes._updateTerritoryElementIds(territoryIds);
@@ -1977,8 +2004,8 @@ const Nodes = {
             }
         });
 
-        // add territories to town's captured territories
-        town.captured = [...town.captured, ...validTerritoryIds];
+        // add territories to town's captured territories (use set to dedup)
+        town.captured = [...new Set([...town.captured, ...validTerritoryIds])];
 
         // update stripe patterns
         Nodes._updateStripePatterns();
@@ -3385,8 +3412,8 @@ const Nodes = {
      */
      _createTownNameTagJsx: (town) => {
         let territory = Nodes.territories.get(town.home);
-        if ( territory === null ) {
-            console.error(`Town ${town.name} has no home territory?`);
+        if ( territory === undefined || territory === null ) {
+            // console.error(`Town ${town.name} has no home territory?`); // avoid console spam
             return null;
         }
 
@@ -3453,8 +3480,8 @@ const Nodes = {
      */
      _createTownCapitalJsx: (town) => {
         let territory = Nodes.territories.get(town.home);
-        if ( territory === null ) {
-            console.error(`Town ${town.name} has no home territory?`);
+        if ( territory === undefined || territory === null ) {
+            // console.error(`Town ${town.name} has no home territory?`); // avoid console spam
             return null;
         }
 

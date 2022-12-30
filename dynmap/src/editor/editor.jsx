@@ -311,6 +311,7 @@ export const Editor = (props) => {
                         setTownHome={props.setTownHome}
                         addTownResident={props.addTownResident}
                         removeTownResident={props.removeTownResident}
+                        setSelectedTownHomeToSelectedTerritory={props.setSelectedTownHomeToSelectedTerritory}
                         addSelectedTownSelectedTerritories={props.addSelectedTownSelectedTerritories}
                         addSelectedTownSelectedTerritoriesAsCaptured={props.addSelectedTownSelectedTerritoriesAsCaptured}
                         removeSelectedTownSelectedTerritories={props.removeSelectedTownSelectedTerritories}
