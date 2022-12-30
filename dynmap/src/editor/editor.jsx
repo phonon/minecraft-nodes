@@ -82,7 +82,7 @@ function EditorHeaderButton(props) {
 
 export const Editor = (props) => {
 
-    const [currentTab, setCurrentTab] = useState(PANEL_TOWNS);
+    const [currentTab, setCurrentTab] = useState(PANEL_WORLD);
     
     // color picker usage state
     const [colorPickerEnabled, setColorPickerEnabled] = useState(false);

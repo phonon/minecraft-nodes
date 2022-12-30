@@ -642,6 +642,15 @@ const Nodes = {
         if ( options.uploadEnabled !== undefined && options.uploadEnabled === false ) {
             uploadEnabled = false;
         }
+        
+        // territory render options
+        Nodes.renderTerritoryIcons = options.renderTerritoryIcons ?? Nodes.renderTerritoryIcons;     
+        Nodes.renderTerritoryId = options.renderTerritoryId ?? Nodes.renderTerritoryId;       
+        Nodes.renderTerritoryCost = options.renderTerritoryCost ?? Nodes.renderTerritoryCost;     
+        Nodes.renderTerritoryOpaque = options.renderTerritoryOpaque ?? Nodes.renderTerritoryOpaque;   
+        Nodes.renderTerritoryNoBorders = options.renderTerritoryNoBorders ?? Nodes.renderTerritoryNoBorders;
+        Nodes.renderTerritoryCapitals = options.renderTerritoryCapitals ?? Nodes.renderTerritoryCapitals; 
+        Nodes.renderTerritoryColors = options.renderTerritoryColors ?? Nodes.renderTerritoryColors;   
 
         let dynmap = options.dynmap;
         Nodes.renderEditor();
