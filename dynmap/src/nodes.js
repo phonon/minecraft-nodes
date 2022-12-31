@@ -1165,7 +1165,7 @@ const Nodes = {
         // serialize nations
         let nations = {};
         Nodes.nations.forEach((n, name) => {
-            nations[name] = n;
+            nations[name] = n.export();
         });
 
         let townsJson = {
