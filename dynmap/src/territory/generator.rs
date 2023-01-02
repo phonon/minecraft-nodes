@@ -102,8 +102,8 @@ impl CellDiagram {
         // for detecting if points on border of voronoi diagram range
         const EPS: f64 = 1e-6;
 
-        let centroids: Vec<Point2D> = voronoi.cells.iter()
-            .map(|cell| centroid_from_points(&cell))
+        let centroids: Vec<Point2D> = voronoi.cells().iter()
+            .map(|cell| centroid_from_points(&cell.points()))
             .map(|p| Point2D::new(p.x, p.y))
             .collect();
         let mut corners: Vec<Corner> = Vec::new();      // all corner points (accessed by index lookup)
@@ -111,9 +111,9 @@ impl CellDiagram {
         let mut neighbors: Vec<Vec<usize>> = Vec::new(); // neighbor centers to a corner (all centers that share this corner)
         let mut cells: Vec<Vec<usize>> = Vec::new();     // cells containing corner point indices in counter clockwise order
 
-        for (i, cell) in voronoi.cells.iter().enumerate() {
+        for (i, cell) in voronoi.cells().iter().enumerate() {
             let mut cell_indices: Vec<usize> = Vec::new();
-            for p in cell.iter() {
+            for p in cell.points().iter() {
                 let p2 = Point2D::new(p.x, p.y);
                 if corner_to_index.contains_key(&p2) {
                     let index = *corner_to_index.get(&p2).unwrap();
@@ -349,7 +349,7 @@ impl CellDiagram {
 }
 
 // https://en.wikipedia.org/wiki/Centroid#Of_a_polygon
-fn centroid_from_points(points: &Vec<VoronoiPoint>) -> VoronoiPoint {
+fn centroid_from_points(points: &[VoronoiPoint]) -> VoronoiPoint {
     let mut cx: f64 = 0.;
     let mut cy: f64 = 0.;
     let mut area: f64 = 0.;
@@ -373,7 +373,7 @@ fn centroid_from_points(points: &Vec<VoronoiPoint>) -> VoronoiPoint {
     }
 }
 
-fn centroid_from_corners_lookup(corners: &Vec<Corner>, lookup: &Vec<usize>) -> Point2D {
+fn centroid_from_corners_lookup(corners: &[Corner], lookup: &[usize]) -> Point2D {
     let mut cx: f64 = 0.;
     let mut cy: f64 = 0.;
     let mut area: f64 = 0.;
@@ -442,8 +442,8 @@ fn smooth_corners(mut cell_diagram: CellDiagram) -> CellDiagram {
 /// 
 /// Repeat until cells become more uniform
 fn smooth_centers(voronoi: &VoronoiDiagram, min: &(f64, f64), max: &(f64, f64)) -> Option<VoronoiDiagram> {
-    let points: Vec<VoronoiPoint> = voronoi.cells.iter()
-        .map(|cell| centroid_from_points(&cell))
+    let points: Vec<VoronoiPoint> = voronoi.cells().iter()
+        .map(|cell| centroid_from_points(&cell.points()))
         .collect();
 
     VoronoiDiagram::new(&VoronoiPoint {x: min.0, y: min.1}, &VoronoiPoint {x: max.0, y: max.1}, &points)
