@@ -22,7 +22,7 @@
  * ```
  * - Toshimichi
  */
-package phonon.blockedit
+package phonon.nms.blockedit
 
 import java.util.HashMap
 import java.util.HashSet
@@ -38,13 +38,25 @@ import org.bukkit.entity.Player
 public class FastBlockEditSession(
     val bukkitWorld: org.bukkit.World
 ) {
+    // nms world
     private val world: World = (bukkitWorld as CraftWorld).getHandle()
+
+    // blocks that were modified in this session
     private val modified: HashMap<BlockPosition, IBlockData> = hashMapOf()
 
+    /**
+     * Mark a block as updated to a new material. This is lazy
+     * and does not actually change world until `execute` is called.
+     */
     public fun setBlock(x: Int, y: Int, z: Int, material: Material) {
         modified.put(BlockPosition(x, y, z), CraftMagicNumbers.getBlock(material).getBlockData())
     }
 
+    /**
+     * Get material of block at location (x, y, z) in this session's
+     * world. This will also check the modified material stored in this
+     * session object. 
+     */
     public fun getBlock(x: Int, y: Int, z: Int): Material {
         val bData = modified.get(BlockPosition(x, y, z))
         if ( bData != null ) {
@@ -53,7 +65,13 @@ public class FastBlockEditSession(
         return Location(bukkitWorld, x.toDouble(), y.toDouble(), z.toDouble()).getBlock().getType()
     }
 
-    public fun update(updateLighting: Boolean) {
+    /**
+     * Run the block changes and send updates to players in view distance.
+     * 
+     * Chunk source api:
+     * https://nms.screamingsandals.org/1.18.2/net/minecraft/server/level/ServerChunkCache.html
+     */
+    public fun execute(updateLighting: Boolean) {
 
         //modify blocks
         val chunks: HashSet<Chunk> = hashSetOf()

@@ -1,4 +1,7 @@
 /**
+ * Old code for 1.12.2 implementation.
+ * TODO: need nametag version compatibility.
+ * 
  * Armor stand entity nametag attached to players to display
  * town name and color (ally, enemy, etc...)
  * 

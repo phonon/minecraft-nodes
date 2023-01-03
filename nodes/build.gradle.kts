@@ -7,14 +7,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
-// disable default versioning
-version = ""
-
-// custom versioning flag
-val VERSION = "0.0.10"
-
-// jvm target
-val JVM = 16 // 1.8 for 8, 11 for 11
+// plugin versioning
+version = "0.0.11"
 
 // base of output jar name
 val OUTPUT_JAR_NAME = "nodes"
@@ -25,11 +19,25 @@ var target = ""
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
     id("org.jetbrains.kotlin.jvm") version "1.6.10"
-    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
     // maven() // no longer needed in gradle 7
 
-    // Apply the application plugin to add support for building a CLI application.
-    application
+    // include paperweight, but DO NOT APPLY BY DEFAULT...
+    // we need imports, but only conditionally apply it for 1.17+ builds
+    // for 1.16.5, we don't want to apply because not supported, it
+    // does not allow building unless a bundle version is applied,
+    // which does not exist for 1.16.5, so its impossible to build with
+    // paperweight plugin enabled on 1.16.5
+    // https://stackoverflow.com/questions/62579114/how-to-optionally-apply-some-plugins-using-kotlin-dsl-and-plugins-block-with-gra
+
+    // i fucking hate gradle and cant configure this
+    // just manually uncomment
+
+    // USE FOR 1.16.5, UNCOMMENT WHEN NEEDED :^(
+    // id("io.papermc.paperweight.userdev") version "1.3.8" apply false
+    
+    // USE FOR 1.18.2 (DEFAULT)
+    id("io.papermc.paperweight.userdev") version "1.3.8"
 }
 
 repositories {
@@ -45,16 +53,23 @@ repositories {
     }
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(JVM))
-    }
-}
-
 configurations {
-    create("resolvableImplementation") {
+    // config required for shadowed dependencies
+    create("shadowImplementation") {
         isCanBeResolved = true
         isCanBeConsumed = true
+    }
+
+    // Special configuration with priority over compileOnly.
+    // Required so we can include NMS and bukkit as dependency,
+    // without overriding the paper API (which has slight differences
+    // in api). See:
+    // https://github.com/gradle/gradle/issues/10502
+    // https://stackoverflow.com/questions/31698510/can-i-force-the-order-of-dependencies-in-my-classpath-with-gradle/47953373#47953373
+    create("compileOnlyPriority") {
+        isCanBeResolved = true
+        isCanBeConsumed = true
+        sourceSets["main"].compileClasspath = configurations["compileOnlyPriority"] + sourceSets["main"].compileClasspath
     }
 }
 
@@ -65,18 +80,27 @@ dependencies {
     // Use the Kotlin JDK 8 standard library.
     compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     if ( project.hasProperty("no-kotlin") == false ) { // shadow kotlin unless "no-kotlin" flag
-        configurations["resolvableImplementation"]("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+        configurations["shadowImplementation"]("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     }
 
     // google json
-    compileOnly("com.google.code.gson:gson:2.8.6")
-    configurations["resolvableImplementation"]("com.google.code.gson:gson:2.8.6")
-    
-    // put spigot/paper on path otherwise kotlin vs code plugin screeches
-    api("com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT")
-
-    // protocol lib (nametag packets)
-    compileOnly("com.comphenix.protocol:ProtocolLib:4.5.0")
+    compileOnly("com.google.code.gson:gson:2.10") {
+        version {
+            strictly("2.10")
+        }
+    }
+    // shadows gson dependency
+    configurations["shadowImplementation"]("com.google.code.gson:gson:2.10") {
+        version {
+            strictly("2.10")
+        }
+    }
+    // force overrides gson dependency inside paper mc
+    configurations["compileOnlyPriority"]("com.google.code.gson:gson:2.10") {
+        version {
+            strictly("2.10")
+        }
+    }
 
     // Use the Kotlin test library.
     testImplementation("org.jetbrains.kotlin:kotlin-test")
@@ -84,33 +108,38 @@ dependencies {
     // Use the Kotlin JUnit integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 
-    if ( project.hasProperty("1.12") == true ) {
-        target = "1.12"
+    if ( project.hasProperty("1.16") == true ) {
+        target = "1.16.5"
+        // java must be up to 16 for 1.16
+        java.toolchain.languageVersion.set(JavaLanguageVersion.of(16))
+        // nms version specific source
+        sourceSets["main"].java.srcDir("src/nms/v1_16_R3")
         // spigot/paper api
-        compileOnly("com.destroystokyo.paper:paper-api:1.12.2-R0.1-SNAPSHOT")
-        // fast block edit internal lib
-        compileOnly(files("./lib/block_edit/build/libs/block-edit-lib-1.12.jar"))
-        configurations["resolvableImplementation"](files("./lib/block_edit/build/libs/block-edit-lib-1.12.jar"))
-    } else if ( project.hasProperty("1.16") == true ) {
-        target = "1.16"
-        // spigot/paper api
-        compileOnly("com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT")
-        // fast block edit internal lib
-        compileOnly(files("./lib/block_edit/build/libs/block-edit-lib-1.16.jar"))
-        configurations["resolvableImplementation"](files("./lib/block_edit/build/libs/block-edit-lib-1.16.jar"))
+        compileOnly(files("./lib/spigot-1.16.5.jar"))
+        configurations["compileOnlyPriority"]("com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT")
     } else if ( project.hasProperty("1.18") == true ) {
-        target = "1.18"
+        target = "1.18.2"
+        // java must be 17 for 1.18
+        java.toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+        // nms version specific source
+        sourceSets["main"].java.srcDir("src/nms/v1_18_R2")
         // spigot/paper api
-        compileOnly("io.papermc.paper:paper-api:1.18.1-R0.1-SNAPSHOT")
-        // fast block edit internal lib
-        compileOnly(files("./lib/block_edit/build/libs/block-edit-lib-1.18.jar"))
-        configurations["resolvableImplementation"](files("./lib/block_edit/build/libs/block-edit-lib-1.18.jar"))
-    }
-}
+        paperDevBundle("1.18.2-R0.1-SNAPSHOT") // contains 1.18.2 nms classes
+        compileOnly("io.papermc.paper:paper-api:1.18.2-R0.1-SNAPSHOT")
 
-application {
-    // Define the main class for the application.
-    mainClassName = "phonon.nodes.NodesPluginKt"
+        tasks {
+            assemble {
+                // must write it like below because in 1.16 config, reobfJar does not exist
+                // so the simpler definition below wont compile
+                // dependsOn(reobfJar) // won't compile :^(
+                dependsOn(project.tasks.first { it.name.contains("reobfJar") })
+            }
+        }
+
+        tasks.named("reobfJar") {
+            base.archivesBaseName = "${OUTPUT_JAR_NAME}-${target}-SNAPSHOT"
+        }
+    }
 }
 
 tasks.withType<KotlinCompile> {
@@ -121,15 +150,15 @@ tasks {
     named<ShadowJar>("shadowJar") {
         // verify valid target minecraft version
         doFirst {
-            val supportedMinecraftVersions = setOf("1.12", "1.16", "1.18")
+            val supportedMinecraftVersions = setOf("1.16.5", "1.18.2")
             if ( !supportedMinecraftVersions.contains(target) ) {
                 throw Exception("Invalid Minecraft version! Supported versions are: 1.12, 1.16, 1.18")
             }
         }
 
         classifier = ""
-        configurations = mutableListOf(project.configurations.named("resolvableImplementation").get())
-        relocate("com.google", "nodes.shadow.gson")
+        configurations = mutableListOf(project.configurations.named("shadowImplementation").get()) as List<FileCollection>
+        relocate("com.google", "nodes.shadow.com.google")
     }
 }
 
@@ -147,11 +176,11 @@ gradle.taskGraph.whenReady {
     tasks {
         named<ShadowJar>("shadowJar") {
             if ( hasTask(":release") ) {
-                baseName = "${OUTPUT_JAR_NAME}-${target}-${VERSION}"
+                baseName = "${OUTPUT_JAR_NAME}-${target}"
                 minimize() // FOR PRODUCTION USE MINIMIZE
             }
             else {
-                baseName = "${OUTPUT_JAR_NAME}-${target}-SNAPSHOT-${VERSION}"
+                baseName = "${OUTPUT_JAR_NAME}-${target}-SNAPSHOT"
                 minimize() // FOR PRODUCTION USE MINIMIZE
             }
         }

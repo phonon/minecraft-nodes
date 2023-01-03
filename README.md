@@ -14,8 +14,7 @@ minecraft-nodes/
  ├─ docs/                 - Documentation source
  ├─ dynmap/               - Dynmap editor/viewer
  ├─ nodes/                - Dynmap editor/viewer
- |   └─ lib/              - Libs that had to be split out
- |       └─ block_edit/   - Fast block editing lib
+ |   └─ lib/              - Put built spigot dependency 
  ├─ ports/                - Nodes ports plugin
  └─ scripts/              - Utility scripts
 ```
@@ -31,17 +30,40 @@ This repository contains the following separate projects:
 
 
 
-## 1. Building main server plugin
+## 1. Building main server plugin (1.18.2)
 Requirements:
-- Java JDK 16 (current plugin target java version)
+- Java JDK 17 (current plugin target java version)
 
-**This build example will be for version 1.16.5, currently
-the only supported version.** 
+Go inside `nodes/` and run
+```
+./gradlew build -P 1.18
+```
+Built `nodes-1.18.2-SNAPSHOT-VERSION.jar` will appear in `build/libs/*.jar`.
 
-Building the main plugin requires Minecraft NMS, so first step
-will be to build spigot and craftbukkit jars:
+To build without kotlin shaded into the jar (e.g. if using separate kotlin
+runtime plugin for example my <https://github.com/phonon/minecraft-kotlin>),
+run with following:
+```
+./gradlew build -P 1.18 -P no-kotlin
+```
+
+
+## 1.b. (OLD) Building main server plugin old version (1.16.5)
+Requirements:
+- Java JDK 16 (1.16.5 required plugin target java version)
+- Manually building nms dependencies
+
+In the later 1.18+ version build process, nms dependencies are handled
+by gradle paperweight plugin <https://github.com/PaperMC/paperweight>.
+However, for older versions we need to manually build and include the 
+nms dependency. So this build process for 1.16.5 includes steps needed
+to download, build, and manually include the `spigot-1.16.5.jar` for
+nms dependencies.
+
+First step will be to build spigot and craftbukkit jars:
 - https://www.spigotmc.org/wiki/buildtools/
 - https://www.spigotmc.org/wiki/spigot-nms-and-minecraft-versions-1-16/
+
 
 ### 1. Download BuildTools.jar: https://www.spigotmc.org/wiki/buildtools/#running-buildtools
 
@@ -51,20 +73,11 @@ will be to build spigot and craftbukkit jars:
 java -jar BuildTools.jar --rev 1.16.5
 ```
 
-### 3. Put `spigot-1.16.5.jar` into `nodes/lib/block_edit/lib/`.
+### 3. Put `spigot-1.16.5.jar` into `nodes/lib/`.
 This folder should now have path:
 ```
-nodes/lib/block_edit/lib/spigot-1.16.5.jar
+nodes/lib/spigot-1.16.5.jar
 ```
-
-### 4. Build `block_edit` lib:
-Go inside `nodes/lib/block_edit/` and run.
-```
-./gradlew build -P 1.16
-```
-*Note: this had to be split out because of a gson version 
-conflict between spigot and nodes. If this is resolved,
-then fast block editing can be pushed into main source.*
 
 
 ### 5. Build final plugin `nodes.jar`:
@@ -86,6 +99,7 @@ this will build `nodes` without kotlin:
 Nodes instead has a soft dependency on any plugin named `kotlin`.
 This is intended for use with this kotlin runtime plugin:
 https://github.com/phonon/minecraft-kotlin
+
 
 -----------------------------------------------------------
 

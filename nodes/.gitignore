@@ -9,3 +9,6 @@ build
 
 # ignore vscode
 .vscode
+
+# nodes library dependencies
+lib/*.jar

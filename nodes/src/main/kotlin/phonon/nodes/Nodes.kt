@@ -91,7 +91,6 @@ public object Nodes {
     internal val hiddenOreInvalidBlocks: OreBlockCache = OreBlockCache(2000)
 
     // hooks to other plugins
-    internal var protocolLib: Boolean = false // flag that protocolLib is loaded
     internal var dynmap: Boolean = false // simple flag
     internal val DYNMAP_DIR: Path = Paths.get("plugins/dynmap/web/nodes")
     internal val DYNMAP_PATH_NODES_CONFIG: Path = Paths.get("plugins/dynmap/web/nodes/config.json")
@@ -172,7 +171,7 @@ public object Nodes {
             Nodes.setResidentOnline(resident, player)
 
             // create nametag (only when town exists)
-            if ( resident.town !== null && Nodes.protocolLib == true && Config.useNametags ) {
+            if ( resident.town !== null && Config.useNametags ) {
                 Nametag.create(player)
             }
         }
@@ -210,7 +209,7 @@ public object Nodes {
         }
 
         // cleanup nametags
-        if ( Nodes.protocolLib == true && Config.useNametags ) {
+        if ( Config.useNametags ) {
             Nametag.clear()
         }
 
@@ -3253,11 +3252,6 @@ public object Nodes {
     // ==============================================
     // Hooks to external functions
     // ==============================================
-    // mark that protocol lib exists
-    internal fun hookProtocolLib() {
-        Nodes.protocolLib = true
-    }
-
     // just sets a flag that dynmap exists
     internal fun hookDynmap() {
         Nodes.dynmap = true

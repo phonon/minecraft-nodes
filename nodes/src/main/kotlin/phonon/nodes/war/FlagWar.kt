@@ -48,7 +48,7 @@ import phonon.nodes.objects.TerritoryChunk
 import phonon.nodes.objects.Town
 import phonon.nodes.event.*
 import phonon.nodes.constants.*
-import phonon.blockedit.FastBlockEditSession
+import phonon.nms.blockedit.FastBlockEditSession
 
 // beacon color: wool material data values
 // corresponding to each 10% progress interval
@@ -873,7 +873,7 @@ public object FlagWar {
         }
 
         if ( createFrame || createColor ) {
-            edit.update(updateLighting)
+            edit.execute(updateLighting)
         }
     }
 
@@ -896,7 +896,7 @@ public object FlagWar {
         }
 
         // dont do lighting update
-        edit.update(false)
+        edit.execute(false)
     }
 
     // cleanup attack instance, then dispatch signal
