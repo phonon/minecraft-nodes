@@ -14,7 +14,6 @@
 
 
 # Nodes
--   Fix moving stuff back into town nodes income inventory
 -   Consider attaching node income into income chests/inventories on
     territories instead of global town income storage. Force players
     to build supply networks to gather resources from their territories.

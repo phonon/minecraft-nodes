@@ -2,6 +2,7 @@ package phonon.nodes.listeners
 
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.inventory.InventoryAction
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent
@@ -17,17 +18,28 @@ public class NodesIncomeInventoryListener: Listener {
     public fun onInventoryClick(event: InventoryClickEvent) {
         val inventoryClicked = event.getClickedInventory()
         val inventoryView = event.getView()
-        val clickSlot = event.getSlot()
 
-        if ( inventoryClicked != null ) {
-            // if player clicks to try inserting item into null slot
-            if ( inventoryView.title == "Town Income" && inventoryClicked.getItem(clickSlot) == null ) {
-                event.setCancelled(true)
+        if ( inventoryClicked !== null && inventoryView.title == "Town Income" ) {
+            // disable actions that move items into top view
+            // https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/inventory/InventoryAction.html
+            if ( inventoryClicked === inventoryView.getTopInventory() ) {
+                when ( event.getAction() ) {
+                    InventoryAction.HOTBAR_MOVE_AND_READD,
+                    InventoryAction.HOTBAR_SWAP,
+                    InventoryAction.PLACE_ALL,
+                    InventoryAction.PLACE_ONE,
+                    InventoryAction.PLACE_SOME,
+                    InventoryAction.SWAP_WITH_CURSOR,
+                        -> { event.setCancelled(true) }
+                    else -> {}
+                }
             }
-            // if shift click and top view is income, cancel
-            // player add item to top inventory
-            else if ( inventoryView.title == "Town Income" && event.isShiftClick() && inventoryView.title != "Town Income" ) {
-                event.setCancelled(true)
+            else { // bottom inventory
+                when ( event.getAction() ) {
+                    InventoryAction.MOVE_TO_OTHER_INVENTORY,
+                        -> { event.setCancelled(true) }
+                    else -> {}
+                }
             }
         }
     }
@@ -36,7 +48,14 @@ public class NodesIncomeInventoryListener: Listener {
     public fun onInventoryDrag(event: InventoryDragEvent) {
         val inventoryView = event.getView()
         if ( inventoryView.title == "Town Income" ) {
-            event.setCancelled(true)
+            // if any slots involved were in top inventory, cancel event
+            // use raw inventory slots: large double chest inventory are index range [0, 53]
+            for ( slot in event.getRawSlots() ) {
+                if ( slot < 54 ) {
+                    event.setCancelled(true)
+                    break
+                }
+            }
         }
     }
 
