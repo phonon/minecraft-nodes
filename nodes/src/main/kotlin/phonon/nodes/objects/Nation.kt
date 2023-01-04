@@ -103,6 +103,7 @@ public class Nation(
      */
     public class NationSaveState(n: Nation): JsonSaveState {
         public val uuid = n.uuid
+        public val name = n.name
         public val capital = n.capital.name
         public val color = n.color
         public val towns = n.towns.map{ x -> x.name }

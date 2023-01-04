@@ -5,8 +5,6 @@
 package phonon.nodes
 
 import kotlin.system.measureNanoTime
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.EnumMap
 import java.util.EnumSet
 import java.util.UUID
@@ -14,17 +12,22 @@ import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.Future
 import java.io.IOException
 import java.io.File
-import java.nio.file.*
-import java.nio.ByteBuffer
-import java.nio.channels.AsynchronousFileChannel
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.logging.Logger
 import com.google.gson.JsonObject
+import org.bukkit.Bukkit
+import org.bukkit.Chunk
+import org.bukkit.ChatColor
+import org.bukkit.Location
+import org.bukkit.Material
+import org.bukkit.World
 import org.bukkit.plugin.Plugin
 import org.bukkit.event.HandlerList
 import org.bukkit.entity.Player
 import org.bukkit.entity.EntityType
-import org.bukkit.*
 import org.bukkit.block.Block
 import org.bukkit.block.Chest
 import org.bukkit.block.DoubleChest
@@ -46,8 +49,6 @@ import phonon.nodes.listeners.NodesPlayerChestProtectListener
 import phonon.nodes.war.FlagWar
 import phonon.nodes.war.Truce
 
-// backup format
-private val BACKUP_DATE_FORMATTER = SimpleDateFormat("yyyy.MM.dd.HH.mm.ss"); 
 
 /**
  * Nodes container
@@ -55,7 +56,7 @@ private val BACKUP_DATE_FORMATTER = SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
 public object Nodes {
     
     // version string
-    internal val version: String = "1.16.5 v0.0.10"
+    internal val version: String = "v0.0.11"
 
     // library of resource node definitions
     internal val resourceNodes: HashMap<String, ResourceNode> = hashMapOf()
@@ -96,7 +97,6 @@ public object Nodes {
     internal val DYNMAP_PATH_NODES_CONFIG: Path = Paths.get("plugins/dynmap/web/nodes/config.json")
     internal val DYNMAP_PATH_WORLD: Path = Paths.get("plugins/dynmap/web/nodes/world.json")
     internal val DYNMAP_PATH_TOWNS: Path = Paths.get("plugins/dynmap/web/nodes/towns.json")
-    internal val dynmapWriteTask = NodesDynmapJsonWriter(Config.pathTowns, Nodes.DYNMAP_DIR, Nodes.DYNMAP_PATH_TOWNS)
 
     // minecraft plugin variable
     internal var plugin: Plugin? = null
@@ -422,8 +422,7 @@ public object Nodes {
 
             // no errors happened: copy world.json to dynmap folder
             if ( Nodes.dynmap == true || Config.dynmapCopyTowns ) {
-                Files.createDirectories(Nodes.DYNMAP_DIR)
-                Files.copy(Config.pathWorld, Nodes.DYNMAP_PATH_WORLD, StandardCopyOption.REPLACE_EXISTING)    
+                TaskCopyToDynmap(Config.pathWorld, Nodes.DYNMAP_DIR, Nodes.DYNMAP_PATH_WORLD).run()
             }
             
             return true
@@ -453,8 +452,7 @@ public object Nodes {
             
             // load world.json to dynmap folder
             if ( Nodes.dynmap == true || Config.dynmapCopyTowns ) {
-                Files.createDirectories(Nodes.DYNMAP_DIR)
-                Files.copy(Config.pathWorld, Nodes.DYNMAP_PATH_WORLD, StandardCopyOption.REPLACE_EXISTING)    
+                TaskCopyToDynmap(Config.pathWorld, Nodes.DYNMAP_DIR, Nodes.DYNMAP_PATH_WORLD).run()
             }
             
             // load towns from json after main world load finishes
@@ -494,122 +492,83 @@ public object Nodes {
         return true
     }
 
-    internal fun copyWorldtoDynmap() {
-        // copy towns to dynmap folder
-        if ( Nodes.dynmap || Config.dynmapCopyTowns ) {
-            Bukkit.getScheduler().runTaskAsynchronously(Nodes.plugin!!, Nodes.dynmapWriteTask)
+    /**
+     * Save world to JSON storage.
+     */
+    internal fun saveWorld(
+        checkIfNeedsSave: Boolean = true, // set to false to force save
+        async: Boolean = false, // run serialization and file write asynchronously
+    ) {
+        // if we reached backup time interval, generate a backup millis
+        // timestamp for save task, which will be used to create a
+        // timestamped backup file
+        val currTime = System.currentTimeMillis()
+        val backup = currTime > Nodes.lastBackupTime + Config.backupPeriod
+        val backupTimestamp = if ( backup ) {
+            Nodes.lastBackupTime = currTime
+            currTime
+        } else {
+            -1
         }
-    }
 
-    // asynchronous file save of town.json
-    // (world.json not saved, that's read only)
-    internal fun saveWorld(checkIfNeedsSave: Boolean = true) {
-        if ( checkIfNeedsSave == false || Nodes.needsSave == true ) {
-
+        if ( Nodes.needsSave == true || checkIfNeedsSave == false ) {
             // world pre-processing
             Nodes.saveWorldPreprocess()
 
-            // get json string
-            var json = ""
             val timeUpdate = measureNanoTime {
-                json = Serializer.worldToJson(
-                    Nodes.residents.values.toList(),
-                    Nodes.towns.values.toList(),
-                    Nodes.nations.values.toList()
+                // create a snapshot of world objects state
+                // always do synchronously on main thread to keep world consistent 
+                val residentsSnapshot = Nodes.residents.values.map { it.getSaveState() }
+                val townsSnapshot = Nodes.towns.values.map { it.getSaveState() }
+                val nationsSnapshot = Nodes.nations.values.map { it.getSaveState() }
+
+                // whether should copy towns.json to dynmap folder
+                val copyToDynmap = Nodes.dynmap || Config.dynmapCopyTowns
+
+                // save task manages:
+                // 1. serialize individual objects into json strings and combine into a full json string
+                // 2. write file
+                // 3. copy to dynmap folder when save done
+                // 4. save backup if reached backup interval
+                val taskSave = TaskSaveWorld(
+                    residentsSnapshot,
+                    townsSnapshot,
+                    nationsSnapshot,
+                    Config.pathTowns,
+                    Nodes.DYNMAP_DIR,
+                    Nodes.DYNMAP_PATH_TOWNS,
+                    Config.pathBackup,
+                    Config.pathLastBackupTime,
+                    copyToDynmap,
+                    backupTimestamp,
                 )
+
+                if ( async ) {
+                    Bukkit.getScheduler().runTaskAsynchronously(Nodes.plugin!!, taskSave)
+                } else {
+                    taskSave.run()
+                }
+                
+                Nodes.needsSave = false
             }
 
-            println("[Nodes] Saving world: ${timeUpdate.toString()}ns")
-
-            // write file in async thread
-            // callback: copy to dynmap folder when save done
-            Bukkit.getScheduler().runTaskAsynchronously(Nodes.plugin!!, FileWriteTask(json, Config.pathTowns, Nodes::copyWorldtoDynmap))
-
-            Nodes.needsSave = false
+            Nodes.logger?.info("[Nodes] Saving world: ${timeUpdate.toString()}ns")
         }
-    }
-
-    // alternative save world method
-    // 1. updates individual object JSON strings on main thread (for thread safety)
-    // 2. combines into a full json string on async thread
-    internal fun saveWorldAsync(checkIfNeedsSave: Boolean = true) {
-        if ( checkIfNeedsSave == false || Nodes.needsSave == true ) {
-
-            // world pre-processing
-            Nodes.saveWorldPreprocess()
-
-            val timeUpdate = measureNanoTime {
-                for ( v in Nodes.residents.values ) {
-                    v.getSaveState()
-                }
-                for ( v in Nodes.towns.values ) {
-                    v.getSaveState()
-                }
-                for ( v in Nodes.nations.values ) {
-                    v.getSaveState()
-                }
+        // no new save needed...just do backup if we reached backup interval
+        else if ( backup ) {
+            val taskBackup = TaskSaveBackup(backupTimestamp, Config.pathTowns, Config.pathBackup, Config.pathLastBackupTime)
+            if ( async ) {
+                Bukkit.getScheduler().runTaskAsynchronously(Nodes.plugin!!, taskBackup)
+            } else {
+                taskBackup.run()
             }
-
-            println("[Nodes] Saving world: ${timeUpdate.toString()}ns")
-
-            // write file in async thread
-            // callback: copy to dynmap folder when save done
-            // val pathTest = Paths.get(Config.pathPlugin, "towns_test.json").normalize()
-            Bukkit.getScheduler().runTaskAsynchronously(Nodes.plugin!!, object: Runnable {
-                val residents = Nodes.residents.values.toList()
-                val towns = Nodes.towns.values.toList()
-                val nations = Nodes.nations.values.toList()
-
-                override public fun run() {
-                    val json = Serializer.worldToJson(
-                        residents,
-                        towns,
-                        nations
-                    )
-
-                    saveStringToFile(json, Config.pathTowns)
-
-                    Nodes.copyWorldtoDynmap()
-                }
-            })
-
-            Nodes.needsSave = false
         }
     }
 
-    // performs synchronous save of the world
-    // much slower, but needed on events that cannot
-    // use threads (e.g. on plugin shutdown, scheduler cancelled)
-    internal fun saveWorldSync(): Boolean {
-        // world pre-processing
-        Nodes.saveWorldPreprocess()
-
-        // get json string
-        val json: String = Serializer.worldToJson(
-            Nodes.residents.values.toList(),
-            Nodes.towns.values.toList(),
-            Nodes.nations.values.toList()
-        )
-
-        // write main file
-        val fileChannel: AsynchronousFileChannel = AsynchronousFileChannel.open(Config.pathTowns, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
-        val buffer = ByteBuffer.wrap(json.toByteArray())
-        val operation: Future<Int> = fileChannel.write(buffer, 0);
-        operation.get()
-        
-        // copy to dynmap folder
-        if ( Nodes.dynmap ) {
-            Files.copy(Config.pathTowns, Nodes.DYNMAP_PATH_TOWNS, StandardCopyOption.REPLACE_EXISTING) 
-        }
-
-        // save truce state
-        FileWriteTask(Truce.toJsonString(), Config.pathTruce).run()
-
-        return true
-    }
-
-    // handle any pre-processing, town/nation modifications before
-    // saving to json
+    /**
+     * Handle any pre-processing or finishing town/nation modifications before
+     * saving to json.
+     */
     internal fun saveWorldPreprocess() {
         // move all town income items from inventory gui
         // back to storage data structure
@@ -622,19 +581,30 @@ public object Nodes {
     }
 
     /**
-     * Run backup
+     * Save config and world state to dynmap folder.
+     * Should run when plugin enabled.
      */
-    internal fun doBackup() {
-        val pathTowns = Config.pathTowns
-        if ( Files.exists(pathTowns) ) {
-            val pathBackupDir = Config.pathBackup
-            Files.createDirectories(pathBackupDir) // create backup folder if it does not exist
+    internal fun saveWorldToDynmap(async: Boolean) {
+        // copy towns to dynmap folder
+        if ( Nodes.dynmap || Config.dynmapCopyTowns ) {
+            val taskSaveClaimsConfig = TaskSaveDynmapClaimsConfig(
+                Config.territoryCostBase,
+                Config.territoryCostScale,
+                Nodes.DYNMAP_PATH_NODES_CONFIG,
+            )
+            val taskSaveTowns = TaskCopyToDynmap(
+                Config.pathTowns,
+                Nodes.DYNMAP_DIR,
+                Nodes.DYNMAP_PATH_TOWNS,
+            )
 
-            // save vehicle file backup
-            val date = Date()
-            val backupName = "towns.${BACKUP_DATE_FORMATTER.format(date)}.json"
-            val pathBackup = pathBackupDir.resolve(backupName)
-            Files.copy(pathTowns, pathBackup)
+            if ( async ) {
+                Bukkit.getScheduler().runTaskAsynchronously(Nodes.plugin!!, taskSaveClaimsConfig)
+                Bukkit.getScheduler().runTaskAsynchronously(Nodes.plugin!!, taskSaveTowns)
+            } else {
+                taskSaveClaimsConfig.run()
+                taskSaveTowns.run()
+            }
         }
     }
 
@@ -3034,8 +3004,21 @@ public object Nodes {
         
         // save truce.json file
         if ( Truce.needsUpdate == true ) {
-            Bukkit.getScheduler().runTaskAsynchronously(Nodes.plugin!!, FileWriteTask(Truce.toJsonString(), Config.pathTruce, null))
+            Bukkit.getScheduler().runTaskAsynchronously(Nodes.plugin!!, Truce.saveTask())
             Truce.needsUpdate = false
+        }
+    }
+    
+    /**
+     * Save truces to json file. This is separate from world state save
+     * because truces only need to be saved infrequently on a separate
+     * schedule than regular world save.
+     */
+    public fun saveTruce(async: Boolean = false) {
+        if ( async ) {
+            Bukkit.getScheduler().runTaskAsynchronously(Nodes.plugin!!, Truce.saveTask())
+        } else {
+            Truce.saveTask().run()
         }
     }
 
@@ -3246,7 +3229,6 @@ public object Nodes {
         }
 
         task.runTaskTimer(Nodes.plugin!!, 0, 20)
-        
     }
 
     // ==============================================

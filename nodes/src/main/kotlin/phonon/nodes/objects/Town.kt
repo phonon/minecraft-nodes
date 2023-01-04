@@ -237,6 +237,7 @@ public class Town(
      */
     public class TownSaveState(t: Town): JsonSaveState {
         public val uuid = t.uuid
+        public val name = t.name
         public val leader = t.leader?.uuid
         public val home = t.home
         public val spawnpoint = doubleArrayOf(t.spawnpoint.x, t.spawnpoint.y, t.spawnpoint.z)

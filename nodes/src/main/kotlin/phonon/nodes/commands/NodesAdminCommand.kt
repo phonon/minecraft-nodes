@@ -147,7 +147,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
             "truce" -> setTruce(sender, args)
             "truceremove" -> removeTruce(sender, args)
             "treaty" -> manageTreaty(sender, args)
-            "save" -> saveWorld(sender)
+            "save" -> saveWorld(sender, args)
             "load" -> loadWorld(sender)
             "runincome" -> Nodes.runIncome()
             "playersonline" -> Nodes.refreshPlayersOnline()
@@ -2079,10 +2079,15 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
     //       - allow loading from backups folder?
     // =============================================================
 
-    // force save the world
-    private fun saveWorld(sender: CommandSender) {
-        Message.print(sender, "[Nodes] Saving world")
-        Nodes.saveWorldAsync(false)
+    // force save the world (using async save)
+    private fun saveWorld(sender: CommandSender, args: Array<String>) {
+        if ( args.size > 1 && args[1] == "sync" ) {
+            Message.print(sender, "[Nodes] Saving world (sync)")
+            Nodes.saveWorld(checkIfNeedsSave = false, async = false)
+        } else {
+            Message.print(sender, "[Nodes] Saving world (async)")
+            Nodes.saveWorld(checkIfNeedsSave = false, async = true)
+        }
     }
 
     // force reload the world

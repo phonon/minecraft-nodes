@@ -120,7 +120,7 @@ public class NodesPlugin : JavaPlugin() {
         Nodes.lastIncomeTime = loadLongFromFile(Config.pathLastIncomeTime) ?: currTime
 
         // run background schedulers/tasks
-        CopyClaimsConfigToDynmap.run(this)
+        Nodes.saveWorldToDynmap(async = true)
         Nodes.reloadManagers()
 
         // initialize all players online
@@ -147,11 +147,12 @@ public class NodesPlugin : JavaPlugin() {
         // world cleanup
         Nodes.cleanup()
         
-        // final save of world
+        // final synchronous save of world
         // -> only save when world was properly initialized,
         //    to avoid saving junk empty data when plugin fails load
         if ( Nodes.initialized ) {
-            Nodes.saveWorldSync()
+            Nodes.saveWorld(checkIfNeedsSave = false, async = false)
+            Nodes.saveTruce(async = false)
         }
     }
 }

@@ -13,6 +13,7 @@
 
 package phonon.nodes.war
 
+import java.nio.file.Path
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -25,6 +26,53 @@ import phonon.nodes.Config
 import phonon.nodes.objects.Resident
 import phonon.nodes.objects.Town
 import phonon.nodes.objects.TownPair
+import phonon.nodes.utils.saveStringToFile
+
+/**
+ * Simplified truce state for serialization.
+ */
+public data class TruceSaveState(
+    val town1: String,
+    val town2: String,
+    val time: Long,
+)
+
+/**
+ * Serialize truces state to json string.
+ */
+public fun trucesToJsonStr(truces: List<TruceSaveState>): String {
+    val size = truces.size
+    var i = 0
+    
+    val s = StringBuilder()
+    s.append("{\"truce\":[")
+    for ( truce in truces ) {
+        s.append("[\"${truce.town1}\", \"${truce.town2}\", ${truce.time}]")
+
+        // add comma
+        if ( i < size-1 ) {
+            s.append(",")
+            i += 1
+        }
+    }
+    s.append("]}")
+
+    return s.toString()
+}
+
+/**
+ * Runnable task to serialize truce save states into json file.
+ */
+public class TaskSaveTruce(
+    val truces: List<TruceSaveState>,
+    val pathTruce: Path,
+): Runnable {
+    override fun run() {
+        // serialize world state
+        val jsonStr = trucesToJsonStr(truces)
+        saveStringToFile(jsonStr, pathTruce)
+    }
+}
 
 public object Truce {
     // truce map of (town1, town2) -> time ticked in current truce
@@ -96,25 +144,10 @@ public object Truce {
         return listOf()
     }
 
-    // convert truces into string
-    public fun toJsonString(): String {
-        val size = truces.size
-        var i = 0
-        
-        val s = StringBuilder()
-        s.append("{\"truce\":[")
-        for ( (towns, count) in Truce.truces ) {
-            s.append("[\"${towns.town1.name}\", \"${towns.town2.name}\", ${count}]")
-
-            // add comma
-            if ( i < size-1 ) {
-                s.append(",")
-                i += 1
-            }
-        }
-        s.append("]}")
-
-        return s.toString()
+    // return snapshot of truce state for saving
+    public fun saveTask(): TaskSaveTruce {
+        val truceSnapshot = Truce.truces.map { (towns, time) -> TruceSaveState(towns.town1.name, towns.town2.name, time) }
+        return TaskSaveTruce(truceSnapshot, Config.pathTruce)
     }
 
     // parse truces from Json string

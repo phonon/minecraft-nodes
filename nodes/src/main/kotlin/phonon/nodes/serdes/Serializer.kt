@@ -13,17 +13,17 @@
 package phonon.nodes.serdes
 
 import phonon.nodes.Nodes
-import phonon.nodes.objects.Resident
-import phonon.nodes.objects.Town
-import phonon.nodes.objects.Nation
+import phonon.nodes.objects.Resident.ResidentSaveState
+import phonon.nodes.objects.Town.TownSaveState
+import phonon.nodes.objects.Nation.NationSaveState
 
 
 public object Serializer {
     
     fun worldToJson(
-        residents: List<Resident>,
-        towns: List<Town>,
-        nations: List<Nation>
+        residents: List<ResidentSaveState>,
+        towns: List<TownSaveState>,
+        nations: List<NationSaveState>
     ): String {
 
         // calculate string builder capacity
@@ -41,19 +41,19 @@ public object Serializer {
         // uuid - 36 chars
         // 2 '"', ":", and "," - 4 chars
         for ( v in residents ) {
-            bufferSize += (40 + v.getSaveState().toJsonString().length)
+            bufferSize += (40 + v.toJsonString().length)
         }
 
         // towns:
         // format: "name":{...},
         for ( v in towns ) {
-            bufferSize += (4 + v.name.length + v.getSaveState().toJsonString().length)
+            bufferSize += (4 + v.name.length + v.toJsonString().length)
         }
 
         // nations:
         // format: "name":{...},
         for ( v in nations ) {
-            bufferSize += (4 + v.name.length + v.getSaveState().toJsonString().length)
+            bufferSize += (4 + v.name.length + v.toJsonString().length)
         }
 
         // json string builder
@@ -72,7 +72,7 @@ public object Serializer {
 
         for ( (i, resident) in residents.withIndex() ) {
             jsonString.append("\"${resident.uuid.toString()}\":")
-            jsonString.append(resident.getSaveState().toJsonString())
+            jsonString.append(resident.toJsonString())
             if ( i < residents.size - 1 ) {
                 jsonString.append(",")
             }
@@ -87,7 +87,7 @@ public object Serializer {
 
         for ( (i, town) in towns.withIndex() ) {
             jsonString.append("\"${town.name}\":")
-            jsonString.append(town.getSaveState().toJsonString())
+            jsonString.append(town.toJsonString())
             if ( i < towns.size - 1 ) {
                 jsonString.append(",")
             }
@@ -102,7 +102,7 @@ public object Serializer {
 
         for ( (i, nation) in nations.withIndex() ) {
             jsonString.append("\"${nation.name}\":")
-            jsonString.append(nation.getSaveState().toJsonString())
+            jsonString.append(nation.toJsonString())
             if ( i < nations.size - 1 ) {
                 jsonString.append(",")
             }
