@@ -1,64 +1,61 @@
-/**
- * Ingame player message printing manager
- * 
- */
-
 package phonon.nodes
 
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import net.md_5.bungee.api.ChatMessageType
-import net.md_5.bungee.api.chat.TextComponent
+import net.kyori.adventure.text.Component
 
+/**
+ * Helper functions for printing messages for players.
+ */
 public object Message {
 
     public val PREFIX = "[Nodes]"
     public val COL_MSG = ChatColor.AQUA
     public val COL_ERROR = ChatColor.RED
 
-    // print generic message to chat
-    public fun print(sender: Any?, s: String) {
+    /**
+     * Print generic plugin message to command sender's chat (either console
+     * or player).
+     */
+    public fun print(sender: CommandSender?, s: String) {
 		if ( sender === null ) {
             System.out.println("${PREFIX} Message called with null sender: ${s}")
             return
 		}
 
-        val msg = "${COL_MSG}${s}"
-        if ( sender is Player ) {
-            (sender as Player).sendMessage(msg)
-        }
-        else {
-            (sender as CommandSender).sendMessage(msg)
-        }
+        val msg = Component.text("${COL_MSG}${s}")
+        sender.sendMessage(msg)
     }
 
-    // print error message to chat
-    public fun error(sender: Any?, s: String) {
+    /**
+     * Print error message to a command sender's chat (either console or player).
+     */
+    public fun error(sender: CommandSender?, s: String) {
 		if ( sender === null ) {
             System.out.println("${PREFIX} Message called with null sender: ${s}")
             return
 		}
 
-        val msg = "${COL_ERROR}${s}"
-        if ( sender is Player ) {
-            (sender as Player).sendMessage(msg)
-        }
-        else {
-            (sender as CommandSender).sendMessage(msg)
-        }
+        val msg = Component.text("${COL_ERROR}${s}")
+        sender.sendMessage(msg)
     }
 
-    // wrapper around Bukkit.broadcast to send
-    // messages to all players
+    /**
+     * Wrapper around Bukkit.broadcast to send plugin formatted messages
+     * to all players.
+     */
     public fun broadcast(s: String) {
-        val msg = "${COL_MSG}${s}"
-        Bukkit.broadcastMessage(msg)
+        val msg = Component.text("${COL_MSG}${s}")
+        Bukkit.broadcast(msg)
     }
 
-    // print text to the player action bar
+    /**
+     * Wrapper around paper sendActionBar to message to player's action bar
+     * above hotbar.
+     */
     public fun announcement(player: Player, s: String) {
-        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(s));
+        player.sendActionBar(Component.text(s))
     }
 }
