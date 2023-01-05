@@ -8,14 +8,23 @@ package phonon.nodes.war
 
 import java.util.UUID
 import org.bukkit.Bukkit
+import org.bukkit.Location
+import org.bukkit.World
 import org.bukkit.scheduler.BukkitTask
 import org.bukkit.block.Block
 import org.bukkit.boss.*
+import org.bukkit.entity.ArmorStand
+import org.bukkit.NamespacedKey
+import org.bukkit.persistence.PersistentDataType
 import phonon.nodes.Nodes
 import phonon.nodes.Config
 import phonon.nodes.objects.Coord
 import phonon.nodes.objects.TerritoryChunk
 import phonon.nodes.objects.Town
+import phonon.nodes.objects.townNametagViewedByPlayer // in nametag
+import phonon.nodes.nms.createArmorStandNamePacket
+import phonon.nodes.nms.sendPacket
+
 
 public class Attack(
     val attacker: UUID,        // attacker's UUID
@@ -40,6 +49,9 @@ public class Attack(
 
     var progressColor: Int // index in progress color array
     var thread: BukkitTask = Bukkit.getScheduler().runTaskTimerAsynchronously(Nodes.plugin!!, this, FlagWar.ATTACK_TICK, FlagWar.ATTACK_TICK)
+
+    // armor stand used to label town name on flag
+    val armorstandTownLabel = AttackArmorStandLabel(town, flagBase.world, flagBase.location.clone().add(0.5, 1.75, 0.5))
 
     // re-used json serialization StringBuilders
     val jsonStringBase: StringBuilder
@@ -66,8 +78,15 @@ public class Attack(
         this.jsonStringBase = generateFixedJsonBase(
             this.attacker,
             this.coord,
-            this.flagBase
+            this.flagBase,
         )
+
+        // send name packets to players in range
+        try {
+            this.armorstandTownLabel.sendLabel()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         
         // full json StringBuilder, initialize capacity to be
         // base capacity + room for progress ticks length
@@ -135,4 +154,100 @@ private fun generateFixedJsonBase(
     s.append("\"b\":[${block.x},${block.y},${block.z}],")
 
     return s
+}
+
+public class AttackArmorStandLabel(
+    val town: Town,
+    val world: World,
+    val loc: Location,
+    val maxViewDistance: Int = 3,
+) {
+    var armorstand = createArmorStandLabel(world, loc)
+
+    // min/max x/z chunk view distance from this label
+    val minViewChunkX: Int
+    val maxViewChunkX: Int
+    val minViewChunkZ: Int
+    val maxViewChunkZ: Int
+
+    init {
+        // calculate max chunk view distance from this label
+        val chunk = this.loc.chunk
+        val chunkX = chunk.x
+        val chunkZ = chunk.z
+
+        minViewChunkX = chunkX - this.maxViewDistance
+        maxViewChunkX = chunkX + this.maxViewDistance
+        minViewChunkZ = chunkZ - this.maxViewDistance
+        maxViewChunkZ = chunkZ + this.maxViewDistance
+    }
+
+    /**
+     * Remove armorstand, for cleanup.
+     */
+    public fun remove() {
+        this.armorstand.remove()
+    }
+
+    /**
+     * Check if armorstand is still valid.
+     */
+    public fun isValid(): Boolean {
+        return this.armorstand.isValid
+    }
+
+    /**
+     * Re-create new armorstand.
+     */
+    public fun respawn() {
+        this.armorstand.remove()
+        this.armorstand = createArmorStandLabel(this.world, this.loc)
+    }
+
+    /**
+     * Send player-specific view label packets for players
+     * within maxViewDistance chunks of this armorstand.
+     */
+    public fun sendLabel() {
+        // if this chunk not loaded, skip
+        if ( !this.world.isChunkLoaded(this.loc.chunk) ) {
+            return
+        }
+
+        for ( player in world.players ) {
+            val playerChunk = player.location.chunk
+            val playerChunkX = playerChunk.x
+            val playerChunkZ = playerChunk.z
+
+            if ( playerChunkX < minViewChunkX || playerChunkX > maxViewChunkX ||
+                 playerChunkZ < minViewChunkZ || playerChunkZ > maxViewChunkZ ) {
+                continue
+            }
+
+            // send view label packet
+            val label = townNametagViewedByPlayer(town, player)
+            val packet = this.armorstand.createArmorStandNamePacket(label)
+            player.sendPacket(packet)
+        }
+    }
+}
+
+/**
+ * Namespaced key for marking armorstands as nodes plugin armorstand labels.
+ */
+internal val NODES_ARMORSTAND_KEY = NamespacedKey("nodes", "armorstand_label")
+
+/**
+ * Helper function to create a new armorstand label with associated label
+ * metadata.
+ */
+private fun createArmorStandLabel(
+    world: World,    
+    loc: Location,
+): ArmorStand {
+    val armorstand = world.spawn(loc, ArmorStand::class.java)
+    armorstand.setSmall(true)
+    armorstand.setGravity(false)
+    armorstand.persistentDataContainer.set(NODES_ARMORSTAND_KEY, PersistentDataType.INTEGER, 0)
+    return armorstand
 }

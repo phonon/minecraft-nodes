@@ -924,6 +924,9 @@ public object FlagWar {
             block.setType(Material.AIR)
         }
 
+        // remove town label
+        attack.armorstandTownLabel.remove()
+
         // remove attack instance references
         FlagWar.attackers.get(attack.attacker)?.remove(attack)
         FlagWar.chunkToAttacker.remove(attack.coord)
@@ -973,6 +976,9 @@ public object FlagWar {
         for ( block in attack.skyBeaconColorBlocks ) {
             block.setType(Material.AIR)
         }
+
+        // remove town label
+        attack.armorstandTownLabel.remove()
 
         // remove attack instance references
         FlagWar.attackers.get(attack.attacker)?.remove(attack)
@@ -1128,6 +1134,23 @@ public object FlagWar {
                             attack.skyBeaconColorBlocks,
                             progressColor
                         )
+                    }
+                })
+            }
+
+            // re-send armorstand label packets to players in range if armorstand
+            // is alive. if somehow dead, schedule re-create armorstand on main thread
+            if ( attack.armorstandTownLabel.isValid() ) {
+                try {
+                    attack.armorstandTownLabel.sendLabel()
+                } catch ( e: Exception ) {
+                    e.printStackTrace()
+                    Nodes.logger?.warning("Error sending war flag armorstand label packet: ${e.message}")
+                }
+            } else {
+                Bukkit.getScheduler().runTask(Nodes.plugin!!, object: Runnable {
+                    override fun run() {
+                        attack.armorstandTownLabel.respawn()
                     }
                 })
             }

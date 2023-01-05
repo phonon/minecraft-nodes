@@ -28,8 +28,6 @@
 
 
 # War
--   Configurable timer above war claim flag
--   Indicator above war claim flag showing enemy/ally owner whos attacking
 -   Claiming incontiguous territories short distance across seazone/wasteland
 -   Seazone border claiming penalty only on edge chunks not bordering friendly land
 -   Investigate MultiBlockChange packet to send flag sky beacon blocks?

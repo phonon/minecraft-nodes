@@ -35,14 +35,14 @@ import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.Player
-import phonon.xc.nms.NMSBlockPos
-import phonon.xc.nms.NMSBlockState
-import phonon.xc.nms.NMSChunk
-import phonon.xc.nms.NMSPlayer
-import phonon.xc.nms.NMSPacketLevelChunkWithLightPacket
-import phonon.xc.nms.CraftWorld
-import phonon.xc.nms.CraftPlayer
-import phonon.xc.nms.CraftMagicNumbers
+import phonon.nodes.nms.NMSBlockPos
+import phonon.nodes.nms.NMSBlockState
+import phonon.nodes.nms.NMSChunk
+import phonon.nodes.nms.NMSPlayer
+import phonon.nodes.nms.NMSPacketLevelChunkWithLightPacket
+import phonon.nodes.nms.CraftWorld
+import phonon.nodes.nms.CraftPlayer
+import phonon.nodes.nms.CraftMagicNumbers
 
 public class FastBlockEditSession(
     val bukkitWorld: org.bukkit.World
