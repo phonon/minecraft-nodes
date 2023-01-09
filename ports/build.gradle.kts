@@ -11,10 +11,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 version = ""
 
 // custom versioning flag
-val VERSION = "0.0.9"
-
-// jvm target
-val JVM = 16 // 1.8 for 8, 11 for 11
+val VERSION = "0.0.11"
 
 // base of output jar name
 val OUTPUT_JAR_NAME = "nodes-ports"
@@ -22,14 +19,12 @@ val OUTPUT_JAR_NAME = "nodes-ports"
 // target will be set to minecraft version by cli input parameter
 var target = ""
 
+
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
     id("org.jetbrains.kotlin.jvm") version "1.6.10"
-    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
     // maven() // no longer needed in gradle 7
-
-    // Apply the application plugin to add support for building a CLI application.
-    application
 }
 
 repositories {
@@ -46,17 +41,17 @@ repositories {
     }
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(JVM))
-    }
-}
 
 configurations {
     create("resolvableImplementation") {
         isCanBeResolved = true
         isCanBeConsumed = true
     }
+}
+
+val instrumentedClasspath by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
 }
 
 dependencies {
@@ -69,15 +64,11 @@ dependencies {
     // google json
     // compileOnly("com.google.code.gson:gson:2.8.6")
 
-    // put spigot/paper on path otherwise kotlin vs code plugin screeches
-    api("com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT")
-
     // nodes (local repo)
-    // this must be compiled for same minecraft version
-    implementation(files("../nodes/build/libs/nodes.jar"))
+    implementation(project(":nodes"))
 
-    // essentials
-    // implementation("net.ess3:EssentialsX:2.17.0")
+    // put spigot/paper on path otherwise kotlin vs code plugin language server gets mad
+    api("com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT")
 
     // Use the Kotlin test library.
     testImplementation("org.jetbrains.kotlin:kotlin-test")
@@ -85,38 +76,33 @@ dependencies {
     // Use the Kotlin JUnit integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 
-    if ( project.hasProperty("1.12") == true ) {
-        target = "1.12"
-        // spigot/paper api
-        compileOnly("com.destroystokyo.paper:paper-api:1.12.2-R0.1-SNAPSHOT")
-    } else if ( project.hasProperty("1.16") == true ) {
-        target = "1.16"
+    if ( project.hasProperty("1.16") == true ) {
+        target = "1.16.5"
+        // java must be up to 16 for 1.16
+        java.toolchain.languageVersion.set(JavaLanguageVersion.of(16))
         // spigot/paper api
         compileOnly("com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT")
     } else if ( project.hasProperty("1.18") == true ) {
-        target = "1.18"
+        target = "1.18.2"
+        // java must be up to 17 for 1.18
+        java.toolchain.languageVersion.set(JavaLanguageVersion.of(17))
         // spigot/paper api
-        compileOnly("io.papermc.paper:paper-api:1.18.1-R0.1-SNAPSHOT")
+        compileOnly("io.papermc.paper:paper-api:1.18.2-R0.1-SNAPSHOT")
     }
-}
-
-application {
-    // Define the main class for the application.
-    mainClassName = "phonon.ports.PortPluginKt"
 }
 
 tasks {
     named<ShadowJar>("shadowJar") {
         // verify valid target minecraft version
         doFirst {
-            val supportedMinecraftVersions = setOf("1.12", "1.16", "1.18")
+            val supportedMinecraftVersions = setOf("1.16.5", "1.18.2")
             if ( !supportedMinecraftVersions.contains(target) ) {
-                throw Exception("Invalid Minecraft version! Supported versions are: 1.12, 1.16, 1.18")
+                throw Exception("Invalid Minecraft version! Supported versions are: 1.16, 1.18")
             }
         }
 
         classifier = ""
-        configurations = mutableListOf(project.configurations.named("resolvableImplementation").get())
+        configurations = mutableListOf(project.configurations.named("resolvableImplementation").get()) as List<FileCollection>
     }
 }
 
@@ -133,6 +119,7 @@ tasks {
 gradle.taskGraph.whenReady {
     tasks {
         named<ShadowJar>("shadowJar") {
+            // baseName = "${OUTPUT_JAR_NAME}-${target}"
             baseName = "${OUTPUT_JAR_NAME}-${target}-${VERSION}"
             minimize() // FOR PRODUCTION USE MINIMIZE
         }

@@ -152,7 +152,7 @@ tasks {
         doFirst {
             val supportedMinecraftVersions = setOf("1.16.5", "1.18.2")
             if ( !supportedMinecraftVersions.contains(target) ) {
-                throw Exception("Invalid Minecraft version! Supported versions are: 1.12, 1.16, 1.18")
+                throw Exception("Invalid Minecraft version! Supported versions are: 1.16, 1.18")
             }
         }
 
