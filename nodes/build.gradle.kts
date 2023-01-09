@@ -137,7 +137,7 @@ dependencies {
         }
 
         tasks.named("reobfJar") {
-            base.archivesBaseName = "${OUTPUT_JAR_NAME}-${target}-SNAPSHOT"
+            base.archivesBaseName = "${OUTPUT_JAR_NAME}-${target}"
         }
     }
 }
@@ -175,14 +175,8 @@ tasks {
 gradle.taskGraph.whenReady {
     tasks {
         named<ShadowJar>("shadowJar") {
-            if ( hasTask(":release") ) {
-                baseName = "${OUTPUT_JAR_NAME}-${target}"
-                minimize() // FOR PRODUCTION USE MINIMIZE
-            }
-            else {
-                baseName = "${OUTPUT_JAR_NAME}-${target}-SNAPSHOT"
-                minimize() // FOR PRODUCTION USE MINIMIZE
-            }
+            baseName = "${OUTPUT_JAR_NAME}-${target}"
+            minimize()
         }
     }
 }
