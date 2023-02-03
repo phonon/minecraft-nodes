@@ -1,0 +1,12 @@
+main: phonon.refinery.RefineryPlugin
+name: nodes-refinery
+version: 0.0
+api-version: 1.16
+depend: [nodes]
+softdepend: [kotlin]
+commands:
+  refinery:
+    description: Refinery command
+    aliases: []
+    permission: refinery.command
+    usage: /refinery help

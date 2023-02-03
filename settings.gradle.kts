@@ -1,2 +1,2 @@
 rootProject.name = "nodes-plugin"
-include("nodes", "ports")
+include("nodes", "ports", "refinery")
