@@ -1,4 +1,162 @@
 # ===========================================
 # nodes refinery config
 # ===========================================
-# dynmap path
+# how often to run save tick
+saveTickPeriod: 6000 # ~5 minutes
+
+# how often to do update tick
+updateTickPeriod: 200 # ~10 seconds
+
+# recipe definitions
+#   inputs: dict of input material -> amount
+#   outputs: dict of output material -> amount
+#   time: time required in seconds
+#
+# (below is example config, used in my server)
+recipe:
+  steel_1:
+    inputs:
+      IRON_INGOT: 4
+      COAL: 16
+    outputs:
+      NETHERITE_INGOT: 1
+    time: 1800
+  steel_2:
+    inputs:
+      IRON_INGOT: 4
+      COAL: 16
+    outputs:
+      NETHERITE_INGOT: 1
+    time: 900
+  steel_3:
+    inputs:
+      IRON_INGOT: 4
+      COAL: 16
+    outputs:
+      NETHERITE_INGOT: 1
+    time: 225
+  machine_parts_1:
+    inputs:
+      GOLD_INGOT: 4
+      DIAMOND: 16
+    outputs:
+      EMERALD: 1
+    time: 1800
+  machine_parts_2:
+    inputs:
+      GOLD_INGOT: 4
+      DIAMOND: 16
+    outputs:
+      EMERALD: 1
+    time: 900
+  machine_parts_3:
+    inputs:
+      GOLD_INGOT: 4
+      DIAMOND: 16
+    outputs:
+      EMERALD: 1
+    time: 225
+  oil_1:
+    inputs:
+      DRIED_KELP_BLOCK: 4
+    outputs:
+      DRAGON_BREATH: 1
+    time: 1800
+  oil_2:
+    inputs:
+      DRIED_KELP_BLOCK: 4
+    outputs:
+      DRAGON_BREATH: 1
+    time: 900
+  oil_3:
+    inputs:
+      DRIED_KELP_BLOCK: 4
+    outputs:
+      DRAGON_BREATH: 1
+    time: 225
+  rubber_1:
+    inputs:
+      DRIED_KELP_BLOCK: 4
+    outputs:
+      PHANTOM_MEMBRANE: 1
+    time: 1800
+  rubber_2:
+    inputs:
+      DRIED_KELP_BLOCK: 4
+    outputs:
+      PHANTOM_MEMBRANE: 1
+    time: 900
+  rubber_3:
+    inputs:
+      DRIED_KELP_BLOCK: 4
+    outputs:
+      PHANTOM_MEMBRANE: 1
+    time: 225
+  
+# refinery type definitions
+#   title: readable name for ingame inventory
+#   resource: node territory resource for creating this refinery
+#   recipes: list of recipe names used by refinery
+#   inventory: size of inventory (9, 18, 27, 36, 45, 54)
+# (below is example config, used in my server)
+refinery:
+  steel_mill_1:
+    title: 'Steel Mill I'
+    resource: 'steel_mill_1'
+    recipes: ['steel_1']
+    inventory: 9
+  steel_mill_2:
+    title: 'Steel Mill II'
+    resource: 'steel_mill_2'
+    recipes: ['steel_1']
+    inventory: 18
+  steel_mill_3:
+    title: 'Steel Mill III'
+    resource: 'steel_mill_3'
+    recipes: ['steel_1']
+    inventory: 27
+  machine_parts_1:
+    title: 'Precision Parts Factory I'
+    resource: 'machine_parts_1'
+    recipes: ['machine_parts_1']
+    inventory: 9
+  machine_parts_2:
+    title: 'Precision Parts Factory II'
+    resource: 'machine_parts_2'
+    recipes: ['machine_parts_2']
+    inventory: 18
+  machine_parts_3:
+    title: 'Precision Parts Factory III'
+    resource: 'machine_parts_3'
+    recipes: ['machine_parts_3']
+    inventory: 27
+  oil_refinery_1:
+    title: 'Oil Refinery I'
+    resource: 'oil_refinery_1'
+    recipes: ['oil_1']
+    inventory: 9
+  oil_refinery_2:
+    title: 'Oil Refinery II'
+    resource: 'oil_refinery_2'
+    recipes: ['oil_2']
+    inventory: 18
+  oil_refinery_3:
+    title: 'Oil Refinery III'
+    resource: 'oil_refinery_3'
+    recipes: ['oil_3']
+    inventory: 27
+  rubber_plant_1:
+    title: 'Synthetic Rubber Plant I'
+    resource: 'rubber_plant_1'
+    recipes: ['rubber_1']
+    inventory: 9
+  rubber_plant_2:
+    title: 'Synthetic Rubber Plant II'
+    resource: 'rubber_plant_2'
+    recipes: ['rubber_2']
+    inventory: 18
+  rubber_plant_3:
+    title: 'Synthetic Rubber Plant III'
+    resource: 'rubber_plant_3'
+    recipes: ['rubber_3']
+    inventory: 27

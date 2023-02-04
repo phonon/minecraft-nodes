@@ -4,8 +4,6 @@
 
 package phonon.refinery
 
-import java.io.File
-import java.io.FileReader
 import java.util.UUID
 import java.util.EnumMap
 import java.util.EnumSet
@@ -59,14 +57,20 @@ data class RefineryRecipe(
 /**
  * Configuration for a refinery type.
  */
-data class RefineryConfig(
-    // Name of refinery type.
+data class RefineryType(
+    // Name of refinery type
     val name: String,
+    // Readable descriptive title of refinery, for inventory gui.
+    val title: String,
+    // Resource node in Nodes territory indicating this refinery type.
+    // During territory load, if this node is present, the refinery is
+    // added to the territory.
+    val resourceName: String, 
     // Recipes available in refinery. During refinery run tick, ALL recipes
     // are checked and run if inputs are available.
     val recipes: List<RefineryRecipe>,
     // Refinery inventory size.
-    val invSize: Int,
+    val inventorySize: Int,
 )
 
 /**
@@ -81,7 +85,7 @@ class Refinery(
     // Refinery config name
     val config: String,
     // Recipes available in refinery, reference to same List as in a
-    // RefineryConfig.
+    // RefineryType.
     val recipes: List<RefineryRecipe>,
     // Current progress of each recipe. Index of this array corresponds to
     // index of recipe in recipes array. Value is an accumulated time in
@@ -165,8 +169,13 @@ public class RefineryPlugin: JavaPlugin() {
     public var saveTickPeriod: Long = 20 * 60 * 5 // 5 minutes
     public var updateTickPeriod: Long = 20 * 10 // 10 seconds
 
-    // refinery configs, loaded on enable
-    public var configs: Map<String, RefineryConfig> = HashMap<String, RefineryConfig>()
+    // refinery recipes and cached names, loaded on enable
+    public var recipes: Map<String, RefineryRecipe> = HashMap<String, RefineryRecipe>()
+    public var recipeNames: List<String> = ArrayList<String>()
+
+    // refinery types and cached names, loaded on enable
+    public var refineryTypes: Map<String, RefineryType> = HashMap<String, RefineryType>()
+    public var refineryTypeNames: List<String> = ArrayList<String>()
 
     // list view of all refineries
     public var refineries: List<Refinery> = ArrayList<Refinery>()
@@ -193,7 +202,7 @@ public class RefineryPlugin: JavaPlugin() {
         // register listener
 
         // register commands
-        this.getCommand("refinery")?.setExecutor(RefineryCommand)
+        this.getCommand("refinery")?.setExecutor(RefineryCommand(this))
 
         // load config and tasks
         this.reloadConfigAndTasks()
@@ -218,7 +227,149 @@ public class RefineryPlugin: JavaPlugin() {
         this.taskUpdate?.cancel()
         this.taskSave?.cancel()
 
+        // new storages
+        val newRecipes = HashMap<String, RefineryRecipe>()
+        val newRefineryTypes = HashMap<String, RefineryType>()
+
         // load yml config
+        val configFile = Paths.get(this.getDataFolder().getPath(), "config.yml")
+        if ( !Files.exists(configFile) ) {
+            logger.info("No config found: generating default config.yml")
+            this.saveDefaultConfig()
+        }
+
+        try {
+            val config = YamlConfiguration.loadConfiguration(Files.newBufferedReader(configFile))
+
+            // general settings
+            this.saveTickPeriod = config.getLong("saveTickPeriod", this.saveTickPeriod)
+            this.updateTickPeriod = config.getLong("updateTickPeriod", this.updateTickPeriod)
+            
+            // recipes
+            config.getConfigurationSection("recipe")?.let { section ->
+                for ( (recipeName, recipeConfig) in section.getValues(false) ) {
+                    try {
+                        if ( recipeConfig !is ConfigurationSection ) {
+                            logger.warning("Invalid recipe config: ${recipeName}, skipping")
+                            continue
+                        }
+
+                        if ( recipeName in newRecipes ) {
+                            logger.warning("Duplicate recipe name: ${recipeName}, overwriting old recipe")
+                        }
+
+                        // parse recipes input map {MATERIAL -> amount} into item stacks
+                        val recipeInputs = ArrayList<ItemStack>()
+                        recipeConfig.getConfigurationSection("inputs")?.let { sectionInputs ->
+                            for ( (materialName, materialAmount) in sectionInputs.getValues(false) ) {
+                                val material = Material.matchMaterial(materialName)
+                                if ( material === null ) {
+                                    logger.warning("Invalid input material name: ${materialName}, skipping")
+                                    continue
+                                }
+
+                                val amount = materialAmount as? Int
+                                if ( amount === null ) {
+                                    logger.warning("Invalid input material amount: ${materialAmount} for ${materialName}, skipping")
+                                    continue
+                                }
+
+                                recipeInputs.add(ItemStack(material, amount))
+                            }
+                        }
+
+                        // parse recipes outputs map {MATERIAL -> amount} into item stacks
+                        val recipeOutputs = ArrayList<ItemStack>()
+                        recipeConfig.getConfigurationSection("outputs")?.let { sectionOutputs ->
+                            for ( (materialName, materialAmount) in sectionOutputs.getValues(false) ) {
+                                val material = Material.matchMaterial(materialName)
+                                if ( material === null ) {
+                                    logger.warning("Invalid output material name: ${materialName}, skipping")
+                                    continue
+                                }
+
+                                val amount = materialAmount as? Int
+                                if ( amount === null ) {
+                                    logger.warning("Invalid output material amount: ${materialAmount} for ${materialName}, skipping")
+                                    continue
+                                }
+
+                                recipeOutputs.add(ItemStack(material, amount))
+                            }
+                        }
+
+                        // recipe time (convert seconds to milliseconds)
+                        val recipeTimeMillis = 1000 * recipeConfig.getLong("time", 1800)
+
+                        newRecipes[recipeName] = RefineryRecipe(
+                            name = recipeName,
+                            inputs = recipeInputs,
+                            outputs = recipeOutputs,
+                            timeRequiredMillis = recipeTimeMillis,
+                        )
+                    } catch ( err: Exception ) {
+                        logger.warning("Failed to load recipe: ${recipeName}, skipping")
+                        err.printStackTrace()
+                    }
+                }
+            }
+
+            // refinery types
+            config.getConfigurationSection("refinery")?.let { section ->
+                for ( (refineryName, refineryConfig) in section.getValues(false) ) {
+                    try {
+                        if ( refineryConfig !is ConfigurationSection ) {
+                            logger.warning("Invalid refinery type config: ${refineryName}, skipping")
+                            continue
+                        }
+
+                        if ( refineryName in this.refineryTypes ) {
+                            logger.warning("Duplicate refinery type: ${refineryName}, overwriting old refinery type")
+                        }
+
+                        val title = refineryConfig.getString("title", "Unknown Refinery")!!
+                        val resourceName = refineryConfig.getString("resource", "refinery")!!
+                        val inventorySize = refineryConfig.getInt("inventory", 9)
+                        val recipeNames = refineryConfig.getStringList("recipes")
+                        val refineryRecipes = ArrayList<RefineryRecipe>(recipeNames.size)
+                        for ( name in recipeNames ) {
+                            val recipe = newRecipes.get(name)
+                            if ( recipe === null ) {
+                                logger.warning("Invalid recipe name ${name} in type ${refineryName}, skipping")
+                                continue
+                            }
+
+                            refineryRecipes.add(recipe)
+                        }
+
+                        newRefineryTypes[refineryName] = RefineryType(
+                            name = refineryName,
+                            title = title,
+                            resourceName = resourceName,
+                            recipes = refineryRecipes,
+                            inventorySize = inventorySize,
+                        )
+                    } catch ( err: Exception ) {
+                        logger.warning("Failed to load refinery type: ${refineryName}, skipping")
+                        err.printStackTrace()
+                    }
+                }
+            }
+
+        } catch ( err: Exception ) {
+            logger.warning("Failed to load config.yml: ${err.message}")
+            err.printStackTrace()
+        }
+
+        // save new recipes and refinery types
+        this.recipes = newRecipes
+        this.recipeNames = newRecipes.keys.toList()
+        this.refineryTypes = newRefineryTypes
+        this.refineryTypeNames = newRefineryTypes.keys.toList()
+
+        // print loaded recipes and refinery types
+        logger.info("- Recipes: ${this.recipeNames.size}")
+        logger.info("- Refinery types: ${this.refineryTypeNames.size}")
 
         // start tasks
         val self = this
