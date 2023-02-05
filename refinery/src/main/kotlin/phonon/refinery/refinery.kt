@@ -12,11 +12,11 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
-import java.nio.channels.AsynchronousFileChannel
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.google.gson.stream.JsonReader
 import org.bukkit.Bukkit
-import org.bukkit.World
 import org.bukkit.Location
 import org.bukkit.ChatColor
 import org.bukkit.Material
@@ -25,23 +25,24 @@ import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.entity.Entity
 import org.bukkit.entity.EntityType
 import org.bukkit.configuration.ConfigurationSection
-import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration
-
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.entity.Player
-
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
-
+import org.bukkit.event.inventory.InventoryAction
+import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryCloseEvent
+import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.scheduler.BukkitTask
-import org.bukkit.scheduler.BukkitRunnable
+import net.kyori.adventure.text.Component
 import phonon.nodes.Nodes
 import phonon.nodes.objects.Town
 import phonon.nodes.objects.TerritoryId
+import phonon.nodes.event.NodesTerritoriesLoadedEvent
 
 /**
  * Available recipe in refinery for converting raw material to refined
@@ -71,7 +72,20 @@ data class RefineryType(
     val recipes: List<RefineryRecipe>,
     // Refinery inventory size.
     val inventorySize: Int,
-)
+) {
+    // Tracks allowed item inputs in all recipes, use to enforce players
+    // only able to insert valid inputs into refinery.
+    val validInputMaterials: EnumSet<Material> = EnumSet.noneOf(Material::class.java)
+
+    init {
+        // populate valid input materials
+        for ( recipe in recipes ) {
+            for ( input in recipe.inputs ) {
+                validInputMaterials.add(input.type)
+            }
+        }
+    }
+}
 
 /**
  * Refinery object. Stores list of valid refinery conversion recipes
@@ -82,8 +96,8 @@ data class RefineryType(
 class Refinery(
     // Refinery's territory id
     val territoryId: TerritoryId,
-    // Refinery config name
-    val config: String,
+    // Refinery type
+    val type: RefineryType,
     // Recipes available in refinery, reference to same List as in a
     // RefineryType.
     val recipes: List<RefineryRecipe>,
@@ -93,25 +107,18 @@ class Refinery(
     // when all inputs are available. Resets to zero if inputs are no 
     // longer available.
     val recipeProgressMillis: LongArray,
-    // Refinery inventory
-    val inv: Inventory,
+    // Refinery inventory size
+    val inventorySize: Int,
 ): InventoryHolder {
-    // Tracks allowed item inputs in all recipes, use to enforce players
-    // only able to insert valid inputs into refinery.
-    val validInputMaterials: EnumSet<Material> = EnumSet.noneOf(Material::class.java)
+    // Readable refinery name
+    val refineryName: String = "Refinery: ${type.title}"
+    
+    // Refinery inventory
+    val inv: Inventory = Bukkit.createInventory(this, inventorySize, Component.text(refineryName))
 
     // Tracks current count of each material in refinery inventory.
     // Use to check if inputs are available for each recipe.
     val inputMaterialCount: EnumMap<Material, Int> = EnumMap<Material, Int>(Material::class.java)
-
-    init {
-        // populate valid input materials
-        for ( recipe in recipes ) {
-            for ( input in recipe.inputs ) {
-                validInputMaterials.add(input.type)
-            }
-        }
-    }
 
     override public fun getInventory(): Inventory {
         return this.inv
@@ -124,7 +131,7 @@ class Refinery(
     public fun toSaveState(): RefinerySaveState {
         return RefinerySaveState(
             territoryId = this.territoryId,
-            inventory = this.inv.getStorageContents().map{ RefineryItemCount(it.type, it.amount) },
+            inventory = this.inv.getStorageContents().filterNotNull().map{ RefineryItemCount(it.type.toString(), it.amount) },
             recipeProgress = this.recipes.mapIndexed{ index, recipe -> RefineryProgress(recipe.name, this.recipeProgressMillis[index]) },
         )
     }
@@ -135,7 +142,7 @@ class Refinery(
  * refinery inventory contents.
  */
 data class RefineryItemCount(
-    val material: Material,
+    val material: String,
     val amount: Int,
 )
 
@@ -157,8 +164,8 @@ data class RefineryProgress(
  */
 data class RefinerySaveState(
     val territoryId: TerritoryId,
-    val inventory: List<RefineryItemCount>,
     val recipeProgress: List<RefineryProgress>,
+    val inventory: List<RefineryItemCount>,
 )
 
 /*
@@ -166,22 +173,47 @@ data class RefinerySaveState(
  */
 public class RefineryPlugin: JavaPlugin() {
     // config settings
-    public var saveTickPeriod: Long = 20 * 60 * 5 // 5 minutes
-    public var updateTickPeriod: Long = 20 * 10 // 10 seconds
+    private var saveTickPeriod: Long = 20 * 60 * 5 // 5 minutes
+    private var updateTickPeriod: Long = 20 * 10 // 10 seconds
+    private var pathSave = Paths.get(this.getDataFolder().getPath(), "refinery_save.json")
 
     // refinery recipes and cached names, loaded on enable
     public var recipes: Map<String, RefineryRecipe> = HashMap<String, RefineryRecipe>()
+        private set
     public var recipeNames: List<String> = ArrayList<String>()
-
+        private set
+        
+    // Tracks all allowed item inputs in all recipes from all recipes,
+    // use to enforce players only able to insert valid inputs into refinery.
+    // Inventory events don't support easy way to determine refinery type
+    // (without encoding in inventory string name and parsing, inefficient)
+    // so for simplicity just only allow refinery inventory interactions
+    // with valid inputs from all recipes.
+    public var allValidInputMaterials: EnumSet<Material> = EnumSet.noneOf(Material::class.java)
+        private set
+    
     // refinery types and cached names, loaded on enable
     public var refineryTypes: Map<String, RefineryType> = HashMap<String, RefineryType>()
+        private set
     public var refineryTypeNames: List<String> = ArrayList<String>()
-
+        private set
+    
+    // map Nodes territory resource names to a refinery type
+    // e.g. "steel_1" => RefineryType(name="steel_1", resourceName="steel_1", ...)
+    public var resourceToRefineryType: Map<String, RefineryType> = HashMap<String, RefineryType>()
+        private set
+    
     // list view of all refineries
     public var refineries: List<Refinery> = ArrayList<Refinery>()
-
+        private set
+    
     // storage mapping territory id to its refinery (same object as in refineries)
-    public var territoryToRefinery: Map<TerritoryId, Refinery> = LinkedHashMap<TerritoryId, Refinery>()
+    public var territoryToRefinery: Map<TerritoryId, Refinery> = HashMap<TerritoryId, Refinery>()
+        private set
+    
+    // flag that plugin has loaded refineries in world
+    // (use to prevent saving refineries before they are first loaded)
+    private var isLoaded: Boolean = false
 
     // last periodic tick time
     private var lastUpdateTime = System.currentTimeMillis()
@@ -192,6 +224,12 @@ public class RefineryPlugin: JavaPlugin() {
     // refinery save task
     private var taskSave: BukkitTask? = null
 
+    /**
+     * On plugin enable: load config, initialize listeners and commands.
+     * Does NOT load actual refineries in each territory...must wait
+     * until Nodes world is fully loaded so we can map territory resources
+     * to refinery types.
+     */
     override fun onEnable() {
         // measure load time
         val timeStart = System.currentTimeMillis()
@@ -200,12 +238,17 @@ public class RefineryPlugin: JavaPlugin() {
         val pluginManager = this.getServer().getPluginManager()
 
         // register listener
+        pluginManager.registerEvents(RefineryListener(this), this)
 
         // register commands
         this.getCommand("refinery")?.setExecutor(RefineryCommand(this))
 
         // load config and tasks
         this.reloadConfigAndTasks()
+
+        // load world, plugin should run after Nodes already loaded
+        // using plugin dependencies in plugin.yml
+        this.reloadWorld()
 
         // print load time
         val timeEnd = System.currentTimeMillis()
@@ -216,7 +259,17 @@ public class RefineryPlugin: JavaPlugin() {
         logger.info("now this is epic")
     }
 
+    /**
+     * On plugin disable: save refineries and cancel tasks.
+     */
     override fun onDisable() {
+        this.taskUpdate?.cancel()
+        this.taskSave?.cancel()
+
+        if ( this.isLoaded ) {
+            this.save()
+        }
+
         logger.info("wtf i hate xeth now")
     }
 
@@ -361,11 +414,22 @@ public class RefineryPlugin: JavaPlugin() {
             err.printStackTrace()
         }
 
+        // map resource node types to refinery types
+        // and gather all valid refinery material types
+        val newResourceToRefineryType = HashMap<String, RefineryType>(newRefineryTypes.size)
+        val newAllValidInputMaterials = EnumSet.noneOf(Material::class.java)
+        for ( refineryType in newRefineryTypes.values ) {
+            newResourceToRefineryType[refineryType.resourceName] = refineryType
+            newAllValidInputMaterials.addAll(refineryType.validInputMaterials)
+        }
+
         // save new recipes and refinery types
         this.recipes = newRecipes
         this.recipeNames = newRecipes.keys.toList()
         this.refineryTypes = newRefineryTypes
         this.refineryTypeNames = newRefineryTypes.keys.toList()
+        this.resourceToRefineryType = newResourceToRefineryType
+        this.allValidInputMaterials = newAllValidInputMaterials
 
         // print loaded recipes and refinery types
         logger.info("- Recipes: ${this.recipeNames.size}")
@@ -381,26 +445,106 @@ public class RefineryPlugin: JavaPlugin() {
 
         this.taskSave = Bukkit.getScheduler().runTaskTimer(this, object: Runnable {
             override fun run() {
-                self.save()
+                self.save(async = true)
             }
         }, this.saveTickPeriod, this.saveTickPeriod)
     }
 
     /**
-     * Reloads refineries from Nodes world. Must be done separately from
-     * config and after Nodes world is fully loaded. Runs in event handler
-     * for Nodes world loaded event.
+     * Reloads refineries from Nodes world. Must be done after Nodes
+     * world is fully loaded.
      */
     internal fun reloadWorld() {
-        // save state to file first
-        this.save()
+        if ( this.isLoaded ) {
+            // save state to file first
+            this.save()
+        }
+
+        val newRefineries = HashMap<TerritoryId, Refinery>()
 
         // first load refineries for each territory
-        // TODO
+        for ( (terrId, terr) in Nodes.iterTerritories() ) {
+            for ( resourceName in terr.resourceNodes ) {
+                val refineryType = this.resourceToRefineryType.get(resourceName)
+                if ( refineryType === null ) {
+                    continue
+                }
+                
+                try {
+                    newRefineries[terrId] = Refinery(
+                        territoryId = terrId,
+                        type = refineryType,
+                        recipes = refineryType.recipes,
+                        recipeProgressMillis = LongArray(refineryType.recipes.size, { 0 }),
+                        inventorySize = refineryType.inventorySize,
+                    )
+                } catch ( err: Exception ) {
+                    logger.warning("Failed to load refinery for territory ${terrId}, skipping")
+                    err.printStackTrace()
+                }
 
-        // load and apply refinery save state onto updated
-        // refinery configs
-        // TODO
+                // only allow one refinery per territory,
+                // exit after first refinery is found
+                break
+            }
+        }
+
+        this.territoryToRefinery = newRefineries
+        this.refineries = newRefineries.values.toList()
+
+        // load and apply saved refinery state onto loaded refineries,
+        // match saved refineries by territory id
+        if ( Files.exists(pathSave) ) {
+            try {
+                val gson = Gson()
+                val json = JsonParser.parseReader(Files.newBufferedReader(pathSave))
+                val jsonObj = json.getAsJsonObject()
+                val jsonRefineries = jsonObj.getAsJsonArray("refineries")
+                val refineriesSaved = gson.fromJson(jsonRefineries, Array<RefinerySaveState>::class.java)
+
+                for ( refinerySaved in refineriesSaved ) {
+                    val refinery = this.territoryToRefinery.get(refinerySaved.territoryId)
+                    if ( refinery === null ) {
+                        logger.warning("Failed to load refinery state for territory ${refinerySaved.territoryId}, skipping")
+                        continue
+                    }
+
+                    try {
+                        for ( progress in refinerySaved.recipeProgress ) {
+                            val (recipeName, progressMillis) = progress
+                            val recipeIndex = refinery.recipes.indexOfFirst { it.name == recipeName }
+                            if ( recipeIndex == -1 ) {
+                                logger.warning("Failed to load progress for refinery ${refinery.type.name} in territory ${refinerySaved.territoryId}: cannot find recipe ${recipeName}, skipping")
+                                continue
+                            }
+                            refinery.recipeProgressMillis[recipeIndex] = progressMillis
+                        }
+
+                        for ( (i, item) in refinerySaved.inventory.withIndex() ) {
+                            if ( i >= refinery.inventorySize ) {
+                                logger.warning("Failed to load inventory for refinery ${refinery.type.name} in territory ${refinerySaved.territoryId}: inventory size ${refinery.inventorySize} is smaller than saved inventory size ${refinerySaved.inventory.size}, skipping")
+                                break
+                            }
+
+                            val (itemMaterial, itemAmount) = item
+                            refinery.inv.setItem(i, ItemStack(Material.matchMaterial(itemMaterial)!!, itemAmount))
+                        }
+                    } catch ( err: Exception ) {
+                        logger.warning("Failed to load refinery state for territory ${refinerySaved.territoryId}: ${err.message}")
+                        err.printStackTrace()
+                    }
+                }
+            } catch ( err: Exception ) {
+                logger.warning("Failed to load refinery state from file: ${err.message}")
+                err.printStackTrace()
+            }
+        }
+
+        // print refineries 
+        logger.info("Loaded refineries:")
+        logger.info("- Refineries: ${this.refineries.size}")
+
+        this.isLoaded = true
     }
     
     /**
@@ -408,7 +552,7 @@ public class RefineryPlugin: JavaPlugin() {
      * progress, and remove inputs + create outputs for recipes whose
      * progress has reached the required time.
      */
-    private fun update() {
+    internal fun update() {
         // time delta since last update
         val dt = System.currentTimeMillis() - this.lastUpdateTime
 
@@ -427,7 +571,7 @@ public class RefineryPlugin: JavaPlugin() {
             
             try { // try/catching to prevent one refinery from breaking all refineries
                 // first pass: calculate number of input materials available
-                refinery.validInputMaterials.forEach { material ->
+                refinery.type.validInputMaterials.forEach { material ->
                     refinery.inputMaterialCount[material] = 0
                 }
                 for ( itemstack in refinery.inventory.getStorageContents() ) {
@@ -435,7 +579,7 @@ public class RefineryPlugin: JavaPlugin() {
                         continue
                     }
                     val material = itemstack.type
-                    if ( refinery.validInputMaterials.contains(material) ) {
+                    if ( refinery.type.validInputMaterials.contains(material) ) {
                         refinery.inputMaterialCount[material] = refinery.inputMaterialCount[material]!! + itemstack.amount
                     }
                 }
@@ -460,6 +604,12 @@ public class RefineryPlugin: JavaPlugin() {
                         refinery.recipeProgressMillis[idx] += dt
 
                         if ( refinery.recipeProgressMillis[idx] >= recipe.timeRequiredMillis ) {
+                            // remove input count from inputMaterialCount and from inventory
+                            for ( input in recipe.inputs ) {
+                                refinery.inputMaterialCount[input.type] = refinery.inputMaterialCount[input.type]!! - input.amount
+                                refinery.inv.removeItem(input)
+                            }
+
                             for ( output in recipe.outputs ) {
                                 Nodes.addToIncome(town, output.type, output.amount)
                             }
@@ -485,7 +635,112 @@ public class RefineryPlugin: JavaPlugin() {
      * refineries into list of RefinerySaveState, then send to async
      * thread for JSON serialization and file saving.
      */
-    private fun save() {
-        // TODO
+    internal fun save(async: Boolean = false) {
+        // convert all refineries to minimal save state object
+        val refineriesToSave = this.refineries.map { r -> r.toSaveState() }
+
+        println("Saving refineries ${refineriesToSave}")
+
+        val task = TaskSaveJson(this.pathSave, refineriesToSave)
+        if ( async ) {
+            Bukkit.getScheduler().runTaskAsynchronously(this, task)
+        } else {
+            task.run()
+        }
+    }
+
+    /**
+     * Runnable task for saving JSON to file, to support running
+     * either sync or async.
+     */
+    private class TaskSaveJson(
+        val path: Path,
+        val refineriesToSave: List<RefinerySaveState>,
+    ): Runnable {
+        override fun run() {
+            val gson = Gson()
+            val json = JsonObject()
+            json.add("refineries", gson.toJsonTree(refineriesToSave))
+            
+            try {
+                Files.write(
+                    path,
+                    json.toString().toByteArray(),
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                )
+            }
+            catch ( err: Exception ) {
+                err.printStackTrace()
+            }
+        }
+    }
+}
+
+public class RefineryListener(val plugin: RefineryPlugin): Listener {
+    /**
+     * Handler to load refineries after Nodes territories are loaded.
+     */
+    @EventHandler
+    public fun onNodesLoad(_e: NodesTerritoriesLoadedEvent) {
+        plugin.reloadWorld()
+    }
+    
+    /**
+     * Only allow inserting items if they are valid input materials.
+     */
+    @EventHandler
+    public fun onInventoryClick(event: InventoryClickEvent) {
+        val inventoryClicked = event.getClickedInventory()
+        val inventoryView = event.getView()
+
+        // all refinery inventory titles must begin with "Refinery", check Refinery object
+        if ( inventoryClicked !== null && inventoryView.title.startsWith("Refinery") ) {
+            val itemClicked = event.getCurrentItem()
+            val itemCursor = event.getCursor()
+            println("Clicked item: ${itemClicked}, cursor item: ${itemCursor}")
+
+            // disable actions that move items into top view
+            // https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/inventory/InventoryAction.html
+            if ( inventoryClicked === inventoryView.getTopInventory() ) {
+                when ( event.getAction() ) {
+                    InventoryAction.HOTBAR_MOVE_AND_READD,
+                    InventoryAction.HOTBAR_SWAP,
+                    InventoryAction.PLACE_ALL,
+                    InventoryAction.PLACE_ONE,
+                    InventoryAction.PLACE_SOME,
+                    InventoryAction.SWAP_WITH_CURSOR,
+                        -> { event.setCancelled(false) }
+                    else -> {}
+                }
+            }
+            else { // bottom inventory
+                when ( event.getAction() ) {
+                    InventoryAction.MOVE_TO_OTHER_INVENTORY,
+                        -> { event.setCancelled(false) }
+                    else -> {}
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public fun onInventoryDrag(event: InventoryDragEvent) {
+        val inventoryView = event.getView()
+        if ( inventoryView.title.startsWith("Refinery") ) {
+            val numSlots = inventoryView.getTopInventory().getSize()
+            val itemType = event.oldCursor.type
+
+            if ( !plugin.allValidInputMaterials.contains(itemType) ) {
+                // if any slots involved were in top inventory, cancel event
+                for ( slot in event.getRawSlots() ) {
+                    if ( slot < numSlots ) {
+                        event.setCancelled(true)
+                        break
+                    }
+                }
+            }
+        }
     }
 }

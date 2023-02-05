@@ -396,6 +396,8 @@ public object Nodes {
                 Nodes.territoryChunks.put(c, TerritoryChunk(c, territory))
             }
         }
+
+        Bukkit.getPluginManager().callEvent(NodesTerritoriesLoadedEvent())
     }
 
     /**
@@ -483,6 +485,8 @@ public object Nodes {
                 System.err.println("No towns found: ${Config.pathTowns.toString()}")
                 return true
             }
+
+            Bukkit.getPluginManager().callEvent(NodesWorldLoadedEvent())
         }
         else {
             System.err.println("Failed to load world: ${Config.pathWorld.toString()}")
@@ -819,6 +823,13 @@ public object Nodes {
     public fun getTerritoryFromChunkCoords(cx: Int, cz: Int): Territory? {
         val coord = Coord(cx, cz)
         return Nodes.territoryChunks.get(coord)?.territory
+    }
+
+    /**
+     * Returns an iterable of all (terrId, territory) pairs in world.
+     */
+    public fun iterTerritories(): Iterable<kotlin.collections.Map.Entry<TerritoryId, Territory>> {
+        return Nodes.territories.asIterable()
     }
 
     public fun getChunkFromCoord(coord: Coord, world: World): Chunk? {

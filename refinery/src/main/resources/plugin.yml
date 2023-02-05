@@ -10,3 +10,7 @@ commands:
     aliases: []
     permission: refinery.command
     usage: /refinery help
+permissions:
+  refinery.admin:
+    description: Allow refinery admin commands
+    default: op
