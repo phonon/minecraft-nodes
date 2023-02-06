@@ -189,7 +189,7 @@ public class RefineryPlugin: JavaPlugin() {
     // (without encoding in inventory string name and parsing, inefficient)
     // so for simplicity just only allow refinery inventory interactions
     // with valid inputs from all recipes.
-    public var allValidInputMaterials: EnumSet<Material> = EnumSet.noneOf(Material::class.java)
+    public var allValidInputMaterials: EnumSet<Material> = EnumSet.of(Material.AIR)
         private set
     
     // refinery types and cached names, loaded on enable
@@ -417,7 +417,7 @@ public class RefineryPlugin: JavaPlugin() {
         // map resource node types to refinery types
         // and gather all valid refinery material types
         val newResourceToRefineryType = HashMap<String, RefineryType>(newRefineryTypes.size)
-        val newAllValidInputMaterials = EnumSet.noneOf(Material::class.java)
+        val newAllValidInputMaterials = EnumSet.of(Material.AIR)
         for ( refineryType in newRefineryTypes.values ) {
             newResourceToRefineryType[refineryType.resourceName] = refineryType
             newAllValidInputMaterials.addAll(refineryType.validInputMaterials)
@@ -639,7 +639,8 @@ public class RefineryPlugin: JavaPlugin() {
         // convert all refineries to minimal save state object
         val refineriesToSave = this.refineries.map { r -> r.toSaveState() }
 
-        println("Saving refineries ${refineriesToSave}")
+        //// DEBUGGING
+        // println("Saving refineries ${refineriesToSave}")
 
         val task = TaskSaveJson(this.pathSave, refineriesToSave)
         if ( async ) {
@@ -699,26 +700,47 @@ public class RefineryListener(val plugin: RefineryPlugin): Listener {
         if ( inventoryClicked !== null && inventoryView.title.startsWith("Refinery") ) {
             val itemClicked = event.getCurrentItem()
             val itemCursor = event.getCursor()
-            println("Clicked item: ${itemClicked}, cursor item: ${itemCursor}")
+            
+            //// DEBUGGING
+            // println("[${event.getAction()}] Clicked item: ${itemClicked}, cursor item: ${itemCursor}")
 
             // disable actions that move items into top view
             // https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/inventory/InventoryAction.html
             if ( inventoryClicked === inventoryView.getTopInventory() ) {
                 when ( event.getAction() ) {
-                    InventoryAction.HOTBAR_MOVE_AND_READD,
-                    InventoryAction.HOTBAR_SWAP,
                     InventoryAction.PLACE_ALL,
                     InventoryAction.PLACE_ONE,
                     InventoryAction.PLACE_SOME,
                     InventoryAction.SWAP_WITH_CURSOR,
-                        -> { event.setCancelled(false) }
+                    -> {
+                        if ( itemCursor !== null && !plugin.allValidInputMaterials.contains(itemCursor.type) ) {
+                            event.setCancelled(true)
+                        }
+                    }
+
+                    InventoryAction.HOTBAR_MOVE_AND_READD,
+                    InventoryAction.HOTBAR_SWAP,
+                    -> {
+                        // must manually check hotbar slot item
+                        val hotbarSlot = event.getHotbarButton()
+                        if ( hotbarSlot != -1 ) {
+                            val hotbarItem = inventoryView.getPlayer().getInventory().getItem(hotbarSlot)
+                            if ( hotbarItem !== null && !plugin.allValidInputMaterials.contains(hotbarItem.type) ) {
+                                event.setCancelled(true)
+                            }
+                        }
+                    }
                     else -> {}
                 }
             }
             else { // bottom inventory
                 when ( event.getAction() ) {
                     InventoryAction.MOVE_TO_OTHER_INVENTORY,
-                        -> { event.setCancelled(false) }
+                    -> {
+                        if ( itemClicked !== null && !plugin.allValidInputMaterials.contains(itemClicked.type) ) {
+                            event.setCancelled(true)
+                        }
+                    }
                     else -> {}
                 }
             }
