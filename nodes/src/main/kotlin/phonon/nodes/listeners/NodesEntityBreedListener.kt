@@ -72,7 +72,7 @@ public class NodesEntityBreedListener: Listener {
                     event.entity.remove()
                 }
                 // handle town over max claims penalty
-                else if ( territory?.town?.isOverClaimsMax == true ) {
+                else if ( Config.overClaimsPenalty && territory?.town?.isOverClaimsMax == true ) {
                     if ( Math.random() < Config.overClaimsMaxPenalty ) {
                         event.entity.remove()
                     }

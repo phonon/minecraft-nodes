@@ -1503,6 +1503,10 @@ public object Nodes {
      * players if their town is over max claims
      */
     public fun overMaxClaimsReminder() {
+        if ( !Config.overClaimsPenalty ) { // skip reminder if over max claims disabled
+            return
+        }
+
         val resourcePenalty = "${(Config.overClaimsMaxPenalty * 100).toInt()}% resource penalty"
 
         for ( town in Nodes.towns.values ) {
@@ -2453,115 +2457,147 @@ public object Nodes {
     // Territory income cycle functions
     // ==============================================
     
-    // add income from each territory,
-    // occupied territories 
+    /**
+     * System to run income from all town territories and deposit items into
+     * a town's income inventory chest. For a town's occupied territories,
+     * it gives the income to the occupier town. This must also handle 
+     * adjusting net income rates based on a town's over max claims penalty.
+     * Strategy for income:
+     *     for each town:
+     *         // 1. construct hashmap of each town name mapped to an enum map of
+     *         //    material mapped to net income to be given
+     *         townIncomes = HashMap<Town, EnumMap<Material, Double>>
+     *         
+     *         // 2. accumulate net income from each territory into the town
+     *         //    incomes hashmap. for occupied territories, create a new
+     *         //    town entry if it doesn't exist.
+     *         for territory in town:
+     *             doTownIncomeLogic(territory)
+     *     
+     *         // 3. apply over max claims penalty, other modifiers, etc.
+     *         //    to each town's income to be given
+     *         townIncomes.forEach { town, income -> doTownIncomeModifiers(town, income) }
+     * 
+     *         // 4. add incomes to each town's income chests
+     *         townIncomes.forEach { town, income -> addTownIncomeToChest(town, income) }
+     */
     public fun runIncome() {
 
-        // converts item rate as Double to item count as Int
-        // (can be < 1.0 for random, or >1.0 for fixed amount)
+        /**
+         * Helper to convert an income item rate Double to a item count as Int.
+         * The rate must be >0.0 but can have fractional parts which allow for
+         * random rolls for item amount. Examples for handling rates:
+         * - rate = 2.0 : 2 items
+         * - rate = 2.5 : split into 2.0 + 0.5
+         *      - 2.0 -> 2 items are guaranteed
+         *      - 0.5 -> do random roll, if roll < 0.5, add 1 item (50% chance)
+         */
         fun rateToAmount(rate: Double): Int {
-            if ( rate < 1.0 ) {
+            if ( rate <= 0.0 ) {
+                return 0
+            }
+
+            // determine integer part and fractional remainder for random roll
+            val intPart = kotlin.math.floor(rate)
+            val fracPart = kotlin.math.max(0.0, rate - intPart)
+
+            val fracAmount = if ( fracPart > 0.0 ) {
                 val roll = ThreadLocalRandom.current().nextDouble()
-                if ( roll < rate ) {
+                if ( roll < fracPart ) {
                     return 1
                 } else {
                     return 0
                 }
+            } else {
+                0
             }
-            else {
-                return rate.toInt()
-            }
+
+            return intPart.toInt() + fracAmount
         }
 
-        val taxRate = Config.taxIncomeRate
+        // tax and kept item rates for occupied territories
+        val taxRate = Config.taxIncomeRate.coerceIn(0.0, 1.0)
+        val keptRate = 1.0 - taxRate
 
         for ( town in Nodes.towns.values ) {
-            for ( terrId in town.territories ) {
-                val territory = Nodes.getTerritoryFromId(terrId)
-                if ( territory === null ) {
-                    continue
-                }
+            try {
+                val thisTownIncome = EnumMap<Material, Double>(Material::class.java) // hard-coded value for this town
+                val townIncomes = HashMap<Town, EnumMap<Material, Double>>()
 
-                val occupier = territory.occupier
-                if ( occupier != null ) {
-                    // regular item income
-                    for ( (material, rate) in territory.income ) {
-                        val amount: Int = rateToAmount(rate)
-                        if ( amount > 1 ) {
-                            val amountTaxed: Int = Math.ceil(taxRate * amount).toInt()
-                            occupier.income.add(material, amountTaxed)
-
-                            val amountKept: Int = amount - amountTaxed
-                            
-                            // apply over claims penalty
-                            if ( town.isOverClaimsMax == true ) {
-                                val newAmountKept: Int = Math.floor(amountKept.toDouble() * (1.0 - Config.overClaimsMaxPenalty)).toInt()
-                                town.income.add(material, newAmountKept)
-                            }
-                            else {
-                                town.income.add(material, amountKept)
-                            }
-                        }
-                        // if <= 1, give all to occupier
-                        else {
-                            occupier.income.add(material, amount)
-                        }
+                // inject this town, to unify claims penalty logic later
+                townIncomes[town] = thisTownIncome
+                
+                for ( terrId in town.territories ) {
+                    val territory = Nodes.getTerritoryFromId(terrId)
+                    if ( territory === null ) {
+                        continue
                     }
 
-                    // 1.12 spawn egg income
-                    // for ( (entityType, rate) in territory.incomeSpawnEgg ) {
-                    //     val amount: Int = rateToAmount(rate)
-                    //     if ( amount > 1 ) {
-                    //         val amountTaxed: Int = Math.ceil(taxRate * amount).toInt()
-                    //         occupier.income.add(Material.MONSTER_EGG, amountTaxed, entityType.ordinal)
+                    val occupier = territory.occupier
+                    if ( occupier != null ) {
+                        val occupierIncome = townIncomes.getOrPut(occupier) { EnumMap<Material, Double>(Material::class.java) }
 
-                    //         val amountKept: Int = amount - amountTaxed
-                            
-                    //         // apply over claims penalty
-                    //         if ( town.isOverClaimsMax == true ) {
-                    //             val newAmountKept: Int = Math.floor(amountKept.toDouble() * (1.0 - Config.overClaimsMaxPenalty)).toInt()
-                    //             town.income.add(Material.MONSTER_EGG, newAmountKept, entityType.ordinal)
-                    //         }
-                    //         else {
-                    //             town.income.add(Material.MONSTER_EGG, amountKept, entityType.ordinal)
-                    //         }
-                    //     }
-                    //     // if <= 1, give all to occupier
-                    //     else {
-                    //         occupier.income.add(Material.MONSTER_EGG, amount, entityType.ordinal)
-                    //     }
-                    // }
-
-                    occupier.needsUpdate()
-                }
-                else {
-                    // regular item income
-                    for ( (material, rate) in territory.income ) {
-                        var amount: Int = rateToAmount(rate)
-
-                        // over max claims penalty
-                        if ( town.isOverClaimsMax == true ) {
-                            amount = Math.floor(amount.toDouble() * (1.0 - Config.overClaimsMaxPenalty)).toInt()
+                        // regular item income
+                        for ( (material, amount) in territory.income ) {                            
+                            occupierIncome[material] = (occupierIncome[material] ?: 0.0) + (amount * taxRate)
+                            thisTownIncome[material] = (thisTownIncome[material] ?: 0.0) + (amount * keptRate)
                         }
 
-                        town.income.add(material, amount)
+                        // TODO: 1.12 compatibility? spawn egg income
+                        // for ( (entityType, rate) in territory.incomeSpawnEgg ) {
+                        //     TODO
+                        // }
+                    }
+                    else {
+                        // regular item income
+                        for ( (material, amount) in territory.income ) {                            
+                            thisTownIncome[material] = (thisTownIncome[material] ?: 0.0) + amount
+                        }
+
+                        // TODO: 1.12 compatibility? spawn egg income
+                        // for ( (entityType, rate) in territory.incomeSpawnEgg ) {
+                        //     TODO
+                        // }
+                    }
+                }
+
+                // apply income modifiers for each town, then add items to town income chest
+                for ( (townForIncome, income) in townIncomes ) {
+                    var incomeModifier = 1.0
+                    
+                    // over max claims penalty
+                    if ( Config.overClaimsPenalty && townForIncome.isOverClaimsMax == true ) {
+                        incomeModifier *= (1.0 - Config.overClaimsMaxPenalty)
                     }
 
-                    // 1.12 spawn egg income
-                    // for ( (entityType, rate) in territory.incomeSpawnEgg ) {
-                    //     var amount: Int = rateToAmount(rate)
+                    // income claims power scaling
+                    if ( Config.incomeScaleByClaimPower ) {
+                        val claimsUsedRatio = townForIncome.claimsMax.toDouble() / townForIncome.claimsUsed.toDouble()
+                        val incomeClaimsPowerScale = claimsUsedRatio.coerceIn(Config.incomeScaleMin, Config.incomeScaleMax)
+                        incomeModifier *= incomeClaimsPowerScale
+                    }
 
-                    //     // over max claims penalty
-                    //     if ( town.isOverClaimsMax == true ) {
-                    //         amount = Math.floor(amount.toDouble() * (1.0 - Config.overClaimsMaxPenalty)).toInt()
-                    //     }
+                    // we can do any other income modifiers here in the future
 
-                    //     town.income.add(Material.MONSTER_EGG, amount, entityType.ordinal)
-                    // }
+                    // add items to town income chest
+                    for ( (material, amount) in income ) {
+                        val amountInt = rateToAmount(amount * incomeModifier)
+                        if ( amountInt > 0 ) {
+                            Nodes.addToIncome(town, material, amountInt)
+                        }
+                    }
                 }
+
+                // TODO: 1.12 compatibility? spawn egg income
+                // for ( (entityType, rate) in territory.incomeSpawnEgg ) {
+                //     var amount: Int = rateToAmount(rate)
+                //     town.income.add(Material.MONSTER_EGG, amount, entityType.ordinal)
+                // }
             }
-
-            town.needsUpdate()
+            catch ( err: Exception ) {
+                Nodes.logger?.severe("Error running income for town ${town.name}")
+                err.printStackTrace()
+            }
         }
 
         // message players ingame that income collected

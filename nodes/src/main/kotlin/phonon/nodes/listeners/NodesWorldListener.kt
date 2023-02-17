@@ -800,7 +800,7 @@ private fun handleCropHarvest(block: Block) {
             block.setType(Material.AIR)
         }
         // handle town over max claims penalty
-        else if ( territory.town?.isOverClaimsMax == true ) {
+        else if ( Config.overClaimsPenalty && territory.town?.isOverClaimsMax == true ) {
             if ( random.nextDouble() < Config.overClaimsMaxPenalty ) {
                 block.setType(Material.AIR)
             }
@@ -850,7 +850,7 @@ private fun handleHiddenOre(player: Player, block: Block) {
             // else, drop items normally
             else {
                 // check if town has claims penalty
-                if ( playerTown?.isOverClaimsMax == true ) {
+                if ( Config.overClaimsPenalty && playerTown?.isOverClaimsMax == true ) {
                     if ( random.nextDouble() < Config.overClaimsMaxPenalty ) {
                         return
                     }
