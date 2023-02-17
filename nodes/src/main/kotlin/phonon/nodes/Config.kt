@@ -69,7 +69,8 @@ public object Config {
     // ===================================
     // resource configs
     // ===================================
-    // territory income time
+    // territory do income enabled and income time
+    public var incomeEnabled: Boolean = true
     public var incomePeriod: Long = 3600000L
 
     // global resource node in all territories
@@ -388,6 +389,7 @@ public object Config {
         Config.townMoveHomeCooldown = config.getLong("townMoveHomeCooldown", Config.townMoveHomeCooldown)
 
         // resource configs
+        Config.incomeEnabled = config.getBoolean("incomeEnabled", Config.incomeEnabled)
         Config.incomePeriod = config.getLong("incomePeriod", Config.incomePeriod)
         Config.allowOreInWilderness = config.getBoolean("allowOreInWilderness", Config.allowOreInWilderness)
         Config.allowCropsInWilderness = config.getBoolean("allowCropsInWilderness", Config.allowCropsInWilderness)

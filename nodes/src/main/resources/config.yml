@@ -139,7 +139,8 @@ canOnlyAnnexDuringWar: true
 # ===========================================
 # Resource Settings
 # ===========================================
-# territory income time
+# territory do income enabled and income time
+incomeEnabled: true
 incomePeriod: 3600000
 
 # default resources in all territories

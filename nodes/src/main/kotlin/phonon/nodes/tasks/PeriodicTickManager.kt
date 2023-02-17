@@ -51,7 +51,9 @@ public object PeriodicTickManager {
                     // schedule main thread to run task
                     Bukkit.getScheduler().runTask(plugin, object: Runnable {
                         override fun run() {
-                            Nodes.runIncome()
+                            if ( Config.incomeEnabled ) {
+                                Nodes.runIncome()
+                            }
                         }
                     })
 
