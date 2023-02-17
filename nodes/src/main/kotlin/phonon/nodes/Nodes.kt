@@ -1522,8 +1522,10 @@ public object Nodes {
         }
     }
 
-    // claim territory for a town
-    // returns TerritoryClaim status of result
+    /**
+     * Claim territory for a town. Returns result with either Territory
+     * if successful, or an TerritoryClaim error status.
+     */
     public fun claimTerritory(town: Town, territory: Territory): Result<Territory> {
 
         // check if territory already claimed
@@ -1545,7 +1547,7 @@ public object Nodes {
         }
 
         // check if town has claims available
-        if ( territory.cost > town.claimsMax - town.claimsUsed ) {
+        if ( !Config.overClaimsAllowClaim && territory.cost > town.claimsMax - town.claimsUsed ) {
             return Result.failure(ErrorTooManyClaims)
         }
 

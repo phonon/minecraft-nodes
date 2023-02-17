@@ -136,6 +136,9 @@ overClaimsPenalty: true
 # reduced resource rate when over max claim (runs Math.random() < rate)
 overClaimsMaxPenalty: 0.5
 
+# allow claiming territories even if town already over max claims
+overClaimsAllowClaim: false
+
 # annexation settings
 
 # can only annex territories during war time

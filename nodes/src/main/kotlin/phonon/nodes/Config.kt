@@ -232,6 +232,9 @@ public object Config {
     // reduced resource rate when over max claim (runs Math.random() < rate)
     public var overClaimsMaxPenalty: Double = 0.5
 
+    // allow claiming territories even if town already over max claims
+    public var overClaimsAllowClaim: Boolean = false
+
     // annexation settings
     // only allow annexing during war time
     public var canOnlyAnnexDuringWar: Boolean = true
@@ -446,6 +449,7 @@ public object Config {
         Config.playerClaimsIncreasePeriod = config.getLong("playerClaimsIncreasePeriod", Config.playerClaimsIncreasePeriod)
         Config.overClaimsPenalty = config.getBoolean("overClaimsPenalty", Config.overClaimsPenalty)
         Config.overClaimsMaxPenalty = config.getDouble("overClaimsMaxPenalty", Config.overClaimsMaxPenalty)
+        Config.overClaimsAllowClaim = config.getBoolean("overClaimsAllowClaim", Config.overClaimsAllowClaim)
 
         Config.canOnlyAnnexDuringWar = config.getBoolean("canOnlyAnnexDuringWar", Config.canOnlyAnnexDuringWar)
 
