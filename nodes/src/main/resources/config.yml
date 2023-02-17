@@ -139,11 +139,6 @@ overClaimsMaxPenalty: 0.5
 # allow claiming territories even if town already over max claims
 overClaimsAllowClaim: false
 
-# annexation settings
-
-# can only annex territories during war time
-canOnlyAnnexDuringWar: true
-
 # ===========================================
 # Resource Settings
 # ===========================================
@@ -257,6 +252,9 @@ canLeaveNationDuringWar: false
 
 # global disable annexing
 annexDisabled: false
+
+# can only annex territories during war time
+canOnlyAnnexDuringWar: true
 
 # war whitelist: only allow attacking/destroying given town uuids,
 # warWhitelist:

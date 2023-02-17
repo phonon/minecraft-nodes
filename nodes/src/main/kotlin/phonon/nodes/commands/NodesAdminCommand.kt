@@ -102,6 +102,7 @@ private val TOWN_SUBCOMMANDS: List<String> = listOf(
     "sethomecooldown",
     "addoutpost",
     "removeoutpost",
+    "defaulttownspawns"
 )
 
 // nation subcommands
@@ -660,6 +661,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                 "sethomecooldown" -> setTownMoveHomeCooldown(sender, args)
                 "addoutpost" -> addOutpostToTown(sender, args)
                 "removeoutpost" -> removeOutpostFromTown(sender, args)
+                "defaulttownspawns" -> defaultTownSpawns(sender, args)
                 else -> { printTownHelp(sender) }
             }
         }
@@ -1553,6 +1555,36 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
     }
 
     // TODO: town perm toggles
+
+    /**
+     * @command /nodesadmin town defaulttownspawns [town]
+     * Reset town spawns to default position (highest block before air)
+     */
+    private fun defaultTownSpawns(sender: CommandSender, args: Array<String>) {
+        if ( args.size < 3 ) {
+            Message.error(sender, "Usage: /nodesadmin town defaulttownspawns [town]")
+            return
+        }
+
+        // get towns
+        val townName = args[2]
+        val towns = Nodes.matchTowns(townName)
+        if ( towns.size == 0 ) {
+            Message.error(sender, "Town \"${townName}\" does not exist")
+            return
+        }
+
+        for ( town in towns ) {
+            val terrHome = Nodes.territories.get(town.home)
+            if ( terrHome !== null ) {
+                val spawnpoint = Nodes.getDefaultSpawnLocation(terrHome)
+                town.spawnpoint = spawnpoint
+                Message.print(sender, "Set town \"${town.name}\" spawnpoint to ${spawnpoint}")
+            } else {
+                Message.error(sender, "Town \"${town.name}\" home territory ${town.home} does not exist")
+            }
+        }
+    }
 
     // =============================================================
     // nation management commands:

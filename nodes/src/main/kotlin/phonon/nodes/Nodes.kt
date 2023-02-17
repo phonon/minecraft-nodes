@@ -847,12 +847,12 @@ public object Nodes {
 
         // iterate up in y to find first empty block
         val world = Bukkit.getWorlds().get(0);
-        var y = 0
-        while ( y < 255 ) {
-            if ( world.getBlockAt(x, y, z).isEmpty() ) {
+        var y = 255
+        while ( y > 0 ) {
+            if ( !world.getBlockAt(x, y, z).isEmpty() ) {
                 break
             }
-            y += 1
+            y -= 1
         }
 
         return Location(world, x.toDouble(), y.toDouble(), z.toDouble())
