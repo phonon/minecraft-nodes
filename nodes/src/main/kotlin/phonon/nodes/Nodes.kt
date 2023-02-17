@@ -86,7 +86,7 @@ public object Nodes {
     public val war = FlagWar
 
     // flag that world was updated and needs save
-    private var needsSave: Boolean = false
+    internal var needsSave: Boolean = false
 
     // set of invalid block locations for hidden ore drops
     internal val hiddenOreInvalidBlocks: OreBlockCache = OreBlockCache(2000)

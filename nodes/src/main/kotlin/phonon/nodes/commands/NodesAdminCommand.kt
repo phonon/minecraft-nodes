@@ -1579,11 +1579,15 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
             if ( terrHome !== null ) {
                 val spawnpoint = Nodes.getDefaultSpawnLocation(terrHome)
                 town.spawnpoint = spawnpoint
+                town.needsUpdate()
                 Message.print(sender, "Set town \"${town.name}\" spawnpoint to ${spawnpoint}")
             } else {
                 Message.error(sender, "Town \"${town.name}\" home territory ${town.home} does not exist")
             }
         }
+
+        // TODO: move this out
+        Nodes.needsSave = true
     }
 
     // =============================================================
