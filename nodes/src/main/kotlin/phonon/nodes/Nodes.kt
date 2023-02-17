@@ -1364,6 +1364,26 @@ public object Nodes {
     }
 
     /**
+     * If input is "*", return all towns. Otherwise, return list of
+     * single town.
+     */
+    public fun matchTowns(name: String): List<Town> {
+        val matchedTowns = ArrayList<Town>()
+
+        if ( name == "*" ) {
+            matchedTowns.addAll(towns.values)
+        }
+        else {
+            val town = getTownFromName(name)
+            if ( town !== null ) {
+                matchedTowns.add(town)
+            }
+        }
+
+        return matchedTowns
+    }
+
+    /**
      * Return town that owns chunk if it exists
      */
     public fun getTownAtChunkCoord(cx: Int, cz: Int): Town? {
@@ -1719,8 +1739,38 @@ public object Nodes {
 
     // adds items to town's income
     // used by taxation events in occupied/captured territories
+    // TODO: cleanup + rename this to "townIncomeAdd"
     public fun addToIncome(town: Town, material: Material, amount: Int, meta: Int = 0) {
         town.income.add(material, amount, meta)
+        town.needsUpdate()
+        Nodes.needsSave = true
+    }
+
+    /**
+     * Removes items from town's income. If Material is null, removes all
+     * items. If amount < 0, removes all items of that type.
+     */
+    public fun townIncomeRemove(
+        town: Town,
+        material: Material?,
+        amount: Int = -1,
+    ) {
+        town.income.pushToStorage(force = true) // push items to storage before removing
+
+        if ( material !== null ) {
+            if ( amount >= 0 ) {
+                val currAmount = town.income.storage.get(material) ?: 0
+                if ( currAmount > amount ) {
+                    town.income.storage.put(material, currAmount - amount)
+                } else {
+                    town.income.storage.remove(material)
+                }
+            } else { // remove all
+                town.income.storage.remove(material)
+            }
+        } else {
+            town.income.storage.clear()
+        }
         town.needsUpdate()
         Nodes.needsSave = true
     }

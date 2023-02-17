@@ -94,6 +94,8 @@ private val TOWN_SUBCOMMANDS: List<String> = listOf(
     "claimspenalty",
     "open",
     "income",
+    "incomeadd",
+    "incomeremove",
     "setspawn",
     "spawn",
     "sethome",
@@ -652,6 +654,8 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                 "leader" -> setTownLeader(sender, args)
                 "open" -> setTownOpen(sender, args)
                 "income" -> townIncome(sender, args)
+                "incomeadd" -> townIncomeAdd(sender, args)
+                "incomeremove" -> townIncomeRemove(sender, args)
                 "sethome" -> setTownHome(sender, args)
                 "sethomecooldown" -> setTownMoveHomeCooldown(sender, args)
                 "addoutpost" -> addOutpostToTown(sender, args)
@@ -1264,6 +1268,82 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
 
         // open town inventory
         player.openInventory(Nodes.getTownIncomeInventory(town))
+    }
+
+    /**
+     * @command /nodesadmin town incomeadd [town]
+     * Adds item player is holding to input town income inventories.
+     */
+    private fun townIncomeAdd(sender: CommandSender, args: Array<String>) {
+        val player: Player? = if ( sender is Player ) sender else null
+        if ( player === null ) {
+            Message.print(sender, "Must be run ingame")
+            return
+        }
+
+        if ( args.size < 3 ) {
+            Message.error(sender, "Usage: /nodesadmin town incomeadd [town]")
+            return
+        }
+
+        // get towns
+        val townName = args[2]
+        val towns = Nodes.matchTowns(townName)
+        if ( towns.size == 0 ) {
+            Message.error(sender, "Town \"${townName}\" does not exist")
+            return
+        }
+
+        // get item in player hand
+        val item = player.inventory.itemInMainHand
+        if ( item === null || item.type == Material.AIR ) {
+            Message.error(sender, "You must be holding an item")
+            return
+        }
+
+        for ( town in towns ) {
+            Nodes.addToIncome(town, item.type, item.amount) 
+            Message.print(sender, "Added item to \"${town.name}\" income inventory")
+        }
+    }
+
+    /**
+     * @command /nodesadmin town incomeremove [town] [material]
+     * Removes items in town income inventories. If material is not specified,
+     * removes all items.
+     */
+    private fun townIncomeRemove(sender: CommandSender, args: Array<String>) {
+        val player: Player? = if ( sender is Player ) sender else null
+        if ( player === null ) {
+            Message.print(sender, "Must be run ingame")
+            return
+        }
+
+        if ( args.size < 3 ) {
+            Message.error(sender, "Usage: /nodesadmin town incomeremove [town] [material]")
+            return
+        }
+
+        // get towns
+        val townName = args[2]
+        val towns = Nodes.matchTowns(townName)
+        if ( towns.size == 0 ) {
+            Message.error(sender, "Town \"${townName}\" does not exist")
+            return
+        }
+
+        // get material if specified, otherwise treat as null and remove all
+        val material = if ( args.size >= 4 ) Material.matchMaterial(args[3]) else null
+
+        // TODO: perhaps abstract this into a Nodes api func
+        for ( town in towns ) {
+            Nodes.townIncomeRemove(town, material)
+            if ( material !== null ) {
+                Message.print(sender, "Removed ${material} from \"${town.name}\" income inventory")
+            } else {
+                Message.print(sender, "Removed all items from \"${town.name}\" income inventory")
+            }
+        }
     }
 
     /**
