@@ -1920,23 +1920,39 @@ public object Nodes {
         return false
     }
 
-    // set town's leader
+    /**
+     * Set town's leader. If input resident is null, try to remove
+     * current town leader.
+     */
     public fun townSetLeader(town: Town, resident: Resident?) {
-        if ( resident?.town !== town ) {
-            return
-        }
-        
-        // same town leader, ignore
-        if ( town.leader === resident ) {
-            return
-        }
+        if ( resident !== null ) {
+            if ( resident.town !== town ) {
+                // must first be part of town, skipping
+                return
+            }
+            
+            // same town leader, ignore
+            if ( town.leader === resident ) {
+                return
+            }
+    
+            // remove resident from officers if there
+            town.officers.remove(resident)
+    
+            town.leader = resident
+            town.needsUpdate()
+            Nodes.needsSave = true
+        } else {
+            // no resident input: remove current town leader
+            if ( town.leader === null ) {
+                // no leader to remove, skipping
+                return
+            }
 
-        // remove resident from officers if there
-        town.officers.remove(resident)
-
-        town.leader = resident
-        town.needsUpdate()
-        Nodes.needsSave = true
+            town.leader = null
+            town.needsUpdate()
+            Nodes.needsSave = true
+        }
     }
 
     public fun renameTown(town: Town, s: String): Boolean {

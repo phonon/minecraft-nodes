@@ -42,10 +42,6 @@ public class Resident(val uuid: UUID, val name: String) {
     var chatMode: ChatMode = ChatMode.GLOBAL
     var prefix: String = ""
     var suffix: String = ""
-    var isOfficer: Boolean = false // purely for chat, NOT PERMISSIONS
-    var isLeader: Boolean = false  // purely for chat, NOT PERMISSIONS
-    var isNationOfficer: Boolean = false // purely for chat, NOT PERMISSIONS
-    var isNationLeader: Boolean = false  // purely for chat, NOT PERMISSIONS
 
     // town teleport thread and flag for outpost
     var teleportThread: BukkitTask? = null

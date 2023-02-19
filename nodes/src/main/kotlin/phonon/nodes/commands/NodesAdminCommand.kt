@@ -1205,8 +1205,8 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
      * Remove town's leader (makes town leaderless)
      */
     private fun removeTownLeader(sender: CommandSender, args: Array<String>) {
-        if ( args.size < 4 ) {
-            Message.error(sender, "Usage: /nodesadmin town leader [town] [player]")
+        if ( args.size < 3 ) {
+            Message.error(sender, "Usage: /nodesadmin town removeleader [town]")
             return
         }
 
