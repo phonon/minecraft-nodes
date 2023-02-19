@@ -653,6 +653,7 @@ public class NodesAdminCommand : CommandExecutor, TabCompleter {
                 "addofficer" -> addTownOfficer(sender, args)
                 "removeofficer" -> removeTownOfficer(sender, args)
                 "leader" -> setTownLeader(sender, args)
+                "removeleader" -> removeTownLeader(sender, args)
                 "open" -> setTownOpen(sender, args)
                 "income" -> townIncome(sender, args)
                 "incomeadd" -> townIncomeAdd(sender, args)
