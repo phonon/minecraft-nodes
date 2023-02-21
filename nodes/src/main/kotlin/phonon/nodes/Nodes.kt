@@ -2522,9 +2522,9 @@ public object Nodes {
             val fracAmount = if ( fracPart > 0.0 ) {
                 val roll = ThreadLocalRandom.current().nextDouble()
                 if ( roll < fracPart ) {
-                    return 1
+                    1
                 } else {
-                    return 0
+                    0
                 }
             } else {
                 0
