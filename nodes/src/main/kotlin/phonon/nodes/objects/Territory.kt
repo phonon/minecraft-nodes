@@ -9,6 +9,7 @@ package phonon.nodes.objects
 
 import java.util.logging.Logger
 import java.util.EnumMap
+import kotlin.math.max
 import com.google.gson.JsonObject
 import org.bukkit.ChatColor
 import org.bukkit.Material
@@ -181,7 +182,17 @@ data class TerritoryResources(
     val crops: EnumMap<Material, Double> = EnumMap<Material, Double>(Material::class.java),
     val animals: EnumMap<EntityType, Double> = EnumMap<EntityType, Double>(EntityType::class.java),
     val customProperties: HashMap<String, Any> = HashMap(0),
-    // neighbor modifiers
+    // accumulated neighbor multipliers applied onto THIS TerritoryResources
+    val accumulatedNeighborTotalIncomeMultiplier: Double = 1.0,
+    val accumulatedNeighborTotalOresMultiplier: Double = 1.0,
+    val accumulatedNeighborTotalCropsMultiplier: Double = 1.0,
+    val accumulatedNeighborTotalAnimalsMultiplier: Double = 1.0,
+    val accumulatedNeighborIncomeMultiplier: EnumMap<Material, Double> = EnumMap<Material, Double>(Material::class.java),
+    val accumulatedNeighborIncomeSpawnEggMultiplier: EnumMap<EntityType, Double> = EnumMap<EntityType, Double>(EntityType::class.java),
+    val accumulatedNeighborOresMultiplier: EnumMap<Material, Double> = EnumMap<Material, Double>(Material::class.java),
+    val accumulatedNeighborCropsMultiplier: EnumMap<Material, Double> = EnumMap<Material, Double>(Material::class.java),
+    val accumulatedNeighborAnimalsMultiplier: EnumMap<EntityType, Double> = EnumMap<EntityType, Double>(EntityType::class.java),
+    // modifiers for neighbors of this territory
     val neighborIncome: EnumMap<Material, Double>? = null,
     val neighborIncomeSpawnEgg: EnumMap<EntityType, Double>? = null,
     val neighborOres: EnumMap<Material, OreDeposit>? = null,
@@ -223,12 +234,24 @@ data class TerritoryResources(
      * TerritoryResources object's neighbor modifiers applied
      * onto this object's resource properties. 
      */
-    public fun applyNeighborModifiers(neighbor: TerritoryResources): TerritoryResources {
+    public fun accumulateNeighborModifiers(neighbor: TerritoryResources): TerritoryResources {
         val newIncome = this.income.clone()
         val newIncomeSpawnEgg = this.incomeSpawnEgg.clone()
         val newOres = this.ores.clone()
         val newCrops = this.crops.clone()
         val newAnimals = this.animals.clone()
+
+        // neighbor total neighbor multipliers applied
+        // for now: CLAMP TO MAX AMONG NEIGHBORS
+        var maxAccumulatedNeighborTotalIncomeMultiplier = this.accumulatedNeighborTotalIncomeMultiplier
+        var maxAccumulatedNeighborTotalOresMultiplier = this.accumulatedNeighborTotalOresMultiplier
+        var maxAccumulatedNeighborTotalCropsMultiplier = this.accumulatedNeighborTotalCropsMultiplier
+        var maxAccumulatedNeighborTotalAnimalsMultiplier = this.accumulatedNeighborTotalAnimalsMultiplier
+        var maxAccumulatedNeighborIncomeMultiplier = this.accumulatedNeighborIncomeMultiplier.clone()
+        var maxAccumulatedNeighborIncomeSpawnEggMultiplier = this.accumulatedNeighborIncomeSpawnEggMultiplier.clone()
+        var maxAccumulatedNeighborOresMultiplier = this.accumulatedNeighborOresMultiplier.clone()
+        var maxAccumulatedNeighborCropsMultiplier = this.accumulatedNeighborCropsMultiplier.clone()
+        var maxAccumulatedNeighborAnimalsMultiplier = this.accumulatedNeighborAnimalsMultiplier.clone()
         
         // income direct addition
         neighbor.neighborIncome?.forEach { (type, amount) ->
@@ -239,25 +262,16 @@ data class TerritoryResources(
         }
         // income multiplier
         neighbor.neighborTotalIncomeMultiplier?.let { multiplier ->
-            newIncome.forEach { (type, value) ->
-                newIncome[type] = value * multiplier
-            }
-            newIncomeSpawnEgg.forEach { (type, value) ->
-                newIncomeSpawnEgg[type] = value * multiplier
-            }
+            maxAccumulatedNeighborTotalIncomeMultiplier = max(multiplier, maxAccumulatedNeighborTotalIncomeMultiplier)
         }
         neighbor.neighborIncomeMultiplier?.let { multipliers ->
             multipliers.forEach { (type, multiplier) ->
-                if ( newIncome.containsKey(type) ) {
-                    newIncome[type] = newIncome[type]!! * multiplier
-                }
+                maxAccumulatedNeighborIncomeMultiplier[type] = max(multiplier, maxAccumulatedNeighborIncomeMultiplier[type] ?: 1.0)
             }
         }
         neighbor.neighborIncomeSpawnEggMultiplier?.let { multipliers ->
             multipliers.forEach { (type, multiplier) ->
-                if ( newIncomeSpawnEgg.containsKey(type) ) {
-                    newIncomeSpawnEgg[type] = newIncomeSpawnEgg[type]!! * multiplier
-                }
+                maxAccumulatedNeighborIncomeSpawnEggMultiplier[type] = max(multiplier, maxAccumulatedNeighborIncomeSpawnEggMultiplier[type] ?: 1.0)
             }
         }
 
@@ -272,16 +286,11 @@ data class TerritoryResources(
         }
         // ores multiplier
         neighbor.neighborTotalOresMultiplier?.let { multiplier ->
-            newOres.forEach { (type, oreDeposit) ->
-                newOres[type] = oreDeposit.copy(dropChance = oreDeposit.dropChance * multiplier)
-            }
+            maxAccumulatedNeighborTotalOresMultiplier = max(multiplier, maxAccumulatedNeighborTotalOresMultiplier)
         }
         neighbor.neighborOresMultiplier?.let { multipliers ->
             multipliers.forEach { (type, multiplier) ->
-                if ( newOres.containsKey(type) ) {
-                    val oreDeposit = newOres[type]!!
-                    newOres[type] = oreDeposit.copy(dropChance = oreDeposit.dropChance * multiplier)
-                }
+                maxAccumulatedNeighborOresMultiplier[type] = max(multiplier, maxAccumulatedNeighborOresMultiplier[type] ?: 1.0)
             }
         }
 
@@ -291,15 +300,11 @@ data class TerritoryResources(
         }
         // crops multiplier
         neighbor.neighborTotalCropsMultiplier?.let { multiplier ->
-            newCrops.forEach { (type, value) ->
-                newCrops[type] = value * multiplier
-            }
+            maxAccumulatedNeighborTotalCropsMultiplier = max(multiplier, maxAccumulatedNeighborTotalCropsMultiplier)
         }
         neighbor.neighborCropsMultiplier?.let { multipliers ->
             multipliers.forEach { (type, multiplier) ->
-                if ( newCrops.containsKey(type) ) {
-                    newCrops[type] = newCrops[type]!! * multiplier
-                }
+                maxAccumulatedNeighborCropsMultiplier[type] = max(multiplier, maxAccumulatedNeighborCropsMultiplier[type] ?: 1.0)
             }
         }
 
@@ -309,15 +314,88 @@ data class TerritoryResources(
         }
         // animals multiplier
         neighbor.neighborTotalAnimalsMultiplier?.let { multiplier ->
-            newAnimals.forEach { (type, value) ->
-                newAnimals[type] = value * multiplier
-            }
+            maxAccumulatedNeighborTotalAnimalsMultiplier = max(multiplier, maxAccumulatedNeighborTotalAnimalsMultiplier)
         }
         neighbor.neighborAnimalsMultiplier?.let { multipliers ->
             multipliers.forEach { (type, multiplier) ->
-                if ( newAnimals.containsKey(type) ) {
-                    newAnimals[type] = newAnimals[type]!! * multiplier
-                }
+                maxAccumulatedNeighborAnimalsMultiplier[type] = max(multiplier, maxAccumulatedNeighborAnimalsMultiplier[type] ?: 1.0)
+            }
+        }
+
+        return this.copy(
+            income = newIncome,
+            incomeSpawnEgg = newIncomeSpawnEgg,
+            ores = newOres,
+            crops = newCrops,
+            animals = newAnimals,
+            accumulatedNeighborTotalIncomeMultiplier = maxAccumulatedNeighborTotalIncomeMultiplier,
+            accumulatedNeighborTotalOresMultiplier = maxAccumulatedNeighborTotalOresMultiplier,
+            accumulatedNeighborTotalCropsMultiplier = maxAccumulatedNeighborTotalCropsMultiplier,
+            accumulatedNeighborTotalAnimalsMultiplier = maxAccumulatedNeighborTotalAnimalsMultiplier,
+            accumulatedNeighborIncomeMultiplier = maxAccumulatedNeighborIncomeMultiplier,
+            accumulatedNeighborIncomeSpawnEggMultiplier = maxAccumulatedNeighborIncomeSpawnEggMultiplier,
+            accumulatedNeighborOresMultiplier = maxAccumulatedNeighborOresMultiplier,
+            accumulatedNeighborCropsMultiplier = maxAccumulatedNeighborCropsMultiplier,
+            accumulatedNeighborAnimalsMultiplier = maxAccumulatedNeighborAnimalsMultiplier,
+        )
+    }
+
+    /**
+     * Applies all accumulated neighbor modifiers onto this territory.
+     */
+    public fun applyNeighborModifiers(): TerritoryResources {
+        val newIncome = this.income.clone()
+        val newIncomeSpawnEgg = this.incomeSpawnEgg.clone()
+        val newOres = this.ores.clone()
+        val newCrops = this.crops.clone()
+        val newAnimals = this.animals.clone()
+        
+        // income multiplier
+        newIncome.forEach { (type, value) ->
+            newIncome[type] = value * accumulatedNeighborTotalIncomeMultiplier
+        }
+        newIncomeSpawnEgg.forEach { (type, value) ->
+            newIncomeSpawnEgg[type] = value * accumulatedNeighborTotalIncomeMultiplier
+        }
+        accumulatedNeighborIncomeMultiplier.forEach { (type, multiplier) ->
+            if ( newIncome.containsKey(type) ) {
+                newIncome[type] = newIncome[type]!! * multiplier
+            }
+        }
+        accumulatedNeighborIncomeSpawnEggMultiplier.forEach { (type, multiplier) ->
+            if ( newIncomeSpawnEgg.containsKey(type) ) {
+                newIncomeSpawnEgg[type] = newIncomeSpawnEgg[type]!! * multiplier
+            }
+        }
+
+        // ores multiplier
+        newOres.forEach { (type, oreDeposit) ->
+            newOres[type] = oreDeposit.copy(dropChance = oreDeposit.dropChance * accumulatedNeighborTotalOresMultiplier)
+        }
+        accumulatedNeighborOresMultiplier.forEach { (type, multiplier) ->
+            if ( newOres.containsKey(type) ) {
+                val oreDeposit = newOres[type]!!
+                newOres[type] = oreDeposit.copy(dropChance = oreDeposit.dropChance * multiplier)
+            }
+        }
+
+        // crops multiplier
+        newCrops.forEach { (type, value) ->
+            newCrops[type] = value * accumulatedNeighborTotalCropsMultiplier
+        }
+        accumulatedNeighborCropsMultiplier.forEach { (type, multiplier) ->
+            if ( newCrops.containsKey(type) ) {
+                newCrops[type] = newCrops[type]!! * multiplier
+            }
+        }
+
+        // animals multiplier
+        newAnimals.forEach { (type, value) ->
+            newAnimals[type] = value * accumulatedNeighborTotalAnimalsMultiplier
+        }
+        accumulatedNeighborAnimalsMultiplier.forEach { (type, multiplier) ->
+            if ( newAnimals.containsKey(type) ) {
+                newAnimals[type] = newAnimals[type]!! * multiplier
             }
         }
 

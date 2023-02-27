@@ -56,7 +56,7 @@ import phonon.nodes.war.Truce
 public object Nodes {
     
     // version string
-    internal val version: String = "v0.0.11"
+    internal val version: String = "v0.0.12"
 
     // library of resource node definitions
     internal val resourceNodes: HashMap<String, ResourceNode> = hashMapOf()
@@ -330,7 +330,7 @@ public object Nodes {
                 for ( neighborId in terr.neighbors ) {
                     terrResourceGraph[neighborId]?.let { neighborResources ->
                         if ( neighborResources.hasNeighborModifier ) {
-                            terrAfterNeighborModifiers = terrAfterNeighborModifiers.applyNeighborModifiers(neighborResources)
+                            terrAfterNeighborModifiers = terrAfterNeighborModifiers.accumulateNeighborModifiers(neighborResources)
                         }
                     }
                 }
@@ -349,7 +349,8 @@ public object Nodes {
                 return
             }
 
-            val resources = terrResourceGraph[t.id]!!
+            // get resources and apply all accumulated neighbor modifiers
+            val resources = terrResourceGraph[t.id]!!.applyNeighborModifiers()
 
             // sorted resource names
             val resourceNamesSorted = t.resourceNodes.sortedBy { name -> Nodes.resourceNodes[name]!!.priority }
