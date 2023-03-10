@@ -56,7 +56,7 @@ import phonon.nodes.war.Truce
 public object Nodes {
     
     // version string
-    internal val version: String = "v0.0.12"
+    internal val version: String = "v0.0.13"
 
     // library of resource node definitions
     internal val resourceNodes: HashMap<String, ResourceNode> = hashMapOf()
@@ -378,6 +378,8 @@ public object Nodes {
                 crops = resources.crops,
                 animals = resources.animals,
                 customProperties = resources.customProperties,
+                attackerTimeMultiplier = resources.attackerTimeMultiplier,
+                defenderTimeMultiplier = resources.defenderTimeMultiplier,
             )
             
             // if previous territory existed, first do cleanup and copy mutable ingame properties

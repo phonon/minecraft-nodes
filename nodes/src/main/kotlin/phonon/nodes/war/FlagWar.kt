@@ -542,13 +542,22 @@ public object FlagWar {
         val flagTorch = world.getBlockAt(flagBaseX, flagBaseY + 2, flagBaseZ)
         val progressBar = Bukkit.getServer().createBossBar("Attacking ${territory.town!!.name} at (${flagBaseX}, ${flagBaseY}, ${flagBaseZ})", BarColor.YELLOW, BarStyle.SOLID)
         
-        // calculate max attack time based on chunk
+        // calculate max attack time based on chunk and other modifiers
         var attackTime = Config.chunkAttackTime.toDouble()
         if ( territory.bordersWilderness ) {
             attackTime *= Config.chunkAttackFromWastelandMultiplier
         }
-        if ( territory.id == territory.town?.home ) {
-            attackTime *= Config.chunkAttackHomeMultiplier
+        // town specific claim time modifiers
+        val terrTown = territory.town
+        if ( terrTown !== null ) {
+            if ( territory.id == terrTown.home ) {
+                attackTime *= Config.chunkAttackHomeMultiplier
+            }
+            if ( terrTown.uuid == attackingTown.uuid || terrTown.allies.contains(attackingTown) ) {
+                attackTime *= territory.defenderTimeMultiplier
+            } else {
+                attackTime *= territory.attackerTimeMultiplier
+            }
         }
 
         // get sky beacon blocks

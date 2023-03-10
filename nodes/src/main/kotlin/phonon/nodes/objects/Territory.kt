@@ -182,6 +182,9 @@ data class TerritoryResources(
     val crops: EnumMap<Material, Double> = EnumMap<Material, Double>(Material::class.java),
     val animals: EnumMap<EntityType, Double> = EnumMap<EntityType, Double>(EntityType::class.java),
     val customProperties: HashMap<String, Any> = HashMap(0),
+    // claim time modifier
+    val attackerTimeMultiplier: Double = 1.0,
+    val defenderTimeMultiplier: Double = 1.0,
     // accumulated neighbor multipliers applied onto THIS TerritoryResources
     val accumulatedNeighborTotalIncomeMultiplier: Double = 1.0,
     val accumulatedNeighborTotalOresMultiplier: Double = 1.0,
@@ -430,6 +433,9 @@ data class Territory(
     val crops: EnumMap<Material, Double>,
     val animals: EnumMap<EntityType, Double>,
     val customProperties: HashMap<String, Any> = HashMap(0),
+    // claim time modifier
+    val attackerTimeMultiplier: Double,
+    val defenderTimeMultiplier: Double,
     // mutable properties: TODO find way to get rid?
     var town: Town? = null, // town owner
     var occupier: Town? = null, // town occupier (after being captured in war)

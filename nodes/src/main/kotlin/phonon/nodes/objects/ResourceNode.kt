@@ -965,6 +965,41 @@ public data class ResourceAttributeNeighborAnimalsMultiplier(
     override fun describe(): String = this.description
 }
 
+public data class ResourceAttributeAttackerTimeMultiplier(
+    val multiplier: Double,
+): ResourceAttribute {
+    override val priority: Int = 200
+    val description: String = "Attacker Time Multiplier: ${this.multiplier}"
+
+    /**
+     * Multiply together multipliers.
+     */
+    override fun apply(resources: TerritoryResources): TerritoryResources {
+        return resources.copy(
+            attackerTimeMultiplier = resources.attackerTimeMultiplier * multiplier,
+        )
+    }
+
+    override fun describe(): String = this.description
+}
+
+public data class ResourceAttributeDefenderTimeMultiplier(
+    val multiplier: Double,
+): ResourceAttribute {
+    override val priority: Int = 201
+    val description: String = "Defender Time Multiplier: ${this.multiplier}"
+
+    /**
+     * Multiply together multipliers.
+     */
+    override fun apply(resources: TerritoryResources): TerritoryResources {
+        return resources.copy(
+            defenderTimeMultiplier = resources.defenderTimeMultiplier * multiplier,
+        )
+    }
+
+    override fun describe(): String = this.description
+}
 
 // ============================================================================
 // RESOURCE ATTRIBUTE LOADER IMPLEMENTATION
@@ -1130,6 +1165,14 @@ public object DefaultResourceAttributeLoader: ResourceAttributeLoader {
                         val animalsMultiplier = parseJsonMapEntityTypeToDouble(jsonAnimals)
                         attributes.add(ResourceAttributeNeighborAnimalsMultiplier(animalsMultiplier))
                     }
+                }
+
+                // claim time modifiers
+                node.get("attacker_time_multiplier")?.getAsDouble()?.let { multiplier ->
+                    attributes.add(ResourceAttributeAttackerTimeMultiplier(multiplier))
+                }
+                node.get("defender_time_multiplier")?.getAsDouble()?.let { multiplier ->
+                    attributes.add(ResourceAttributeDefenderTimeMultiplier(multiplier))
                 }
 
                 resources.put(name, ResourceNode(

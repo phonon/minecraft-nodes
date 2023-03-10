@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 // plugin versioning
-version = "0.0.12"
+version = "0.0.13"
 
 // base of output jar name
 val OUTPUT_JAR_NAME = "nodes"
