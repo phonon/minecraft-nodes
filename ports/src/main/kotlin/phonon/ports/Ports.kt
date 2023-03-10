@@ -29,6 +29,7 @@ import org.bukkit.Material
 import org.bukkit.plugin.Plugin
 import org.bukkit.entity.Entity
 import org.bukkit.entity.EntityType
+import org.bukkit.entity.LivingEntity
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration
@@ -54,6 +55,11 @@ import org.bukkit.event.player.PlayerBucketEmptyEvent
 
 import org.bukkit.scheduler.BukkitTask
 import org.bukkit.scheduler.BukkitRunnable
+
+import org.bukkit.craftbukkit.v1_18_R2.entity.CraftEntity
+import org.bukkit.craftbukkit.v1_18_R2.entity.CraftPlayer
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
+
 import phonon.nodes.Nodes
 import phonon.nodes.constants.DiplomaticRelationship
 import phonon.nodes.objects.Town
@@ -242,7 +248,7 @@ public object PortCommand: CommandExecutor, TabCompleter {
     }
 
     private fun printHelp(sender: CommandSender) {
-        Message.print(sender, "${ChatColor.AQUA}${ChatColor.BOLD}[Ports] for Mineman 1.16.4")
+        Message.print(sender, "${ChatColor.AQUA}${ChatColor.BOLD}[Ports] for Mineman 1.18.2")
         Message.print(sender, "${ChatColor.AQUA}/port help${ChatColor.WHITE}: help")
         Message.print(sender, "${ChatColor.AQUA}/port list${ChatColor.WHITE}: list all ports")
         Message.print(sender, "${ChatColor.AQUA}/port info${ChatColor.WHITE}: print info about a port")
@@ -480,7 +486,7 @@ public object PortAdminCommand: CommandExecutor, TabCompleter {
     }
 
     private fun printHelp(sender: CommandSender) {
-        Message.print(sender, "${ChatColor.AQUA}${ChatColor.BOLD}[Ports] for Mineman 1.16.4")
+        Message.print(sender, "${ChatColor.AQUA}${ChatColor.BOLD}[Ports] for Mineman 1.18.2")
         Message.print(sender, "${ChatColor.AQUA}/portadmin help${ChatColor.WHITE}: help")
         Message.print(sender, "${ChatColor.AQUA}/portadmin reload${ChatColor.WHITE}: reload config (admin only)")
         Message.print(sender, "${ChatColor.AQUA}/portadmin createbeacon${ChatColor.WHITE}: create port beacons")
@@ -681,6 +687,9 @@ public object Ports {
     // ==============================
     // config
     // ==============================
+    // debug mode
+    public var debug: Boolean = false
+
     // sea level
     public var seaLevel: Double = 40.0
 
@@ -796,6 +805,8 @@ public object Ports {
         }
 
         val config = YamlConfiguration.loadConfiguration(configFile)
+
+        Ports.debug = config.getBoolean("debug", false)
 
         Ports.seaLevel = config.getDouble("seaLevel", Ports.seaLevel)
 
@@ -1590,15 +1601,31 @@ public object Ports {
      */
     public fun teleportEntity(entity: Entity, destination: Location) {
         val passengers = entity.getPassengers()
+
+        // remove players from boats and teleport to destination
         for ( p in passengers ) {
+            p.eject()
             entity.removePassenger(p)
             p.teleport(destination)
         }
 
-        // schedule entity teleport
+        // schedule entity teleport (after players already teleported)
         Bukkit.getScheduler().runTaskLater(Ports.plugin!!, object: Runnable {
             override public fun run() {
                 entity.teleport(destination)
+
+                // re-send entity to players to make sure it exists on client
+                for ( p in passengers ) {
+                    try {
+                        val nmsPlayer = (p as CraftPlayer).getHandle()
+                        val nmsEntity = (entity as CraftEntity).getHandle()
+                        nmsPlayer.connection.send(ClientboundAddEntityPacket(nmsEntity))
+                    } catch ( err: Exception ) {
+                        if ( Ports.debug ) {
+                            err.printStackTrace()
+                        }
+                    }
+                }
             }
         }, 1L)
 

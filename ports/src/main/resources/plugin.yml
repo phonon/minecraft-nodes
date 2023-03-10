@@ -1,6 +1,6 @@
 main: phonon.ports.PortPlugin
 name: ports
-version: 0.0
+version: 0.0.13
 api-version: 1.16
 depend: [nodes]
 softdepend: [kotlin]

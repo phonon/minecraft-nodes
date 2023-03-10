@@ -11,7 +11,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 version = ""
 
 // custom versioning flag
-val VERSION = "0.0.11"
+val VERSION = "0.0.13"
 
 // base of output jar name
 val OUTPUT_JAR_NAME = "nodes-ports"
@@ -21,6 +21,8 @@ var target = ""
 
 
 plugins {
+    // paperweight for nms
+    id("io.papermc.paperweight.userdev") version "1.3.8"
     // Apply the Kotlin JVM plugin to add support for Kotlin.
     id("org.jetbrains.kotlin.jvm") version "1.6.10"
     id("com.github.johnrengelman.shadow") version "7.1.2"
@@ -86,8 +88,23 @@ dependencies {
         target = "1.18.2"
         // java must be up to 17 for 1.18
         java.toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+        // nms
+        paperDevBundle("1.18.2-R0.1-SNAPSHOT")
         // spigot/paper api
         compileOnly("io.papermc.paper:paper-api:1.18.2-R0.1-SNAPSHOT")
+
+        tasks {
+            assemble {
+                // must write it like below because in 1.16 config, reobfJar does not exist
+                // so the simpler definition below wont compile
+                // dependsOn(reobfJar) // won't compile :^(
+                dependsOn(project.tasks.first { it.name.contains("reobfJar") })
+            }
+        }
+
+        tasks.named("reobfJar") {
+            base.archivesBaseName = "${OUTPUT_JAR_NAME}-${target}-${VERSION}"
+        }
     }
 }
 
