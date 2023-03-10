@@ -11,7 +11,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 version = ""
 
 // custom versioning flag
-val VERSION = "0.0.11"
+val VERSION = "0.0.13"
 
 // base of output jar name
 val OUTPUT_JAR_NAME = "nodes-refinery"
