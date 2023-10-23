@@ -3442,7 +3442,18 @@ const Nodes = {
         if ( Nodes.renderTownNames === RENDER_TOWN_NAMETAG_TOWN ) {
             tagName = town.name;
         } else if ( Nodes.renderTownNames === RENDER_TOWN_NAMETAG_NATION ) {
-            tagName = town.nation !== undefined ? town.nation : town.name;
+            const nation = town.nation;
+            if ( nation !== undefined ) {
+                // only display nation name for capital of a nation,
+                // otherwise skip this town name tag
+                if ( town.name !== Nodes.nations.get(nation)?.capital ) {
+                    return null;
+                }
+                tagName = town.nation;
+            }
+            else { // for town without nation, use its name
+                tagName = town.name;
+            }
         } else {
             console.error(`Invalid town name render mode: ${Nodes.renderTownNames}`);
             return null;
@@ -3477,7 +3488,9 @@ const Nodes = {
         if ( Nodes.renderTownNames !== RENDER_TOWN_NAMETAG_NONE ) {
             for ( const town of Nodes.towns.values() ) {
                 const jsx = Nodes._createTownNameTagJsx(town);
-                elements.push(jsx);
+                if ( jsx !== null ) {
+                    elements.push(jsx);
+                }
             }
         }
 
