@@ -30,12 +30,12 @@ npm install
 
 3. Download/install rust language: <https://www.rust-lang.org/tools/install>
 
-4. Switch into rust nightly for this repository (required for wasm for now):
+4. Switch into specific version rust nightly for this repository (required for wasm for now):
 ```
-rustup override set nightly
+rustup override set nightly-2023-06-15
 ```
 
-5. Make sure rust toolchain is updated to nightly >=1.62.0:
+5. Make sure rust toolchain is updated to nightly 1.62.0 - 1.72.0:
 ```
 rustup update nightly
 ```
